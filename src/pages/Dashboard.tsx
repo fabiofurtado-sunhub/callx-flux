@@ -25,10 +25,10 @@ export default function Dashboard() {
   const taxaReuniaoVenda = reunioes > 0 ? ((vendasCount / reunioes) * 100).toFixed(1) : '0';
   const leadTimeMedio = vendas.filter(v => v.lead_time).reduce((sum, v) => sum + (v.lead_time || 0), 0) / (vendas.filter(v => v.lead_time).length || 1);
 
-  // Leads por campanha
-  const campanhaMap = new Map<string, number>();
-  leads.forEach(l => campanhaMap.set(l.campanha, (campanhaMap.get(l.campanha) || 0) + 1));
-  const leadsPorCampanha = Array.from(campanhaMap, ([name, value]) => ({ name: name.substring(0, 15), value }));
+  // Leads por criativo (adset)
+  const criativoMap = new Map<string, number>();
+  leads.forEach(l => { const key = l.adset || 'Sem criativo'; criativoMap.set(key, (criativoMap.get(key) || 0) + 1); });
+  const leadsPorCriativo = Array.from(criativoMap, ([name, value]) => ({ name: name.substring(0, 20), value }));
 
   // Receita por vendedor
   const vendedorReceitaMap = new Map<string, number>();
@@ -95,12 +95,12 @@ export default function Dashboard() {
         </div>
 
         <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
-          <h3 className="text-sm font-display font-semibold text-card-foreground mb-4">Leads por Campanha</h3>
+          <h3 className="text-sm font-display font-semibold text-card-foreground mb-4">Leads por Criativo</h3>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={leadsPorCampanha} layout="vertical">
+            <BarChart data={leadsPorCriativo} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(216,30%,18%)" />
               <XAxis type="number" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
-              <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} width={100} />
+              <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} width={120} />
               <Tooltip contentStyle={{ background: 'hsl(216,50%,10%)', border: '1px solid hsl(216,30%,18%)', borderRadius: 8, color: 'hsl(210,40%,95%)' }} />
               <Bar dataKey="value" fill="hsl(199,89%,48%)" radius={[0, 6, 6, 0]}>
                 <LabelList dataKey="value" position="right" fill="hsl(210,40%,95%)" fontSize={11} fontWeight={600} />
