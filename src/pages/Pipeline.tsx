@@ -1,8 +1,9 @@
 import { useAppContext, LeadStatus } from '@/contexts/AppContext';
 import { FUNNEL_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState } from 'react';
-import { GripVertical, Search } from 'lucide-react';
+import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { format } from 'date-fns';
 
 export default function Pipeline() {
   const { leads, moveLeadToStage } = useAppContext();
@@ -58,15 +59,18 @@ export default function Pipeline() {
             (!search || l.nome.toLowerCase().includes(searchLower) ||
               l.telefone.includes(search) ||
               (l.campanha || '').toLowerCase().includes(searchLower) ||
+              (l.adset || '').toLowerCase().includes(searchLower) ||
+              (l.grupo_anuncios || '').toLowerCase().includes(searchLower) ||
               (l.vendedor_nome || '').toLowerCase().includes(searchLower) ||
-              (l.email || '').toLowerCase().includes(searchLower))
+              (l.email || '').toLowerCase().includes(searchLower) ||
+              (l.observacoes || '').toLowerCase().includes(searchLower))
           );
           const isOver = dragOverStage === stage.key;
 
           return (
             <div
               key={stage.key}
-              className={`flex-shrink-0 w-72 rounded-xl border bg-card/50 transition-all ${
+              className={`flex-shrink-0 w-80 rounded-xl border bg-card/50 transition-all ${
                 isOver ? 'border-primary ring-1 ring-primary/30' : 'border-border'
               }`}
               onDragOver={e => handleDragOver(e, stage.key)}
@@ -90,24 +94,106 @@ export default function Pipeline() {
                     draggable
                     onDragStart={() => handleDragStart(lead.id)}
                     onDragEnd={handleDragEnd}
-                    className={`rounded-lg border border-border bg-card p-3 cursor-grab active:cursor-grabbing hover:border-primary/40 transition-all ${
+                    className={`rounded-lg border border-border bg-card p-3.5 cursor-grab active:cursor-grabbing hover:border-primary/40 transition-all space-y-2.5 ${
                       draggedLead === lead.id ? 'opacity-40' : ''
                     }`}
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <p className="text-sm font-medium text-card-foreground">{lead.nome}</p>
-                      <GripVertical className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    {/* Header: Nome + Score + Grip */}
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-card-foreground truncate">{lead.nome}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                        <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${getScoreColor(lead.score_lead)}`}>
+                          {getScoreLabel(lead.score_lead)}
+                        </span>
+                        <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-1">{lead.campanha}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground"><span className="text-xs text-muted-foreground">{lead.vendedor_nome}</span></span>
-                      <span className={`text-[10px] font-bold uppercase ${getScoreColor(lead.score_lead)}`}>
-                        {getScoreLabel(lead.score_lead)}
+
+                    {/* Contato */}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Phone className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{lead.telefone}</span>
+                      </div>
+                      {lead.email && (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Mail className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{lead.email}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Campanha / Adset / Grupo */}
+                    {(lead.campanha || lead.adset || lead.grupo_anuncios) && (
+                      <div className="space-y-1 border-t border-border/50 pt-2">
+                        {lead.campanha && (
+                          <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                            <Megaphone className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                            <span className="line-clamp-2">{lead.campanha}</span>
+                          </div>
+                        )}
+                        {lead.adset && (
+                          <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                            <Layers className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                            <span className="truncate">{lead.adset}</span>
+                          </div>
+                        )}
+                        {lead.grupo_anuncios && (
+                          <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                            <Users className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                            <span className="truncate">{lead.grupo_anuncios}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Vendedor + Data */}
+                    <div className="flex items-center justify-between border-t border-border/50 pt-2">
+                      <span className="text-xs text-muted-foreground truncate">
+                        {lead.vendedor_nome || 'Sem vendedor'}
                       </span>
+                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground flex-shrink-0">
+                        <Calendar className="w-3 h-3" />
+                        {format(new Date(lead.data_entrada), 'dd/MM/yy')}
+                      </div>
                     </div>
-                    {lead.valor_proposta && (
-                      <p className="text-xs font-semibold text-primary mt-2">
-                        R$ {lead.valor_proposta.toLocaleString()}
+
+                    {/* Lead Time + WhatsApp Status */}
+                    <div className="flex items-center justify-between">
+                      {lead.lead_time != null && (
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <Clock className="w-3 h-3" />
+                          {lead.lead_time}d
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground ml-auto">
+                        <MessageSquare className="w-3 h-3" />
+                        {lead.envio_whatsapp_status}
+                      </div>
+                    </div>
+
+                    {/* Valores */}
+                    {(lead.valor_proposta || lead.valor_venda) && (
+                      <div className="flex items-center gap-3 border-t border-border/50 pt-2">
+                        {lead.valor_proposta && (
+                          <span className="text-xs font-semibold text-primary">
+                            Proposta: R$ {lead.valor_proposta.toLocaleString()}
+                          </span>
+                        )}
+                        {lead.valor_venda && (
+                          <span className="text-xs font-semibold text-accent-foreground">
+                            Venda: R$ {lead.valor_venda.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Observações */}
+                    {lead.observacoes && (
+                      <p className="text-[10px] text-muted-foreground/70 italic line-clamp-2 border-t border-border/50 pt-2">
+                        {lead.observacoes}
                       </p>
                     )}
                   </div>
