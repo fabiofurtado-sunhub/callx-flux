@@ -155,10 +155,12 @@ function normalizePhone(phone: string): string {
 }
 
 function parseNumber(val: string): number | null {
-  let cleaned = val.replace(/[^\d.,\-]/g, "");
-  if (!cleaned) return null;
+  if (!val || !val.trim()) return null;
+  // Handle ranges like "50.000 - 100.000" — take first number segment
+  const rangeMatch = val.match(/[\d.,]+/);
+  if (!rangeMatch) return null;
+  let cleaned = rangeMatch[0];
   // Brazilian format: dots are thousands, comma is decimal
-  // Remove all dots (thousands separator), replace comma with dot (decimal)
   cleaned = cleaned.replace(/\./g, "").replace(",", ".");
   const num = parseFloat(cleaned);
   return isNaN(num) ? null : num;
