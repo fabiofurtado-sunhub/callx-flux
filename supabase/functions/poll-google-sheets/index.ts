@@ -78,8 +78,8 @@ Deno.serve(async (req) => {
       campanha: findCol(headers, ["campanha", "campaign", "utm_campaign"]),
       adset: findCol(headers, ["adset", "ad_set", "conjunto", "anuncio", "anúncio", "ad_name"]),
       grupo_anuncios: findCol(headers, ["grupo_anuncios", "grupo", "ad_group", "grupo de anuncio", "grupo de anúncio", "grupo_de_anuncio"]),
+      faturamento: findCol(headers, ["faturamento", "receita", "revenue", "faturamento mensal"]),
     };
-
     if (colMap.nome === -1 || colMap.telefone === -1) {
       return new Response(
         JSON.stringify({ ok: false, message: "Colunas 'nome' e 'telefone' são obrigatórias na planilha" }),
@@ -114,6 +114,7 @@ Deno.serve(async (req) => {
         campanha: colMap.campanha !== -1 ? (row[colMap.campanha] || "").trim() : "",
         adset: colMap.adset !== -1 ? (row[colMap.adset] || "").trim() : "",
         grupo_anuncios: colMap.grupo_anuncios !== -1 ? (row[colMap.grupo_anuncios] || "").trim() : "",
+        faturamento: colMap.faturamento !== -1 ? parseNumber(row[colMap.faturamento] || "") : null,
         origem: "google_sheets",
         status_funil: "lead",
       });
@@ -151,6 +152,12 @@ Deno.serve(async (req) => {
 
 function normalizePhone(phone: string): string {
   return phone.replace(/\D/g, "").trim();
+}
+
+function parseNumber(val: string): number | null {
+  const cleaned = val.replace(/[^\d.,\-]/g, "").replace(",", ".");
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? null : num;
 }
 
 function findCol(headers: string[], aliases: string[]): number {

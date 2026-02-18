@@ -26,6 +26,7 @@ export interface Lead {
   envio_whatsapp_data: string | null;
   lead_time: number | null;
   observacoes: string;
+  faturamento: number | null;
 }
 
 interface Settings {
@@ -78,6 +79,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         status_funil: d.status_funil as LeadStatus,
         valor_proposta: d.valor_proposta ? Number(d.valor_proposta) : null,
         valor_venda: d.valor_venda ? Number(d.valor_venda) : null,
+        faturamento: d.faturamento ? Number(d.faturamento) : null,
       })));
     }
     setLoading(false);

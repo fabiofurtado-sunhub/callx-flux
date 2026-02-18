@@ -46,6 +46,7 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
         valor_venda: form.valor_venda,
         motivo_perda: form.motivo_perda,
         observacoes: form.observacoes,
+        faturamento: form.faturamento,
         data_ultimo_movimento: new Date().toISOString(),
       }).eq('id', lead.id);
 
@@ -155,10 +156,16 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
             )}
           </div>
 
-          {/* Observações */}
-          <div className="border-t border-border pt-4">
-            <Label className="text-xs text-muted-foreground">Observações</Label>
-            <Textarea value={form.observacoes || ''} onChange={e => set('observacoes', e.target.value)} rows={3} className="mt-1 bg-background border-border resize-none" />
+          {/* Faturamento + Observações */}
+          <div className="space-y-3 border-t border-border pt-4">
+            <div>
+              <Label className="text-xs text-muted-foreground">Faturamento Mensal (R$)</Label>
+              <Input type="number" value={form.faturamento ?? ''} onChange={e => set('faturamento', e.target.value ? Number(e.target.value) : null)} className="mt-1 bg-background border-border" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Observações</Label>
+              <Textarea value={form.observacoes || ''} onChange={e => set('observacoes', e.target.value)} rows={3} className="mt-1 bg-background border-border resize-none" />
+            </div>
           </div>
 
           {/* Info somente leitura */}
