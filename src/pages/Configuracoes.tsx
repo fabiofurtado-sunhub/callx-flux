@@ -2,7 +2,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Settings as SettingsIcon, Save, Webhook, DollarSign, Target } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Webhook, DollarSign, Target, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Configuracoes() {
@@ -21,6 +21,24 @@ export default function Configuracoes() {
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Configurações</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Integração ZAPI e metas comerciais</p>
+        </div>
+      </div>
+
+      {/* Google Sheets */}
+      <div className="rounded-xl border border-border bg-card p-6 space-y-4" style={{ boxShadow: 'var(--shadow-card)' }}>
+        <div className="flex items-center gap-2 mb-2">
+          <FileSpreadsheet className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-display font-semibold text-card-foreground">Google Sheets (Captação de Leads)</h3>
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">URL da Planilha</Label>
+          <Input
+            value={settings.googleSheetsUrl}
+            onChange={e => setSettings(s => ({ ...s, googleSheetsUrl: e.target.value }))}
+            placeholder="https://docs.google.com/spreadsheets/d/..."
+            className="mt-1 bg-background border-border"
+          />
+          <p className="text-xs text-muted-foreground mt-1.5">Cole o link da planilha pública do Google Sheets com os leads.</p>
         </div>
       </div>
 

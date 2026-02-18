@@ -32,6 +32,7 @@ interface Settings {
   zapiWebhook: string;
   zapiToken: string;
   zapiInstanceId: string;
+  googleSheetsUrl: string;
   custoPorLead: number;
   metaVendasMensal: number;
   metaReceitaMensal: number;
@@ -51,6 +52,7 @@ const defaultSettings: Settings = {
   zapiWebhook: '',
   zapiToken: '',
   zapiInstanceId: '',
+  googleSheetsUrl: '',
   custoPorLead: 25,
   metaVendasMensal: 30,
   metaReceitaMensal: 500000,
