@@ -4,12 +4,42 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Settings as SettingsIcon, Save, Webhook, DollarSign, Target, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Configuracoes() {
   const { settings, setSettings } = useAppContext();
 
-  const handleSave = () => {
-    toast.success('Configurações salvas com sucesso!');
+  const handleSave = async () => {
+    try {
+      const { data: existing } = await supabase.from('configuracoes').select('id').limit(1).single();
+      if (existing) {
+        await supabase.from('configuracoes').update({
+          zapi_webhook: settings.zapiWebhook,
+          zapi_token: settings.zapiToken,
+          zapi_instance_id: settings.zapiInstanceId,
+          google_sheets_url: settings.googleSheetsUrl,
+        }).eq('id', existing.id);
+      }
+
+      const { data: existingMeta } = await supabase.from('metas').select('id').limit(1).single();
+      if (existingMeta) {
+        await supabase.from('metas').update({
+          custo_por_lead: settings.custoPorLead,
+          meta_vendas_mensal: settings.metaVendasMensal,
+          meta_receita_mensal: settings.metaReceitaMensal,
+        }).eq('id', existingMeta.id);
+      } else {
+        await supabase.from('metas').insert({
+          custo_por_lead: settings.custoPorLead,
+          meta_vendas_mensal: settings.metaVendasMensal,
+          meta_receita_mensal: settings.metaReceitaMensal,
+        });
+      }
+
+      toast.success('Configurações salvas com sucesso!');
+    } catch (err) {
+      toast.error('Erro ao salvar configurações');
+    }
   };
 
   return (
