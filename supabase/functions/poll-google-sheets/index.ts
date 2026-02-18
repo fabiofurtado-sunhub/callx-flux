@@ -30,19 +30,24 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 2. Extract spreadsheet ID from URL
+    // 2. Build CSV URL - support both regular and published URLs
     const sheetUrl: string = config.google_sheets_url;
-    const match = sheetUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
-    if (!match) {
+    let csvUrl: string;
+    const pubMatch = sheetUrl.match(/\/d\/e\/(2PACX[a-zA-Z0-9_-]+)/);
+    const regularMatch = sheetUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+
+    if (pubMatch) {
+      csvUrl = `https://docs.google.com/spreadsheets/d/e/${pubMatch[1]}/pub?output=csv`;
+    } else if (regularMatch) {
+      csvUrl = `https://docs.google.com/spreadsheets/d/${regularMatch[1]}/export?format=csv`;
+    } else {
       return new Response(
         JSON.stringify({ ok: false, message: "URL de planilha inválida" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    const sheetId = match[1];
 
     // 3. Fetch CSV from public Google Sheet
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
     const csvResp = await fetch(csvUrl);
     if (!csvResp.ok) {
       const body = await csvResp.text();
