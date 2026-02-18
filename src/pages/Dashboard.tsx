@@ -41,6 +41,23 @@ export default function Dashboard() {
   perdidos.forEach(l => { if (l.motivo_perda) motivoMap.set(l.motivo_perda, (motivoMap.get(l.motivo_perda) || 0) + 1); });
   const motivosPerda = Array.from(motivoMap, ([name, value]) => ({ name, value }));
 
+  // Leads por faixa de faturamento
+  const faixas = [
+    { label: 'Sem info', min: -1, max: 0 },
+    { label: 'Até 50k', min: 0, max: 50000 },
+    { label: '50k–200k', min: 50000, max: 200000 },
+    { label: '200k–500k', min: 200000, max: 500000 },
+    { label: '500k–1M', min: 500000, max: 1000000 },
+    { label: 'Acima 1M', min: 1000000, max: Infinity },
+  ];
+  const leadsPorFaturamento = faixas.map(f => {
+    const count = leads.filter(l => {
+      if (f.min === -1) return !l.faturamento;
+      return l.faturamento != null && l.faturamento > f.min && l.faturamento <= f.max;
+    }).length;
+    return { name: f.label, value: count };
+  }).filter(d => d.value > 0);
+
   // Funil data
   const funnelData = [
     { name: 'Lead', value: leads.filter(l => l.status_funil === 'lead').length },
@@ -138,6 +155,24 @@ export default function Dashboard() {
               </Pie>
               <Tooltip contentStyle={{ background: 'hsl(216,50%,10%)', border: '1px solid hsl(216,30%,18%)', borderRadius: 8, color: 'hsl(210,40%,95%)' }} />
             </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Charts Row 3 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <h3 className="text-sm font-display font-semibold text-card-foreground mb-4">Leads por Faixa de Faturamento</h3>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={leadsPorFaturamento}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(216,30%,18%)" />
+              <XAxis dataKey="name" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
+              <YAxis tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
+              <Tooltip contentStyle={{ background: 'hsl(216,50%,10%)', border: '1px solid hsl(216,30%,18%)', borderRadius: 8, color: 'hsl(210,40%,95%)' }} />
+              <Bar dataKey="value" fill="hsl(38,92%,50%)" radius={[6, 6, 0, 0]}>
+                <LabelList dataKey="value" position="top" fill="hsl(210,40%,95%)" fontSize={11} fontWeight={600} />
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
