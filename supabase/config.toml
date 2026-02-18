@@ -1,1 +1,4 @@
 project_id = "tqzrebkunvezpdeipamf"
+
+[functions.poll-google-sheets]
+verify_jwt = false
