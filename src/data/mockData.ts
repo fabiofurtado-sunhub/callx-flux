@@ -51,7 +51,8 @@ export function getScoreColor(score: number): string {
   }
 }
 
-const vendedores = ['Fábio Furtado', 'Ana Silva', 'Carlos Mendes', 'Juliana Costa'];
+export const VENDEDORES = ['Arthur', 'Fernando', 'Paula'];
+const vendedores = VENDEDORES;
 const campanhas = ['CallX IA Comercial', 'Meta Lead Gen Q1', 'Remarketing Funil'];
 const adsets = ['Lookalike 1%', 'Interesse B2B', 'Custom Audience'];
 const grupos = ['Grupo A - CEO', 'Grupo B - Diretores', 'Grupo C - Gestores'];

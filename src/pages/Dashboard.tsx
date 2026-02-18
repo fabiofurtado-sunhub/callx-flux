@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, AreaChart, Area,
+  PieChart, Pie, Cell, LabelList,
 } from 'recharts';
 
 export default function Dashboard() {
@@ -87,7 +87,9 @@ export default function Dashboard() {
               <XAxis dataKey="name" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
               <YAxis tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
               <Tooltip contentStyle={{ background: 'hsl(216,50%,10%)', border: '1px solid hsl(216,30%,18%)', borderRadius: 8, color: 'hsl(210,40%,95%)' }} />
-              <Bar dataKey="value" fill="hsl(18,100%,60%)" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="value" fill="hsl(18,100%,60%)" radius={[6, 6, 0, 0]}>
+                <LabelList dataKey="value" position="top" fill="hsl(210,40%,95%)" fontSize={11} fontWeight={600} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -100,7 +102,9 @@ export default function Dashboard() {
               <XAxis type="number" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
               <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} width={100} />
               <Tooltip contentStyle={{ background: 'hsl(216,50%,10%)', border: '1px solid hsl(216,30%,18%)', borderRadius: 8, color: 'hsl(210,40%,95%)' }} />
-              <Bar dataKey="value" fill="hsl(199,89%,48%)" radius={[0, 6, 6, 0]} />
+              <Bar dataKey="value" fill="hsl(199,89%,48%)" radius={[0, 6, 6, 0]}>
+                <LabelList dataKey="value" position="right" fill="hsl(210,40%,95%)" fontSize={11} fontWeight={600} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -116,7 +120,9 @@ export default function Dashboard() {
               <XAxis dataKey="name" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
               <YAxis tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
               <Tooltip contentStyle={{ background: 'hsl(216,50%,10%)', border: '1px solid hsl(216,30%,18%)', borderRadius: 8, color: 'hsl(210,40%,95%)' }} formatter={(v: number) => [`R$ ${v.toLocaleString()}`, 'Receita']} />
-              <Bar dataKey="value" fill="hsl(142,71%,45%)" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="value" fill="hsl(142,71%,45%)" radius={[6, 6, 0, 0]}>
+                <LabelList dataKey="value" position="top" fill="hsl(210,40%,95%)" fontSize={11} fontWeight={600} formatter={(v: number) => `R$${(v/1000).toFixed(0)}k`} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
