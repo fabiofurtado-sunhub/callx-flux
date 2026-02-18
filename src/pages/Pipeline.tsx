@@ -1,15 +1,17 @@
-import { useAppContext, LeadStatus } from '@/contexts/AppContext';
+import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
 import { FUNNEL_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState } from 'react';
 import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
+import LeadEditModal from '@/components/LeadEditModal';
 
 export default function Pipeline() {
-  const { leads, moveLeadToStage } = useAppContext();
+  const { leads, moveLeadToStage, refreshLeads } = useAppContext();
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<LeadStatus | null>(null);
   const [search, setSearch] = useState('');
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
 
   const handleDragStart = (leadId: string) => {
     setDraggedLead(leadId);
@@ -94,9 +96,10 @@ export default function Pipeline() {
                     draggable
                     onDragStart={() => handleDragStart(lead.id)}
                     onDragEnd={handleDragEnd}
-                    className={`rounded-lg border border-border bg-card p-3.5 cursor-grab active:cursor-grabbing hover:border-primary/40 transition-all space-y-2.5 ${
+                    className={`rounded-lg border border-border bg-card p-3.5 cursor-pointer hover:border-primary/40 transition-all space-y-2.5 ${
                       draggedLead === lead.id ? 'opacity-40' : ''
                     }`}
+                    onClick={() => setEditingLead(lead)}
                   >
                     {/* Header: Nome + Score + Grip */}
                     <div className="flex items-start justify-between">
@@ -206,6 +209,13 @@ export default function Pipeline() {
           );
         })}
       </div>
+
+      <LeadEditModal
+        lead={editingLead}
+        open={!!editingLead}
+        onOpenChange={open => { if (!open) setEditingLead(null); }}
+        onSaved={refreshLeads}
+      />
     </div>
   );
 }

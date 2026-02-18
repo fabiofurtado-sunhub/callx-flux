@@ -13,6 +13,7 @@ export default function Dashboard() {
   const { leads, settings } = useAppContext();
 
   const totalLeads = leads.length;
+  const leadsEtapaLead = leads.filter(l => l.status_funil === 'lead').length;
   const reunioes = leads.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'proposta' || l.status_funil === 'venda').length;
   const propostas = leads.filter(l => l.status_funil === 'proposta' || l.status_funil === 'venda').length;
   const vendas = leads.filter(l => l.status_funil === 'venda');
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const receitaTotal = vendas.reduce((sum, l) => sum + (l.valor_venda || 0), 0);
   const ticketMedio = vendasCount > 0 ? receitaTotal / vendasCount : 0;
   const taxaConversao = totalLeads > 0 ? ((vendasCount / totalLeads) * 100).toFixed(1) : '0';
+  const taxaLeadReuniao = totalLeads > 0 ? ((reunioes / totalLeads) * 100).toFixed(1) : '0';
   const taxaReuniaoVenda = reunioes > 0 ? ((vendasCount / reunioes) * 100).toFixed(1) : '0';
   const leadTimeMedio = vendas.filter(v => v.lead_time).reduce((sum, v) => sum + (v.lead_time || 0), 0) / (vendas.filter(v => v.lead_time).length || 1);
 
@@ -67,8 +69,9 @@ export default function Dashboard() {
         <KpiCard title="Receita Total" value={`R$ ${(receitaTotal / 1000).toFixed(0)}k`} icon={DollarSign} variant="primary" />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <KpiCard title="Ticket Médio" value={`R$ ${ticketMedio.toFixed(0)}`} icon={Target} />
+        <KpiCard title="Conv. Lead→Reunião" value={`${taxaLeadReuniao}%`} icon={ArrowRightLeft} variant="warning" />
         <KpiCard title="Conv. Lead→Venda" value={`${taxaConversao}%`} icon={TrendingUp} variant="success" />
         <KpiCard title="Conv. Reunião→Venda" value={`${taxaReuniaoVenda}%`} icon={ArrowRightLeft} />
         <KpiCard title="Lead Time Médio" value={`${leadTimeMedio.toFixed(0)} dias`} icon={Clock} variant="warning" />
