@@ -9,7 +9,7 @@ import { Save, X } from 'lucide-react';
 import { Lead, LeadStatus } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { FUNNEL_STAGES } from '@/data/mockData';
+import { FUNNEL_STAGES, VENDEDORES } from '@/data/mockData';
 
 interface LeadEditModalProps {
   lead: Lead | null;
@@ -125,7 +125,16 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Vendedor</Label>
-                <Input value={form.vendedor_nome || ''} onChange={e => set('vendedor_nome', e.target.value)} className="mt-1 bg-background border-border" />
+                <Select value={form.vendedor_nome || ''} onValueChange={v => set('vendedor_nome', v)}>
+                  <SelectTrigger className="mt-1 bg-background border-border">
+                    <SelectValue placeholder="Selecione o vendedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VENDEDORES.map(v => (
+                      <SelectItem key={v} value={v}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
