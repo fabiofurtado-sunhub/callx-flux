@@ -156,13 +156,10 @@ function normalizePhone(phone: string): string {
 
 function parseNumber(val: string): number | null {
   let cleaned = val.replace(/[^\d.,\-]/g, "");
-  // Brazilian format: 50.000,50 → remove dots (thousands), replace comma (decimal)
-  if (cleaned.includes(",")) {
-    cleaned = cleaned.replace(/\./g, "").replace(",", ".");
-  } else if ((cleaned.match(/\./g) || []).length > 1) {
-    // Multiple dots like 50.000.000 → thousands separators
-    cleaned = cleaned.replace(/\./g, "");
-  }
+  if (!cleaned) return null;
+  // Brazilian format: dots are thousands, comma is decimal
+  // Remove all dots (thousands separator), replace comma with dot (decimal)
+  cleaned = cleaned.replace(/\./g, "").replace(",", ".");
   const num = parseFloat(cleaned);
   return isNaN(num) ? null : num;
 }
