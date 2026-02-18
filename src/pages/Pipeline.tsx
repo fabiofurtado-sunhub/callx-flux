@@ -1,5 +1,5 @@
-import { useAppContext } from '@/contexts/AppContext';
-import { FUNNEL_STAGES, LeadStatus, Lead, getScoreLabel, getScoreColor } from '@/data/mockData';
+import { useAppContext, LeadStatus } from '@/contexts/AppContext';
+import { FUNNEL_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState } from 'react';
 import { GripVertical } from 'lucide-react';
 
@@ -79,7 +79,7 @@ export default function Pipeline() {
                     </div>
                     <p className="text-xs text-muted-foreground mb-1">{lead.campanha}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">{lead.vendedor}</span>
+                      <span className="text-xs text-muted-foreground"><span className="text-xs text-muted-foreground">{lead.vendedor_nome}</span></span>
                       <span className={`text-[10px] font-bold uppercase ${getScoreColor(lead.score_lead)}`}>
                         {getScoreLabel(lead.score_lead)}
                       </span>

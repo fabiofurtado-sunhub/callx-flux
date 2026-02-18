@@ -79,7 +79,7 @@ export default function Leads() {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{lead.telefone}</td>
                   <td className="px-4 py-3 text-muted-foreground text-xs">{lead.campanha}</td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs">{lead.vendedor}</td>
+                  <td className="px-4 py-3 text-muted-foreground text-xs"><td className="px-4 py-3 text-muted-foreground text-xs">{lead.vendedor_nome}</td></td>
                   <td className="px-4 py-3">{statusBadge(lead.status_funil)}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-semibold uppercase ${getScoreColor(lead.score_lead)}`}>

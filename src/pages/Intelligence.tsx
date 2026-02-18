@@ -30,7 +30,7 @@ export default function Intelligence() {
 
   // Melhor vendedor
   const vendedorReceita = new Map<string, number>();
-  vendas.forEach(v => vendedorReceita.set(v.vendedor, (vendedorReceita.get(v.vendedor) || 0) + (v.valor_venda || 0)));
+  vendas.forEach(v => vendedorReceita.set(v.vendedor_nome, (vendedorReceita.get(v.vendedor_nome) || 0) + (v.valor_venda || 0)));
   const melhorVendedor = Array.from(vendedorReceita).sort((a, b) => b[1] - a[1])[0];
 
   // Forecast

@@ -14,16 +14,287 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      configuracoes: {
+        Row: {
+          id: string
+          updated_at: string
+          updated_by: string | null
+          zapi_instance_id: string | null
+          zapi_token: string | null
+          zapi_webhook: string | null
+        }
+        Insert: {
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          zapi_instance_id?: string | null
+          zapi_token?: string | null
+          zapi_webhook?: string | null
+        }
+        Update: {
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          zapi_instance_id?: string | null
+          zapi_token?: string | null
+          zapi_webhook?: string | null
+        }
+        Relationships: []
+      }
+      interacoes_whatsapp: {
+        Row: {
+          conteudo: string
+          created_at: string
+          data: string
+          id: string
+          lead_id: string
+          response_data: Json | null
+          status: Database["public"]["Enums"]["whatsapp_status"]
+          tipo: string
+        }
+        Insert: {
+          conteudo?: string
+          created_at?: string
+          data?: string
+          id?: string
+          lead_id: string
+          response_data?: Json | null
+          status?: Database["public"]["Enums"]["whatsapp_status"]
+          tipo?: string
+        }
+        Update: {
+          conteudo?: string
+          created_at?: string
+          data?: string
+          id?: string
+          lead_id?: string
+          response_data?: Json | null
+          status?: Database["public"]["Enums"]["whatsapp_status"]
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interacoes_whatsapp_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_logs: {
+        Row: {
+          acao: string
+          created_at: string
+          de: string | null
+          id: string
+          lead_id: string
+          para: string | null
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          de?: string | null
+          id?: string
+          lead_id: string
+          para?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          de?: string | null
+          id?: string
+          lead_id?: string
+          para?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          adset: string | null
+          campanha: string | null
+          created_at: string
+          data_entrada: string
+          data_ultimo_movimento: string
+          email: string | null
+          envio_whatsapp_data: string | null
+          envio_whatsapp_status: Database["public"]["Enums"]["whatsapp_status"]
+          grupo_anuncios: string | null
+          id: string
+          lead_time: number | null
+          motivo_perda: string | null
+          nome: string
+          observacoes: string | null
+          origem: string | null
+          probabilidade_fechamento: number
+          score_lead: number
+          status_funil: Database["public"]["Enums"]["lead_status"]
+          telefone: string
+          updated_at: string
+          valor_proposta: number | null
+          valor_venda: number | null
+          vendedor_id: string | null
+          vendedor_nome: string | null
+        }
+        Insert: {
+          adset?: string | null
+          campanha?: string | null
+          created_at?: string
+          data_entrada?: string
+          data_ultimo_movimento?: string
+          email?: string | null
+          envio_whatsapp_data?: string | null
+          envio_whatsapp_status?: Database["public"]["Enums"]["whatsapp_status"]
+          grupo_anuncios?: string | null
+          id?: string
+          lead_time?: number | null
+          motivo_perda?: string | null
+          nome: string
+          observacoes?: string | null
+          origem?: string | null
+          probabilidade_fechamento?: number
+          score_lead?: number
+          status_funil?: Database["public"]["Enums"]["lead_status"]
+          telefone: string
+          updated_at?: string
+          valor_proposta?: number | null
+          valor_venda?: number | null
+          vendedor_id?: string | null
+          vendedor_nome?: string | null
+        }
+        Update: {
+          adset?: string | null
+          campanha?: string | null
+          created_at?: string
+          data_entrada?: string
+          data_ultimo_movimento?: string
+          email?: string | null
+          envio_whatsapp_data?: string | null
+          envio_whatsapp_status?: Database["public"]["Enums"]["whatsapp_status"]
+          grupo_anuncios?: string | null
+          id?: string
+          lead_time?: number | null
+          motivo_perda?: string | null
+          nome?: string
+          observacoes?: string | null
+          origem?: string | null
+          probabilidade_fechamento?: number
+          score_lead?: number
+          status_funil?: Database["public"]["Enums"]["lead_status"]
+          telefone?: string
+          updated_at?: string
+          valor_proposta?: number | null
+          valor_venda?: number | null
+          vendedor_id?: string | null
+          vendedor_nome?: string | null
+        }
+        Relationships: []
+      }
+      metas: {
+        Row: {
+          custo_por_lead: number
+          id: string
+          meta_receita_mensal: number
+          meta_vendas_mensal: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          custo_por_lead?: number
+          id?: string
+          meta_receita_mensal?: number
+          meta_vendas_mensal?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          custo_por_lead?: number
+          id?: string
+          meta_receita_mensal?: number
+          meta_vendas_mensal?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "gestor" | "vendedor"
+      lead_status: "lead" | "reuniao" | "proposta" | "venda" | "perdido"
+      whatsapp_status:
+        | "pendente"
+        | "enviado"
+        | "entregue"
+        | "falha"
+        | "erro_envio"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +421,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "gestor", "vendedor"],
+      lead_status: ["lead", "reuniao", "proposta", "venda", "perdido"],
+      whatsapp_status: [
+        "pendente",
+        "enviado",
+        "entregue",
+        "falha",
+        "erro_envio",
+      ],
+    },
   },
 } as const
