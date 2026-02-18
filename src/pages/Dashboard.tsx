@@ -30,7 +30,7 @@ export default function Dashboard() {
 
   // Receita por vendedor
   const vendedorReceitaMap = new Map<string, number>();
-  vendas.forEach(v => vendedorReceitaMap.set(v.vendedor, (vendedorReceitaMap.get(v.vendedor) || 0) + (v.valor_venda || 0)));
+  vendas.forEach(v => vendedorReceitaMap.set(v.vendedor_nome, (vendedorReceitaMap.get(v.vendedor_nome) || 0) + (v.valor_venda || 0)));
   const receitaPorVendedor = Array.from(vendedorReceitaMap, ([name, value]) => ({ name: name.split(' ')[0], value }));
 
   // Motivos de perda

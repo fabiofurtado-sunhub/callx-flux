@@ -8,8 +8,10 @@ import {
   Zap,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -21,6 +23,8 @@ const navItems = [
 
 export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const initials = user?.email?.substring(0, 2).toUpperCase() || 'MX';
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -76,12 +80,14 @@ export default function AppLayout() {
         <div className="px-4 py-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3 px-2">
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
-              FF
+              {initials}
             </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">Fábio Furtado</p>
-              <p className="text-[11px] text-muted-foreground">Admin</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{user?.email}</p>
             </div>
+            <button onClick={signOut} className="text-muted-foreground hover:text-foreground transition-colors">
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </aside>
