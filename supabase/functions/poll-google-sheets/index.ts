@@ -155,7 +155,14 @@ function normalizePhone(phone: string): string {
 }
 
 function parseNumber(val: string): number | null {
-  const cleaned = val.replace(/[^\d.,\-]/g, "").replace(",", ".");
+  let cleaned = val.replace(/[^\d.,\-]/g, "");
+  // Brazilian format: 50.000,50 → remove dots (thousands), replace comma (decimal)
+  if (cleaned.includes(",")) {
+    cleaned = cleaned.replace(/\./g, "").replace(",", ".");
+  } else if ((cleaned.match(/\./g) || []).length > 1) {
+    // Multiple dots like 50.000.000 → thousands separators
+    cleaned = cleaned.replace(/\./g, "");
+  }
   const num = parseFloat(cleaned);
   return isNaN(num) ? null : num;
 }
