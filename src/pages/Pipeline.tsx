@@ -1,12 +1,14 @@
 import { useAppContext, LeadStatus } from '@/contexts/AppContext';
 import { FUNNEL_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState } from 'react';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 export default function Pipeline() {
   const { leads, moveLeadToStage } = useAppContext();
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<LeadStatus | null>(null);
+  const [search, setSearch] = useState('');
 
   const handleDragStart = (leadId: string) => {
     setDraggedLead(leadId);
@@ -32,14 +34,33 @@ export default function Pipeline() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">Pipeline Comercial</h1>
-        <p className="text-sm text-muted-foreground mt-1">Arraste os leads entre as etapas</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-foreground">Pipeline Comercial</h1>
+          <p className="text-sm text-muted-foreground mt-1">Arraste os leads entre as etapas</p>
+        </div>
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar por nome, telefone, campanha..."
+            className="pl-9 bg-background border-border"
+          />
+        </div>
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4">
         {FUNNEL_STAGES.map(stage => {
-          const stageLeads = leads.filter(l => l.status_funil === stage.key);
+          const searchLower = search.toLowerCase();
+          const stageLeads = leads.filter(l =>
+            l.status_funil === stage.key &&
+            (!search || l.nome.toLowerCase().includes(searchLower) ||
+              l.telefone.includes(search) ||
+              (l.campanha || '').toLowerCase().includes(searchLower) ||
+              (l.vendedor_nome || '').toLowerCase().includes(searchLower) ||
+              (l.email || '').toLowerCase().includes(searchLower))
+          );
           const isOver = dragOverStage === stage.key;
 
           return (
