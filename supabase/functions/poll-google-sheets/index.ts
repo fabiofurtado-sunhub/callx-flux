@@ -76,8 +76,8 @@ Deno.serve(async (req) => {
       telefone: findCol(headers, ["telefone", "phone", "tel", "whatsapp", "celular"]),
       email: findCol(headers, ["email", "e-mail"]),
       campanha: findCol(headers, ["campanha", "campaign", "utm_campaign"]),
-      adset: findCol(headers, ["adset", "ad_set", "conjunto"]),
-      grupo_anuncios: findCol(headers, ["grupo_anuncios", "grupo", "ad_group"]),
+      adset: findCol(headers, ["adset", "ad_set", "conjunto", "anuncio", "anúncio", "ad_name"]),
+      grupo_anuncios: findCol(headers, ["grupo_anuncios", "grupo", "ad_group", "grupo de anuncio", "grupo de anúncio", "grupo_de_anuncio"]),
     };
 
     if (colMap.nome === -1 || colMap.telefone === -1) {
