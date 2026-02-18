@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       configuracoes: {
         Row: {
+          google_sheets_url: string | null
           id: string
           updated_at: string
           updated_by: string | null
@@ -24,6 +25,7 @@ export type Database = {
           zapi_webhook: string | null
         }
         Insert: {
+          google_sheets_url?: string | null
           id?: string
           updated_at?: string
           updated_by?: string | null
@@ -32,6 +34,7 @@ export type Database = {
           zapi_webhook?: string | null
         }
         Update: {
+          google_sheets_url?: string | null
           id?: string
           updated_at?: string
           updated_by?: string | null
