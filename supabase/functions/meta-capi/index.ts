@@ -9,7 +9,7 @@ const corsHeaders = {
 const STAGE_EVENT_MAP: Record<string, string> = {
   lead: "Lead",
   reuniao: "Schedule",
-  reuniao_realizada: "Schedule", // follow-up
+  reuniao_realizada: "Schedule",
   proposta: "InitiateCheckout",
   venda: "Purchase",
   perdido: "Other",
@@ -31,7 +31,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -68,7 +67,6 @@ Deno.serve(async (req) => {
     const eventName = STAGE_EVENT_MAP[new_stage] || "Other";
     const now = Math.floor(Date.now() / 1000);
 
-    // Build user data for matching
     const userData: Record<string, any> = {};
     if (lead_data?.email) {
       userData.em = [await hashSHA256(lead_data.email.toLowerCase().trim())];
@@ -86,7 +84,6 @@ Deno.serve(async (req) => {
       user_data: userData,
     };
 
-    // Add value for Purchase events
     if (new_stage === "venda" && lead_data?.valor_venda) {
       eventData.custom_data = {
         currency: "BRL",
@@ -94,7 +91,6 @@ Deno.serve(async (req) => {
       };
     }
 
-    // Add content info for proposals
     if (new_stage === "proposta" && lead_data?.valor_proposta) {
       eventData.custom_data = {
         currency: "BRL",
@@ -102,7 +98,6 @@ Deno.serve(async (req) => {
       };
     }
 
-    // Send to Meta
     const metaUrl = `https://graph.facebook.com/v21.0/${PIXEL_ID}/events`;
     const metaResponse = await fetch(metaUrl, {
       method: "POST",
@@ -114,8 +109,20 @@ Deno.serve(async (req) => {
     });
 
     const metaResult = await metaResponse.json();
-
     console.log("Meta CAPI response:", JSON.stringify(metaResult));
+
+    // Log the event to meta_capi_logs table
+    const isSuccess = metaResult?.events_received >= 1;
+    const errorMsg = metaResult?.error?.error_user_msg || metaResult?.error?.message || null;
+
+    await supabase.from("meta_capi_logs").insert({
+      lead_id,
+      event_name: eventName,
+      stage: new_stage,
+      status: isSuccess ? "success" : "error",
+      meta_response: metaResult,
+      error_message: errorMsg,
+    });
 
     return new Response(
       JSON.stringify({
