@@ -1,7 +1,7 @@
 import { useAppContext } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState, useMemo } from 'react';
-import { DollarSign, TrendingUp, BarChart3, Target, RotateCw, Users } from 'lucide-react';
+import { DollarSign, TrendingUp, BarChart3, Target, RotateCw, Users, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -69,6 +69,8 @@ export default function Investimentos() {
   const cpp = propostas > 0 ? investimentoTotal / propostas : 0;
   const cac = vendas.length > 0 ? investimentoTotal / vendas.length : 0;
   const roi = investimentoTotal > 0 ? ((receitaTotal - investimentoTotal) / investimentoTotal) * 100 : 0;
+  const roiReais = receitaTotal - investimentoTotal;
+  const valorPropostas = leads.filter(l => ['proposta', 'venda'].includes(l.status_funil)).reduce((s, l) => s + (l.valor_proposta || 0), 0);
 
   // Grouped data
   const groupedData = useMemo(() => {
@@ -166,10 +168,12 @@ export default function Investimentos() {
       </div>
 
       {/* Global KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <KpiCard title="Investimento Total" value={fmtShort(investimentoTotal)} icon={DollarSign} variant="default" />
         <KpiCard title="Receita Total" value={fmtShort(receitaTotal)} icon={TrendingUp} variant="success" />
         <KpiCard title="ROI" value={`${roi.toFixed(1)}%`} icon={BarChart3} variant={roi > 0 ? 'success' : 'warning'} />
+        <KpiCard title="ROI (R$)" value={fmtShort(roiReais)} icon={TrendingUp} variant={roiReais > 0 ? 'success' : 'warning'} />
+        <KpiCard title="Propostas Emitidas" value={fmtShort(valorPropostas)} subtitle={`${propostas} propostas`} icon={FileText} variant="primary" />
         <KpiCard title="CAC" value={fmt(cac)} icon={Target} variant="primary" />
       </div>
 
