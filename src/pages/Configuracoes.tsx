@@ -2,7 +2,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Settings as SettingsIcon, Save, Webhook, DollarSign, Target, FileSpreadsheet } from 'lucide-react';
+import { Settings as SettingsIcon, Save, DollarSign, Target, FileSpreadsheet, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -14,9 +14,6 @@ export default function Configuracoes() {
       const { data: existing } = await supabase.from('configuracoes').select('id').limit(1).single();
       if (existing) {
         await supabase.from('configuracoes').update({
-          zapi_webhook: settings.zapiWebhook,
-          zapi_token: settings.zapiToken,
-          zapi_instance_id: settings.zapiInstanceId,
           google_sheets_url: settings.googleSheetsUrl,
         }).eq('id', existing.id);
       }
@@ -50,7 +47,7 @@ export default function Configuracoes() {
         </div>
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Configurações</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Integração ZAPI e metas comerciais</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Google Sheets e metas comerciais</p>
         </div>
       </div>
 
@@ -72,44 +69,15 @@ export default function Configuracoes() {
         </div>
       </div>
 
-      {/* ZAPI */}
-      <div className="rounded-xl border border-border bg-card p-6 space-y-4" style={{ boxShadow: 'var(--shadow-card)' }}>
+      {/* ZAPI Status */}
+      <div className="rounded-xl border border-border bg-card p-6 space-y-2" style={{ boxShadow: 'var(--shadow-card)' }}>
         <div className="flex items-center gap-2 mb-2">
-          <Webhook className="w-4 h-4 text-primary" />
+          <CheckCircle className="w-4 h-4 text-success" />
           <h3 className="text-sm font-display font-semibold text-card-foreground">Integração ZAPI (WhatsApp)</h3>
         </div>
-        <div className="space-y-3">
-          <div>
-            <Label className="text-xs text-muted-foreground">Webhook URL</Label>
-            <Input
-              value={settings.zapiWebhook}
-              onChange={e => setSettings(s => ({ ...s, zapiWebhook: e.target.value }))}
-              placeholder="https://api.z-api.io/instances/..."
-              className="mt-1 bg-background border-border"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs text-muted-foreground">Instance ID</Label>
-              <Input
-                value={settings.zapiInstanceId}
-                onChange={e => setSettings(s => ({ ...s, zapiInstanceId: e.target.value }))}
-                placeholder="Instance ID"
-                className="mt-1 bg-background border-border"
-              />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Token</Label>
-              <Input
-                type="password"
-                value={settings.zapiToken}
-                onChange={e => setSettings(s => ({ ...s, zapiToken: e.target.value }))}
-                placeholder="Token"
-                className="mt-1 bg-background border-border"
-              />
-            </div>
-          </div>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          As credenciais ZAPI estão configuradas de forma segura no backend. O envio automático de mensagens via WhatsApp está ativo.
+        </p>
       </div>
 
       {/* Metas */}
