@@ -329,6 +329,7 @@ export type Database = {
       app_role: "admin" | "gestor" | "vendedor"
       lead_status:
         | "lead"
+        | "mensagem_enviada"
         | "reuniao"
         | "reuniao_realizada"
         | "proposta"
@@ -470,6 +471,7 @@ export const Constants = {
       app_role: ["admin", "gestor", "vendedor"],
       lead_status: [
         "lead",
+        "mensagem_enviada",
         "reuniao",
         "reuniao_realizada",
         "proposta",
