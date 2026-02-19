@@ -5,6 +5,8 @@ import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, 
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import LeadEditModal from '@/components/LeadEditModal';
+import LossReasonDialog from '@/components/LossReasonDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Pipeline() {
   const { leads, moveLeadToStage, refreshLeads } = useAppContext();
@@ -12,6 +14,8 @@ export default function Pipeline() {
   const [dragOverStage, setDragOverStage] = useState<LeadStatus | null>(null);
   const [search, setSearch] = useState('');
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [lossDialogOpen, setLossDialogOpen] = useState(false);
+  const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
 
   const handleDragStart = (leadId: string) => {
     setDraggedLead(leadId);
@@ -24,9 +28,23 @@ export default function Pipeline() {
 
   const handleDrop = (stage: LeadStatus) => {
     if (draggedLead) {
-      moveLeadToStage(draggedLead, stage);
+      if (stage === 'perdido') {
+        setPendingLossLeadId(draggedLead);
+        setLossDialogOpen(true);
+      } else {
+        moveLeadToStage(draggedLead, stage);
+      }
       setDraggedLead(null);
       setDragOverStage(null);
+    }
+  };
+
+  const handleLossConfirm = async (motivo: string) => {
+    if (pendingLossLeadId) {
+      await moveLeadToStage(pendingLossLeadId, 'perdido');
+      await supabase.from('leads').update({ motivo_perda: motivo }).eq('id', pendingLossLeadId);
+      setPendingLossLeadId(null);
+      setLossDialogOpen(false);
     }
   };
 
@@ -221,6 +239,15 @@ export default function Pipeline() {
         open={!!editingLead}
         onOpenChange={open => { if (!open) setEditingLead(null); }}
         onSaved={refreshLeads}
+      />
+
+      <LossReasonDialog
+        open={lossDialogOpen}
+        onOpenChange={(open) => {
+          setLossDialogOpen(open);
+          if (!open) setPendingLossLeadId(null);
+        }}
+        onConfirm={handleLossConfirm}
       />
     </div>
   );
