@@ -1,7 +1,7 @@
 import { useAppContext, LeadStatus } from '@/contexts/AppContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, RefreshCw, Search } from 'lucide-react';
+import { MessageSquare, RefreshCw, Search, RotateCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
@@ -17,6 +17,21 @@ export default function Leads() {
   const [vendedorFilter, setVendedorFilter] = useState<string>('todos');
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncSheets = async () => {
+    setSyncing(true);
+    try {
+      const { error } = await supabase.functions.invoke('poll-google-sheets');
+      if (error) throw error;
+      await refreshLeads();
+      toast.success('Base de leads atualizada!');
+    } catch {
+      toast.error('Erro ao sincronizar com Google Sheets');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleStageChange = (leadId: string, newStage: string) => {
     if (newStage === 'perdido') {
@@ -83,9 +98,15 @@ export default function Leads() {
     <>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Leads</h1>
-            <p className="text-sm text-muted-foreground mt-1">{filtered.length} leads encontrados</p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-2xl font-display font-bold text-foreground">Leads</h1>
+              <p className="text-sm text-muted-foreground mt-1">{filtered.length} leads encontrados</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={handleSyncSheets} disabled={syncing} className="gap-2">
+              <RotateCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Atualizando...' : 'Atualizar Base'}
+            </Button>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative w-full sm:w-72">
