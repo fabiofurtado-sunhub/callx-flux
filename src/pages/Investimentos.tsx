@@ -254,16 +254,18 @@ export default function Investimentos() {
           <h3 className="text-sm font-display font-semibold text-card-foreground mb-4 flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" /> Resumo do Funil
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             {[
               { label: 'Leads', count: totalLeads, color: 'text-info', bg: 'bg-info/10' },
               { label: 'Reunião Ag.', count: reuniaoAgendada, color: 'text-warning', bg: 'bg-warning/10' },
               { label: 'Reunião Rl.', count: reuniaoRealizada, color: 'text-warning', bg: 'bg-warning/10' },
               { label: 'Propostas', count: propostas, color: 'text-primary', bg: 'bg-primary/10' },
               { label: 'Vendas', count: vendas.length, color: 'text-success', bg: 'bg-success/10' },
+              { label: 'Perdidos', count: leads.filter(l => l.status_funil === 'perdido').length, color: 'text-destructive', bg: 'bg-destructive/10' },
+              { label: 'Conversão', count: null as number | null, color: 'text-primary', bg: 'bg-primary/10', pct: totalLeads > 0 ? ((vendas.length / totalLeads) * 100).toFixed(1) + '%' : '0%' },
             ].map(s => (
               <div key={s.label} className={`rounded-lg p-4 ${s.bg} text-center`}>
-                <p className={`text-2xl font-display font-bold ${s.color}`}>{s.count}</p>
+                <p className={`text-2xl font-display font-bold ${s.color}`}>{'pct' in s && s.pct ? s.pct : s.count}</p>
                 <p className={`text-xs font-semibold uppercase mt-1 ${s.color}`}>{s.label}</p>
               </div>
             ))}
