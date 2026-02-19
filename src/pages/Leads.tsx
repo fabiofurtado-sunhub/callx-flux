@@ -1,10 +1,10 @@
 import { useAppContext, LeadStatus } from '@/contexts/AppContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, RefreshCw, Search, RotateCw } from 'lucide-react';
+import { MessageSquare, RefreshCw, Search, RotateCw, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { getScoreLabel, getScoreColor, FUNNEL_STAGES, VENDEDORES } from '@/data/mockData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -18,6 +18,22 @@ export default function Leads() {
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const SortIcon = ({ column }: { column: string }) => {
+    if (sortKey !== column) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+    return sortDir === 'asc' ? <ArrowUp className="w-3 h-3 ml-1" /> : <ArrowDown className="w-3 h-3 ml-1" />;
+  };
 
   const handleSyncSheets = async () => {
     setSyncing(true);
@@ -72,6 +88,26 @@ export default function Leads() {
     return matchesSearch && matchesStatus && matchesVendedor;
   });
 
+  const sorted = useMemo(() => {
+    if (!sortKey) return filtered;
+    return [...filtered].sort((a, b) => {
+      let valA: any, valB: any;
+      switch (sortKey) {
+        case 'nome': valA = a.nome.toLowerCase(); valB = b.nome.toLowerCase(); break;
+        case 'telefone': valA = a.telefone; valB = b.telefone; break;
+        case 'campanha': valA = (a.campanha || '').toLowerCase(); valB = (b.campanha || '').toLowerCase(); break;
+        case 'vendedor': valA = (a.vendedor_nome || '').toLowerCase(); valB = (b.vendedor_nome || '').toLowerCase(); break;
+        case 'funil': valA = a.status_funil; valB = b.status_funil; break;
+        case 'score': valA = a.score_lead; valB = b.score_lead; break;
+        case 'whatsapp': valA = a.envio_whatsapp_status; valB = b.envio_whatsapp_status; break;
+        default: return 0;
+      }
+      if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filtered, sortKey, sortDir]);
+
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
       lead: 'bg-info/15 text-info border-info/30',
@@ -101,7 +137,7 @@ export default function Leads() {
           <div className="flex items-center gap-3">
             <div>
               <h1 className="text-2xl font-display font-bold text-foreground">Leads</h1>
-              <p className="text-sm text-muted-foreground mt-1">{filtered.length} leads encontrados</p>
+              <p className="text-sm text-muted-foreground mt-1">{sorted.length} leads encontrados</p>
             </div>
             <Button variant="outline" size="sm" onClick={handleSyncSheets} disabled={syncing} className="gap-2">
               <RotateCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
@@ -148,18 +184,18 @@ export default function Leads() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Nome</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Telefone</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Campanha</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Vendedor</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Funil</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Score</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">WhatsApp</th>
+                  <th onClick={() => toggleSort('nome')} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"><span className="inline-flex items-center">Nome<SortIcon column="nome" /></span></th>
+                  <th onClick={() => toggleSort('telefone')} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"><span className="inline-flex items-center">Telefone<SortIcon column="telefone" /></span></th>
+                  <th onClick={() => toggleSort('campanha')} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"><span className="inline-flex items-center">Campanha<SortIcon column="campanha" /></span></th>
+                  <th onClick={() => toggleSort('vendedor')} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"><span className="inline-flex items-center">Vendedor<SortIcon column="vendedor" /></span></th>
+                  <th onClick={() => toggleSort('funil')} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"><span className="inline-flex items-center">Funil<SortIcon column="funil" /></span></th>
+                  <th onClick={() => toggleSort('score')} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"><span className="inline-flex items-center">Score<SortIcon column="score" /></span></th>
+                  <th onClick={() => toggleSort('whatsapp')} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"><span className="inline-flex items-center">WhatsApp<SortIcon column="whatsapp" /></span></th>
                   <th className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.slice(0, 25).map(lead => (
+                {sorted.slice(0, 25).map(lead => (
                   <tr key={lead.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
                     <td className="px-4 py-3">
                       <p className="font-medium text-foreground">{lead.nome}</p>
