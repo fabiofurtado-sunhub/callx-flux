@@ -2,7 +2,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import KpiCard from '@/components/KpiCard';
 import {
   Users, CalendarCheck, FileText, Trophy, DollarSign, Target,
-  TrendingUp, Clock, ArrowRightLeft
+  TrendingUp, Clock, ArrowRightLeft, MessageSquare
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -14,6 +14,7 @@ export default function Dashboard() {
 
   const totalLeads = leads.length;
   const leadsEtapaLead = leads.filter(l => l.status_funil === 'lead').length;
+  const mensagensEnviadas = leads.filter(l => l.status_funil === 'mensagem_enviada').length;
   const reunioes = leads.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'reuniao_realizada' || l.status_funil === 'proposta' || l.status_funil === 'venda').length;
   const propostas = leads.filter(l => l.status_funil === 'proposta' || l.status_funil === 'venda').length;
   const vendas = leads.filter(l => l.status_funil === 'venda');
@@ -61,7 +62,9 @@ export default function Dashboard() {
   // Funil data
   const funnelData = [
     { name: 'Lead', value: leads.filter(l => l.status_funil === 'lead').length },
+    { name: 'Msg Enviada', value: mensagensEnviadas },
     { name: 'Reunião', value: leads.filter(l => l.status_funil === 'reuniao').length },
+    { name: 'Reunião Real.', value: leads.filter(l => l.status_funil === 'reuniao_realizada').length },
     { name: 'Proposta', value: leads.filter(l => l.status_funil === 'proposta').length },
     { name: 'Venda', value: vendasCount },
     { name: 'Perdido', value: perdidos.length },
@@ -78,8 +81,9 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <KpiCard title="Total Leads" value={totalLeads} icon={Users} variant="primary" />
+        <KpiCard title="Msg Enviadas" value={mensagensEnviadas} icon={MessageSquare} />
         <KpiCard title="Reuniões" value={reunioes} icon={CalendarCheck} variant="warning" />
         <KpiCard title="Propostas" value={propostas} icon={FileText} />
         <KpiCard title="Vendas" value={vendasCount} icon={Trophy} variant="success" />
