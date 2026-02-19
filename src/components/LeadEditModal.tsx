@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save, X } from 'lucide-react';
+import { Save, X, Trash2 } from 'lucide-react';
 import { Lead, LeadStatus } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -21,6 +21,7 @@ interface LeadEditModalProps {
 export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: LeadEditModalProps) {
   const [form, setForm] = useState<Partial<Lead>>({});
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (lead) setForm({ ...lead });
@@ -184,10 +185,35 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
             </div>
           </div>
 
-          <Button onClick={handleSave} disabled={saving} className="w-full gap-2">
-            <Save className="w-4 h-4" />
-            {saving ? 'Salvando...' : 'Salvar Alterações'}
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleSave} disabled={saving || deleting} className="flex-1 gap-2">
+              <Save className="w-4 h-4" />
+              {saving ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={saving || deleting}
+              className="gap-2"
+              onClick={async () => {
+                if (!confirm('Tem certeza que deseja excluir este lead?')) return;
+                setDeleting(true);
+                try {
+                  const { error } = await supabase.from('leads').delete().eq('id', lead.id);
+                  if (error) throw error;
+                  toast.success('Lead excluído com sucesso!');
+                  onSaved?.();
+                  onOpenChange(false);
+                } catch {
+                  toast.error('Erro ao excluir lead');
+                } finally {
+                  setDeleting(false);
+                }
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+              {deleting ? 'Excluindo...' : 'Excluir'}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
