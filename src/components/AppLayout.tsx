@@ -4,6 +4,7 @@ import {
   Users,
   Kanban,
   Brain,
+  DollarSign,
   Settings,
   Zap,
   Menu,
@@ -18,6 +19,7 @@ const navItems = [
   { to: '/leads', icon: Users, label: 'Leads' },
   { to: '/pipeline', icon: Kanban, label: 'Pipeline' },
   { to: '/inteligencia', icon: Brain, label: 'Inteligência' },
+  { to: '/investimentos', icon: DollarSign, label: 'Investimentos' },
   { to: '/configuracoes', icon: Settings, label: 'Configurações' },
 ];
 

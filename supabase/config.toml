@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.meta-capi]
 verify_jwt = false
+
+[functions.poll-ad-spend]
+verify_jwt = false

@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_spend: {
+        Row: {
+          ad_name: string
+          adset: string
+          campanha: string
+          created_at: string
+          dia: string
+          id: string
+          updated_at: string
+          valor_gasto: number
+        }
+        Insert: {
+          ad_name?: string
+          adset?: string
+          campanha?: string
+          created_at?: string
+          dia: string
+          id?: string
+          updated_at?: string
+          valor_gasto?: number
+        }
+        Update: {
+          ad_name?: string
+          adset?: string
+          campanha?: string
+          created_at?: string
+          dia?: string
+          id?: string
+          updated_at?: string
+          valor_gasto?: number
+        }
+        Relationships: []
+      }
       configuracoes: {
         Row: {
           google_sheets_url: string | null
