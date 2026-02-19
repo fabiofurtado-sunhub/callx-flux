@@ -294,7 +294,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "gestor" | "vendedor"
-      lead_status: "lead" | "reuniao" | "proposta" | "venda" | "perdido"
+      lead_status:
+        | "lead"
+        | "reuniao"
+        | "reuniao_realizada"
+        | "proposta"
+        | "venda"
+        | "perdido"
       whatsapp_status:
         | "pendente"
         | "enviado"
@@ -429,7 +435,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "gestor", "vendedor"],
-      lead_status: ["lead", "reuniao", "proposta", "venda", "perdido"],
+      lead_status: [
+        "lead",
+        "reuniao",
+        "reuniao_realizada",
+        "proposta",
+        "venda",
+        "perdido",
+      ],
       whatsapp_status: [
         "pendente",
         "enviado",

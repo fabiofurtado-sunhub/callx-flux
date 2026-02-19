@@ -14,7 +14,7 @@ export default function Dashboard() {
 
   const totalLeads = leads.length;
   const leadsEtapaLead = leads.filter(l => l.status_funil === 'lead').length;
-  const reunioes = leads.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'proposta' || l.status_funil === 'venda').length;
+  const reunioes = leads.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'reuniao_realizada' || l.status_funil === 'proposta' || l.status_funil === 'venda').length;
   const propostas = leads.filter(l => l.status_funil === 'proposta' || l.status_funil === 'venda').length;
   const vendas = leads.filter(l => l.status_funil === 'venda');
   const vendasCount = vendas.length;
