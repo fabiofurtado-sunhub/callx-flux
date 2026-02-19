@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export type LeadStatus = 'lead' | 'reuniao' | 'reuniao_realizada' | 'proposta' | 'venda' | 'perdido';
+export type LeadStatus = 'lead' | 'mensagem_enviada' | 'reuniao' | 'reuniao_realizada' | 'proposta' | 'venda' | 'perdido';
 
 export interface Lead {
   id: string;
@@ -83,6 +83,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) {
       fetchLeads();
 
+      // Auto-refresh every 5 minutes
+      const interval = setInterval(() => {
+        fetchLeads();
+      }, 5 * 60 * 1000);
+
       // Realtime subscription
       const channel = supabase
         .channel('leads-changes')
@@ -91,7 +96,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         })
         .subscribe();
 
-      return () => { supabase.removeChannel(channel); };
+      return () => {
+        clearInterval(interval);
+        supabase.removeChannel(channel);
+      };
     }
   }, [user, fetchLeads]);
 
@@ -99,8 +107,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const lead = leads.find(l => l.id === leadId);
     if (!lead) return;
 
-    const scoreMap: Record<LeadStatus, number> = { lead: 10, reuniao: 30, reuniao_realizada: 45, proposta: 60, venda: 100, perdido: 5 };
-    const probMap: Record<LeadStatus, number> = { lead: 10, reuniao: 30, reuniao_realizada: 45, proposta: 60, venda: 100, perdido: 0 };
+    const scoreMap: Record<LeadStatus, number> = { lead: 10, mensagem_enviada: 15, reuniao: 30, reuniao_realizada: 45, proposta: 60, venda: 100, perdido: 5 };
+    const probMap: Record<LeadStatus, number> = { lead: 10, mensagem_enviada: 15, reuniao: 30, reuniao_realizada: 45, proposta: 60, venda: 100, perdido: 0 };
 
     const updates: Record<string, any> = {
       status_funil: newStage,
