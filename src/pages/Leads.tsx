@@ -1,17 +1,31 @@
 import { useAppContext, LeadStatus } from '@/contexts/AppContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, RefreshCw, Search, Filter } from 'lucide-react';
+import { MessageSquare, RefreshCw, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
 import { getScoreLabel, getScoreColor, FUNNEL_STAGES, VENDEDORES } from '@/data/mockData';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Leads() {
-  const { leads } = useAppContext();
+  const { leads, moveLeadToStage, refreshLeads } = useAppContext();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
   const [vendedorFilter, setVendedorFilter] = useState<string>('todos');
+
+  const handleVendedorChange = async (leadId: string, vendedor: string) => {
+    const { error } = await supabase.from('leads').update({
+      vendedor_nome: vendedor,
+      data_ultimo_movimento: new Date().toISOString(),
+    }).eq('id', leadId);
+    if (error) {
+      toast.error('Erro ao atualizar vendedor');
+    } else {
+      toast.success('Vendedor atualizado');
+    }
+  };
 
   const filtered = leads.filter(l => {
     const matchesSearch = l.nome.toLowerCase().includes(search.toLowerCase()) ||
@@ -109,8 +123,30 @@ export default function Leads() {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{lead.telefone}</td>
                   <td className="px-4 py-3 text-muted-foreground text-xs">{lead.campanha}</td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs">{lead.vendedor_nome}</td>
-                  <td className="px-4 py-3">{statusBadge(lead.status_funil)}</td>
+                  <td className="px-4 py-3">
+                    <Select value={lead.vendedor_nome || ''} onValueChange={v => handleVendedorChange(lead.id, v)}>
+                      <SelectTrigger className="h-7 w-28 text-xs bg-card border-border">
+                        <SelectValue placeholder="Vendedor" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50">
+                        {VENDEDORES.map(v => (
+                          <SelectItem key={v} value={v}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Select value={lead.status_funil} onValueChange={v => moveLeadToStage(lead.id, v as LeadStatus)}>
+                      <SelectTrigger className="h-7 w-32 text-xs bg-card border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50">
+                        {FUNNEL_STAGES.map(s => (
+                          <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-semibold uppercase ${getScoreColor(lead.score_lead)}`}>
                       {getScoreLabel(lead.score_lead)}
