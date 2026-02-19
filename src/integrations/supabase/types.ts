@@ -240,6 +240,47 @@ export type Database = {
         }
         Relationships: []
       }
+      meta_capi_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_name: string
+          id: string
+          lead_id: string
+          meta_response: Json | null
+          stage: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_name: string
+          id?: string
+          lead_id: string
+          meta_response?: Json | null
+          stage: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_name?: string
+          id?: string
+          lead_id?: string
+          meta_response?: Json | null
+          stage?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_capi_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metas: {
         Row: {
           custo_por_lead: number
