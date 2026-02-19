@@ -1,7 +1,7 @@
 import { useAppContext, LeadStatus } from '@/contexts/AppContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, RefreshCw, Search, RotateCw, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { MessageSquare, RefreshCw, Search, RotateCw, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useMemo } from 'react';
@@ -18,6 +18,8 @@ export default function Leads() {
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [page, setPage] = useState(0);
+  const perPage = 25;
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
@@ -150,11 +152,11 @@ export default function Leads() {
               <Input
                 placeholder="Buscar leads..."
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={e => { setSearch(e.target.value); setPage(0); }}
                 className="pl-9 bg-card border-border"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setPage(0); }}>
               <SelectTrigger className="w-full sm:w-44 bg-card border-border">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -165,7 +167,7 @@ export default function Leads() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={vendedorFilter} onValueChange={setVendedorFilter}>
+            <Select value={vendedorFilter} onValueChange={v => { setVendedorFilter(v); setPage(0); }}>
               <SelectTrigger className="w-full sm:w-44 bg-card border-border">
                 <SelectValue placeholder="Vendedor" />
               </SelectTrigger>
@@ -195,7 +197,7 @@ export default function Leads() {
                 </tr>
               </thead>
               <tbody>
-                {sorted.slice(0, 25).map(lead => (
+                {sorted.slice(page * perPage, (page + 1) * perPage).map(lead => (
                   <tr key={lead.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
                     <td className="px-4 py-3">
                       <p className="font-medium text-foreground">{lead.nome}</p>
@@ -248,6 +250,25 @@ export default function Leads() {
               </tbody>
             </table>
           </div>
+          {/* Pagination */}
+          {sorted.length > perPage && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+              <p className="text-xs text-muted-foreground">
+                Mostrando {page * perPage + 1}–{Math.min((page + 1) * perPage, sorted.length)} de {sorted.length}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {page + 1} / {Math.ceil(sorted.length / perPage)}
+                </span>
+                <Button variant="outline" size="icon" className="h-7 w-7" disabled={(page + 1) * perPage >= sorted.length} onClick={() => setPage(p => p + 1)}>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
