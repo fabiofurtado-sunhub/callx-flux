@@ -10,6 +10,7 @@ import Dashboard from "@/pages/Dashboard";
 import Leads from "@/pages/Leads";
 import Pipeline from "@/pages/Pipeline";
 import Intelligence from "@/pages/Intelligence";
+import Investimentos from "@/pages/Investimentos";
 import Configuracoes from "@/pages/Configuracoes";
 import Auth from "@/pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -37,6 +38,7 @@ function ProtectedRoutes() {
           <Route path="/leads" element={<Leads />} />
           <Route path="/pipeline" element={<Pipeline />} />
           <Route path="/inteligencia" element={<Intelligence />} />
+          <Route path="/investimentos" element={<Investimentos />} />
           <Route path="/configuracoes" element={<Configuracoes />} />
         </Route>
         <Route path="*" element={<NotFound />} />
