@@ -40,12 +40,13 @@ export default function Leads() {
     const map: Record<string, string> = {
       lead: 'bg-info/15 text-info border-info/30',
       reuniao: 'bg-warning/15 text-warning border-warning/30',
+      reuniao_realizada: 'bg-warning/15 text-warning border-warning/30',
       proposta: 'bg-primary/15 text-primary border-primary/30',
       venda: 'bg-success/15 text-success border-success/30',
       perdido: 'bg-destructive/15 text-destructive border-destructive/30',
     };
     const labels: Record<string, string> = {
-      lead: 'Lead', reuniao: 'Reunião', proposta: 'Proposta', venda: 'Venda', perdido: 'Perdido',
+      lead: 'Lead', reuniao: 'Reunião', reuniao_realizada: 'Reunião Realizada', proposta: 'Proposta', venda: 'Venda', perdido: 'Perdido',
     };
     return <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${map[status]}`}>{labels[status]}</span>;
   };
