@@ -1,20 +1,26 @@
-import { useAppContext } from '@/contexts/AppContext';
+import { useAppContext, LeadStatus } from '@/contexts/AppContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, RefreshCw, Search } from 'lucide-react';
+import { MessageSquare, RefreshCw, Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
-import { getScoreLabel, getScoreColor } from '@/data/mockData';
+import { getScoreLabel, getScoreColor, FUNNEL_STAGES, VENDEDORES } from '@/data/mockData';
 
 export default function Leads() {
   const { leads } = useAppContext();
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('todos');
+  const [vendedorFilter, setVendedorFilter] = useState<string>('todos');
 
-  const filtered = leads.filter(l =>
-    l.nome.toLowerCase().includes(search.toLowerCase()) ||
-    l.email.toLowerCase().includes(search.toLowerCase()) ||
-    l.campanha.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = leads.filter(l => {
+    const matchesSearch = l.nome.toLowerCase().includes(search.toLowerCase()) ||
+      l.email.toLowerCase().includes(search.toLowerCase()) ||
+      l.campanha.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === 'todos' || l.status_funil === statusFilter;
+    const matchesVendedor = vendedorFilter === 'todos' || l.vendedor_nome === vendedorFilter;
+    return matchesSearch && matchesStatus && matchesVendedor;
+  });
 
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
@@ -44,14 +50,38 @@ export default function Leads() {
           <h1 className="text-2xl font-display font-bold text-foreground">Leads</h1>
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} leads encontrados</p>
         </div>
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar leads..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9 bg-card border-border"
-          />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar leads..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 bg-card border-border"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-44 bg-card border-border">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Status</SelectItem>
+              {FUNNEL_STAGES.map(s => (
+                <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={vendedorFilter} onValueChange={setVendedorFilter}>
+            <SelectTrigger className="w-full sm:w-44 bg-card border-border">
+              <SelectValue placeholder="Vendedor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos Vendedores</SelectItem>
+              {VENDEDORES.map(v => (
+                <SelectItem key={v} value={v}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -79,7 +109,7 @@ export default function Leads() {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{lead.telefone}</td>
                   <td className="px-4 py-3 text-muted-foreground text-xs">{lead.campanha}</td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs"><td className="px-4 py-3 text-muted-foreground text-xs">{lead.vendedor_nome}</td></td>
+                  <td className="px-4 py-3 text-muted-foreground text-xs">{lead.vendedor_nome}</td>
                   <td className="px-4 py-3">{statusBadge(lead.status_funil)}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-semibold uppercase ${getScoreColor(lead.score_lead)}`}>
