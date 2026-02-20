@@ -412,6 +412,7 @@ export type Database = {
       lead_status:
         | "lead"
         | "mensagem_enviada"
+        | "fup_1"
         | "reuniao"
         | "reuniao_realizada"
         | "proposta"
@@ -554,6 +555,7 @@ export const Constants = {
       lead_status: [
         "lead",
         "mensagem_enviada",
+        "fup_1",
         "reuniao",
         "reuniao_realizada",
         "proposta",
