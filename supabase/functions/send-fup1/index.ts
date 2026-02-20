@@ -40,11 +40,13 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch all leads still in 'mensagem_enviada'
+    // Fetch leads in 'mensagem_enviada' for at least 24 hours
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { data: leads, error: fetchError } = await supabase
       .from("leads")
-      .select("id, nome, telefone")
-      .eq("status_funil", "mensagem_enviada");
+      .select("id, nome, telefone, envio_whatsapp_data")
+      .eq("status_funil", "mensagem_enviada")
+      .lt("envio_whatsapp_data", cutoff);
 
     if (fetchError) throw fetchError;
     if (!leads || leads.length === 0) {
