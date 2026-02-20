@@ -115,6 +115,17 @@ Deno.serve(async (req) => {
 
     console.log("GA4 response:", ga4Response.status, responseBody);
 
+    // Log the event to ga4_logs table
+    const errorMsg = !isSuccess ? (responseBody || "Unknown error") : null;
+    await supabase.from("ga4_logs").insert({
+      lead_id,
+      event_name: eventName,
+      stage: new_stage,
+      status: isSuccess ? "success" : "error",
+      ga_response: responseBody,
+      error_message: errorMsg,
+    });
+
     return new Response(
       JSON.stringify({
         success: isSuccess,

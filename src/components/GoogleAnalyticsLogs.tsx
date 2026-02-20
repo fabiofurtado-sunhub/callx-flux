@@ -33,11 +33,11 @@ export default function GoogleAnalyticsLogs({ leadId, limit = 10 }: GoogleAnalyt
   const [loading, setLoading] = useState(true);
 
   const fetchLogs = async () => {
-    let query = supabase
-      .from('ga4_logs')
+    let query = (supabase
+      .from('ga4_logs' as any)
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(limit);
+      .limit(limit)) as any;
 
     if (leadId) {
       query = query.eq('lead_id', leadId);
@@ -53,7 +53,7 @@ export default function GoogleAnalyticsLogs({ leadId, limit = 10 }: GoogleAnalyt
 
     const channel = supabase
       .channel('ga4-logs-realtime')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ga4_logs' }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ga4_logs' } as any, () => {
         fetchLogs();
       })
       .subscribe();

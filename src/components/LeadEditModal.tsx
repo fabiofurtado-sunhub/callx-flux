@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import MetaCapiLogs from '@/components/MetaCapiLogs';
+import GoogleAnalyticsLogs from '@/components/GoogleAnalyticsLogs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -190,6 +191,12 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
           <div className="border-t border-border pt-4 space-y-2">
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Eventos Meta CAPI</h4>
             <MetaCapiLogs leadId={lead.id} limit={5} />
+          </div>
+
+          {/* Google Analytics Events */}
+          <div className="border-t border-border pt-4 space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Eventos Google Analytics</h4>
+            <GoogleAnalyticsLogs leadId={lead.id} limit={5} />
           </div>
 
           <div className="flex gap-2">
