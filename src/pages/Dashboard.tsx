@@ -45,16 +45,16 @@ export default function Dashboard() {
   // Leads por faixa de faturamento
   const faixas = [
     { label: 'Sem info', min: -1, max: 0 },
-    { label: 'Até 50k', min: 0, max: 50000 },
-    { label: '50k–200k', min: 50000, max: 200000 },
-    { label: '200k–500k', min: 200000, max: 500000 },
-    { label: '500k–1M', min: 500000, max: 1000000 },
+    { label: 'Até 50k', min: 0, max: 49999 },
+    { label: '50k–200k', min: 50000, max: 199999 },
+    { label: '200k–500k', min: 200000, max: 499999 },
+    { label: '500k–1M', min: 500000, max: 999999 },
     { label: 'Acima 1M', min: 1000000, max: Infinity },
   ];
   const leadsPorFaturamento = faixas.map(f => {
     const count = leads.filter(l => {
       if (f.min === -1) return !l.faturamento;
-      return l.faturamento != null && l.faturamento > f.min && l.faturamento <= f.max;
+      return l.faturamento != null && l.faturamento >= f.min && l.faturamento <= f.max;
     }).length;
     return { name: f.label, value: count };
   }).filter(d => d.value > 0);
