@@ -1,7 +1,7 @@
 import { useAppContext } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useState, useMemo } from 'react';
-import { DollarSign, TrendingUp, BarChart3, Target, RotateCw, Users, FileText } from 'lucide-react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { DollarSign, TrendingUp, BarChart3, Target, RotateCw, Users, FileText, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -17,6 +17,8 @@ interface AdSpend {
 }
 
 type ViewMode = 'geral' | 'campanha' | 'adset' | 'criativo' | 'vendedor';
+type SortCol = 'label' | 'investido' | 'leads' | 'cpl' | 'cpra' | 'cprl' | 'cpp' | 'cac' | 'vendas' | 'receita' | 'roi';
+type SortDir = 'asc' | 'desc';
 
 export default function Investimentos() {
   const { leads } = useAppContext();
@@ -24,6 +26,8 @@ export default function Investimentos() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('geral');
+  const [sortCol, setSortCol] = useState<SortCol>('investido');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
 
   const fetchAdSpend = async () => {
     const { data, error } = await supabase
@@ -101,7 +105,7 @@ export default function Investimentos() {
       map.set(key, row);
     });
 
-    // Sum spend per group
+    // Sum spend per group — exact match for campanha, proportional for others when no match
     const getSpendKey = (a: AdSpend) => {
       switch (viewMode) {
         case 'campanha': return a.campanha || '(sem campanha)';
@@ -112,22 +116,70 @@ export default function Investimentos() {
     };
 
     if (viewMode !== 'vendedor') {
+      // Try exact match first
+      const spendMap = new Map<string, number>();
       adSpend.forEach(a => {
         const key = getSpendKey(a);
-        const row = map.get(key) || { label: key, investido: 0, leads: 0, reuniaoAg: 0, reuniaoRl: 0, propostas: 0, vendas: 0, receita: 0 };
-        row.investido += a.valor_gasto;
-        map.set(key, row);
+        spendMap.set(key, (spendMap.get(key) || 0) + a.valor_gasto);
       });
+
+      // Check if any lead group matches any spend group
+      let hasMatch = false;
+      map.forEach((_, key) => { if (spendMap.has(key)) hasMatch = true; });
+
+      if (hasMatch) {
+        // Apply exact matches
+        spendMap.forEach((valor, key) => {
+          const row = map.get(key) || { label: key, investido: 0, leads: 0, reuniaoAg: 0, reuniaoRl: 0, propostas: 0, vendas: 0, receita: 0 };
+          row.investido += valor;
+          map.set(key, row);
+        });
+      } else {
+        // No match — distribute total spend proportionally by lead count
+        const totalLeadsCount = leads.length || 1;
+        map.forEach(row => {
+          row.investido = investimentoTotal * (row.leads / totalLeadsCount);
+        });
+      }
     } else {
-      // For vendedor, distribute total spend proportionally
+      // Vendedor: distribute proportionally
       const totalLeadsCount = leads.length || 1;
       map.forEach(row => {
         row.investido = investimentoTotal * (row.leads / totalLeadsCount);
       });
     }
 
-    return Array.from(map.values()).sort((a, b) => b.investido - a.investido);
-  }, [viewMode, leads, adSpend, investimentoTotal]);
+    const rows = Array.from(map.values());
+
+    // Compute derived metrics for sorting
+    const getMetric = (row: Row, col: SortCol): number => {
+      switch (col) {
+        case 'label': return 0; // handled separately
+        case 'investido': return row.investido;
+        case 'leads': return row.leads;
+        case 'cpl': return row.leads > 0 ? row.investido / row.leads : Infinity;
+        case 'cpra': return row.reuniaoAg > 0 ? row.investido / row.reuniaoAg : Infinity;
+        case 'cprl': return row.reuniaoRl > 0 ? row.investido / row.reuniaoRl : Infinity;
+        case 'cpp': return row.propostas > 0 ? row.investido / row.propostas : Infinity;
+        case 'cac': return row.vendas > 0 ? row.investido / row.vendas : Infinity;
+        case 'vendas': return row.vendas;
+        case 'receita': return row.receita;
+        case 'roi': return row.investido > 0 ? ((row.receita - row.investido) / row.investido) * 100 : -Infinity;
+        default: return 0;
+      }
+    };
+
+    rows.sort((a, b) => {
+      if (sortCol === 'label') {
+        return sortDir === 'asc' ? a.label.localeCompare(b.label) : b.label.localeCompare(a.label);
+      }
+      const va = getMetric(a, sortCol);
+      const vb = getMetric(b, sortCol);
+      return sortDir === 'asc' ? va - vb : vb - va;
+    });
+
+    return rows;
+  }, [viewMode, leads, adSpend, investimentoTotal, sortCol, sortDir]);
 
   const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const fmtShort = (v: number) => v >= 1000 ? `R$ ${(v / 1000).toFixed(1)}k` : fmt(v);
@@ -202,19 +254,37 @@ export default function Investimentos() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    {viewMode === 'campanha' ? 'Campanha' : viewMode === 'adset' ? 'Ad Set' : viewMode === 'criativo' ? 'Criativo' : 'Vendedor'}
-                  </th>
-                  <th className="text-right px-3 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Investido</th>
-                  <th className="text-right px-3 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Leads</th>
-                  <th className="text-right px-3 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">CPL</th>
-                  <th className="text-right px-3 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">CPRA</th>
-                  <th className="text-right px-3 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">CPRL</th>
-                  <th className="text-right px-3 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">CPP</th>
-                  <th className="text-right px-3 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">CAC</th>
-                  <th className="text-right px-3 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Vendas</th>
-                  <th className="text-right px-3 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Receita</th>
-                  <th className="text-right px-3 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">ROI</th>
+                  {([
+                    { col: 'label' as SortCol, label: viewMode === 'campanha' ? 'Campanha' : viewMode === 'adset' ? 'Ad Set' : viewMode === 'criativo' ? 'Criativo' : 'Vendedor', align: 'left' },
+                    { col: 'investido' as SortCol, label: 'Investido', align: 'right' },
+                    { col: 'leads' as SortCol, label: 'Leads', align: 'right' },
+                    { col: 'cpl' as SortCol, label: 'CPL', align: 'right' },
+                    { col: 'cpra' as SortCol, label: 'CPRA', align: 'right' },
+                    { col: 'cprl' as SortCol, label: 'CPRL', align: 'right' },
+                    { col: 'cpp' as SortCol, label: 'CPP', align: 'right' },
+                    { col: 'cac' as SortCol, label: 'CAC', align: 'right' },
+                    { col: 'vendas' as SortCol, label: 'Vendas', align: 'right' },
+                    { col: 'receita' as SortCol, label: 'Receita', align: 'right' },
+                    { col: 'roi' as SortCol, label: 'ROI', align: 'right' },
+                  ]).map(h => (
+                    <th
+                      key={h.col}
+                      className={`${h.align === 'left' ? 'text-left px-4' : 'text-right px-3'} py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition-colors select-none`}
+                      onClick={() => {
+                        if (sortCol === h.col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+                        else { setSortCol(h.col); setSortDir('desc'); }
+                      }}
+                    >
+                      <span className={`inline-flex items-center gap-1 ${h.align === 'right' ? 'justify-end' : ''}`}>
+                        {h.label}
+                        {sortCol === h.col ? (
+                          sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                        ) : (
+                          <ArrowUpDown className="w-3 h-3 opacity-30" />
+                        )}
+                      </span>
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
