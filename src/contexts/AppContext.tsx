@@ -151,6 +151,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (error) console.error('Meta CAPI error:', error);
         else console.log('Meta CAPI event sent:', newStage);
       });
+
+      // Send Google Analytics event (fire-and-forget)
+      supabase.functions.invoke('google-analytics', {
+        body: {
+          lead_id: leadId,
+          new_stage: newStage,
+          lead_data: {
+            valor_proposta: lead.valor_proposta,
+            valor_venda: lead.valor_venda,
+          },
+        },
+      }).then(({ error }) => {
+        if (error) console.error('GA4 error:', error);
+        else console.log('GA4 event sent:', newStage);
+      });
     }
   };
 
