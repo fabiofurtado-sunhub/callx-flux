@@ -1,4 +1,4 @@
-export type LeadStatus = 'lead' | 'mensagem_enviada' | 'reuniao' | 'reuniao_realizada' | 'proposta' | 'venda' | 'perdido';
+export type LeadStatus = 'lead' | 'mensagem_enviada' | 'fup_1' | 'reuniao' | 'reuniao_realizada' | 'proposta' | 'venda' | 'perdido';
 export type LeadScore = 'frio' | 'morno' | 'quente' | 'oportunidade';
 export type WhatsAppStatus = 'enviado' | 'entregue' | 'falha' | 'erro_envio' | 'pendente';
 export type UserRole = 'admin' | 'gestor' | 'vendedor';
@@ -29,6 +29,7 @@ export interface Lead {
 export const FUNNEL_STAGES: { key: LeadStatus; label: string; color: string }[] = [
   { key: 'lead', label: 'Lead', color: 'hsl(var(--info))' },
   { key: 'mensagem_enviada', label: 'Mensagem Enviada', color: 'hsl(var(--info))' },
+  { key: 'fup_1', label: 'FUP 1', color: 'hsl(var(--info))' },
   { key: 'reuniao', label: 'Reunião Agendada', color: 'hsl(var(--warning))' },
   { key: 'reuniao_realizada', label: 'Reunião Realizada', color: 'hsl(var(--warning))' },
   { key: 'proposta', label: 'Proposta Emitida', color: 'hsl(var(--primary))' },
