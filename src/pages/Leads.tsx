@@ -1,7 +1,7 @@
 import { useAppContext, LeadStatus } from '@/contexts/AppContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, RefreshCw, Search, RotateCw, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MessageSquare, RefreshCw, Search, RotateCw, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useMemo } from 'react';
@@ -49,6 +49,44 @@ export default function Leads() {
     } finally {
       setSyncing(false);
     }
+  };
+
+  const handleExportCSV = () => {
+    const stageLabels: Record<string, string> = {
+      lead: 'Lead', mensagem_enviada: 'Msg Enviada', reuniao: 'Reunião', reuniao_realizada: 'Reunião Realizada',
+      proposta: 'Proposta', venda: 'Venda', perdido: 'Perdido',
+    };
+    const headers = [
+      'Nome', 'Email', 'Telefone', 'Campanha', 'Adset', 'Grupo de Anúncios',
+      'Vendedor', 'Etapa do Funil', 'Score', 'Probabilidade Fechamento (%)',
+      'Valor Proposta (R$)', 'Valor Venda (R$)', 'Faturamento (R$)',
+      'Motivo Perda', 'Observações', 'WhatsApp Status',
+      'Data Entrada', 'Último Movimento', 'Lead Time (dias)',
+    ];
+    const escape = (v: any) => {
+      if (v == null) return '';
+      const s = String(v);
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const rows = sorted.map(l => [
+      l.nome, l.email, l.telefone, l.campanha, l.adset, l.grupo_anuncios,
+      l.vendedor_nome, stageLabels[l.status_funil] || l.status_funil, l.score_lead, l.probabilidade_fechamento,
+      l.valor_proposta, l.valor_venda, l.faturamento,
+      l.motivo_perda, l.observacoes, l.envio_whatsapp_status,
+      l.data_entrada ? new Date(l.data_entrada).toLocaleDateString('pt-BR') : '',
+      l.data_ultimo_movimento ? new Date(l.data_ultimo_movimento).toLocaleDateString('pt-BR') : '',
+      l.lead_time,
+    ].map(escape).join(','));
+
+    const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `leads_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${sorted.length} leads exportados com sucesso!`);
   };
 
   const handleStageChange = (leadId: string, newStage: string) => {
@@ -140,7 +178,11 @@ export default function Leads() {
             <div>
               <h1 className="text-2xl font-display font-bold text-foreground">Leads</h1>
               <p className="text-sm text-muted-foreground mt-1">{sorted.length} leads encontrados</p>
-            </div>
+            <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
+              <Download className="w-4 h-4" />
+              Exportar CSV
+            </Button>
+          </div>
             <Button variant="outline" size="sm" onClick={handleSyncSheets} disabled={syncing} className="gap-2">
               <RotateCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
               {syncing ? 'Atualizando...' : 'Atualizar Base'}
