@@ -1,13 +1,28 @@
+import { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Settings as SettingsIcon, Save, DollarSign, Target, FileSpreadsheet, CheckCircle } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Target, FileSpreadsheet, CheckCircle, BarChart3, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Configuracoes() {
   const { settings, setSettings } = useAppContext();
+  const [backfilling, setBackfilling] = useState(false);
+
+  const handleBackfillGA4 = async () => {
+    setBackfilling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('google-analytics-backfill');
+      if (error) throw error;
+      toast.success(`Backfill concluído: ${data?.sent || 0} eventos enviados ao Google Analytics`);
+    } catch (err: any) {
+      toast.error('Erro no backfill: ' + (err.message || 'erro desconhecido'));
+    } finally {
+      setBackfilling(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -78,6 +93,21 @@ export default function Configuracoes() {
         <p className="text-sm text-muted-foreground">
           As credenciais ZAPI estão configuradas de forma segura no backend. O envio automático de mensagens via WhatsApp está ativo.
         </p>
+      </div>
+
+      {/* Google Analytics */}
+      <div className="rounded-xl border border-border bg-card p-6 space-y-3" style={{ boxShadow: 'var(--shadow-card)' }}>
+        <div className="flex items-center gap-2 mb-2">
+          <BarChart3 className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-display font-semibold text-card-foreground">Google Analytics 4</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Eventos de conversão são enviados automaticamente ao GA4 a cada mudança de etapa no funil.
+        </p>
+        <Button variant="outline" size="sm" onClick={handleBackfillGA4} disabled={backfilling} className="gap-2">
+          {backfilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <BarChart3 className="w-4 h-4" />}
+          {backfilling ? 'Enviando...' : 'Enviar eventos históricos ao Google'}
+        </Button>
       </div>
 
       {/* Metas */}
