@@ -77,6 +77,47 @@ export type Database = {
         }
         Relationships: []
       }
+      ga4_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_name: string
+          ga_response: string | null
+          id: string
+          lead_id: string
+          stage: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_name: string
+          ga_response?: string | null
+          id?: string
+          lead_id: string
+          stage: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_name?: string
+          ga_response?: string | null
+          id?: string
+          lead_id?: string
+          stage?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ga4_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interacoes_whatsapp: {
         Row: {
           conteudo: string
