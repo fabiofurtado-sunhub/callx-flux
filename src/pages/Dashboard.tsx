@@ -46,8 +46,8 @@ export default function Dashboard() {
   const faixas = [
     { label: 'Sem info', min: -1, max: 0 },
     { label: 'Até 50k', min: 0, max: 49999 },
-    { label: '50k–200k', min: 50000, max: 199999 },
-    { label: '200k–500k', min: 200000, max: 499999 },
+    { label: '50k–100k', min: 50000, max: 99999 },
+    { label: '100k–500k', min: 100000, max: 499999 },
     { label: '500k–1M', min: 500000, max: 999999 },
     { label: 'Acima 1M', min: 1000000, max: Infinity },
   ];
