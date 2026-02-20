@@ -156,7 +156,39 @@ function normalizePhone(phone: string): string {
 
 function parseNumber(val: string): number | null {
   if (!val || !val.trim()) return null;
-  // Handle ranges like "50.000 - 100.000" — take first number segment
+  const lower = val.toLowerCase().replace(/[^a-z0-9.,_\- ]/g, "");
+
+  // Handle Brazilian text ranges like "acima_de_r$_1_milhão" or "acima de 1 milhao"
+  if (/acima.*milh/i.test(val)) return 1500000;
+  if (/acima/i.test(val)) {
+    // "acima_de_r$_500.000" → extract number
+    const m = val.match(/[\d.]+/);
+    if (m) {
+      const n = parseFloat(m[0].replace(/\./g, "").replace(",", "."));
+      return isNaN(n) ? null : n * 1.5; // midpoint above
+    }
+    return 1500000;
+  }
+  if (/abaixo/i.test(val)) {
+    // "abaixo_de_r$_50.000" → value below the threshold
+    const m = val.match(/[\d.]+/);
+    if (m) {
+      const n = parseFloat(m[0].replace(/\./g, "").replace(",", "."));
+      return isNaN(n) ? null : n * 0.5; // midpoint below
+    }
+    return 25000;
+  }
+  if (/de_r|de r/i.test(val) && /a_r|a r/i.test(val)) {
+    // "de_r$_50.000_a_r$_100.000" → extract both numbers and take midpoint
+    const matches = val.match(/[\d.]+/g);
+    if (matches && matches.length >= 2) {
+      const n1 = parseFloat(matches[0].replace(/\./g, "").replace(",", "."));
+      const n2 = parseFloat(matches[1].replace(/\./g, "").replace(",", "."));
+      if (!isNaN(n1) && !isNaN(n2)) return (n1 + n2) / 2;
+    }
+  }
+
+  // Fallback: extract first number segment
   const rangeMatch = val.match(/[\d.,]+/);
   if (!rangeMatch) return null;
   let cleaned = rangeMatch[0];
