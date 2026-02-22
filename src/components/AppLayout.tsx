@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   LogOut,
+  MessageCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,6 +21,7 @@ const navItems = [
   { to: '/pipeline', icon: Kanban, label: 'Pipeline' },
   { to: '/inteligencia', icon: Brain, label: 'Inteligência' },
   { to: '/investimentos', icon: DollarSign, label: 'Investimentos' },
+  { to: '/setup-mensagens', icon: MessageCircle, label: 'Mensagens' },
   { to: '/configuracoes', icon: Settings, label: 'Configurações' },
 ];
 
