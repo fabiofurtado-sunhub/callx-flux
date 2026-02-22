@@ -12,6 +12,7 @@ import Pipeline from "@/pages/Pipeline";
 import Intelligence from "@/pages/Intelligence";
 import Investimentos from "@/pages/Investimentos";
 import Configuracoes from "@/pages/Configuracoes";
+import SetupMensagens from "@/pages/SetupMensagens";
 import Auth from "@/pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -40,6 +41,7 @@ function ProtectedRoutes() {
           <Route path="/inteligencia" element={<Intelligence />} />
           <Route path="/investimentos" element={<Investimentos />} />
           <Route path="/configuracoes" element={<Configuracoes />} />
+          <Route path="/setup-mensagens" element={<SetupMensagens />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

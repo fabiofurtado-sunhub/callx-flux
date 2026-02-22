@@ -293,6 +293,45 @@ export type Database = {
         }
         Relationships: []
       }
+      message_templates: {
+        Row: {
+          ativo: boolean
+          conteudo: string
+          created_at: string
+          delay_horas: number
+          etapa: string
+          funil: string
+          id: string
+          ordem: number
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          conteudo?: string
+          created_at?: string
+          delay_horas?: number
+          etapa: string
+          funil?: string
+          id?: string
+          ordem?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          conteudo?: string
+          created_at?: string
+          delay_horas?: number
+          etapa?: string
+          funil?: string
+          id?: string
+          ordem?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       meta_capi_logs: {
         Row: {
           created_at: string
