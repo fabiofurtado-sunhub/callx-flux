@@ -27,6 +27,7 @@ export interface Lead {
   lead_time: number | null;
   observacoes: string;
   faturamento: number | null;
+  funil: string;
 }
 
 interface Settings {
@@ -74,6 +75,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         valor_proposta: d.valor_proposta ? Number(d.valor_proposta) : null,
         valor_venda: d.valor_venda ? Number(d.valor_venda) : null,
         faturamento: d.faturamento ? Number(d.faturamento) : null,
+        funil: (d as any).funil || 'callx',
       })));
     }
     setLoading(false);

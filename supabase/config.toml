@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.send-fup1]
 verify_jwt = false
+
+[functions.receive-core-ai-lead]
+verify_jwt = false

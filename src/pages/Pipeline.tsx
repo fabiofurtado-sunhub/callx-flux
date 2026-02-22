@@ -3,6 +3,7 @@ import { FUNNEL_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState } from 'react';
 import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import LeadEditModal from '@/components/LeadEditModal';
 import LossReasonDialog from '@/components/LossReasonDialog';
@@ -16,6 +17,10 @@ export default function Pipeline() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
+  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai'>('callx');
+
+  const filteredLeads = leads.filter(l => (l.funil || 'callx') === activeFunil);
+  const funilLabel = activeFunil === 'callx' ? 'Funil CallX' : 'Funil Core AI';
 
   const handleDragStart = (leadId: string) => {
     setDraggedLead(leadId);
@@ -55,26 +60,34 @@ export default function Pipeline() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Pipeline Comercial</h1>
-          <p className="text-sm text-muted-foreground mt-1">Arraste os leads entre as etapas</p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">{funilLabel}</h1>
+            <p className="text-sm text-muted-foreground mt-1">Arraste os leads entre as etapas</p>
+          </div>
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por nome, telefone, campanha..."
+              className="pl-9 bg-background border-border"
+            />
+          </div>
         </div>
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por nome, telefone, campanha..."
-            className="pl-9 bg-background border-border"
-          />
-        </div>
+        <Tabs value={activeFunil} onValueChange={v => setActiveFunil(v as 'callx' | 'core_ai')}>
+          <TabsList>
+            <TabsTrigger value="callx">Funil CallX</TabsTrigger>
+            <TabsTrigger value="core_ai">Funil Core AI</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4">
         {FUNNEL_STAGES.map(stage => {
           const searchLower = search.toLowerCase();
-          const stageLeads = leads.filter(l =>
+          const stageLeads = filteredLeads.filter(l =>
             l.status_funil === stage.key &&
             (!search || l.nome.toLowerCase().includes(searchLower) ||
               l.telefone.includes(search) ||
