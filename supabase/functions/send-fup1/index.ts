@@ -46,6 +46,7 @@ serve(async (req) => {
       .from("leads")
       .select("id, nome, telefone, envio_whatsapp_data")
       .eq("status_funil", "mensagem_enviada")
+      .eq("funil", "callx")
       .lt("envio_whatsapp_data", cutoff);
 
     if (fetchError) throw fetchError;
