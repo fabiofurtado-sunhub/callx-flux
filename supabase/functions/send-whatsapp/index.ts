@@ -52,7 +52,18 @@ serve(async (req) => {
     if (phone.startsWith("0")) phone = "55" + phone.substring(1);
     if (!phone.startsWith("55")) phone = "55" + phone;
 
-    const scheduleText = buildScheduleText();
+    // Fetch horario_sugerido from configuracoes
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+    const { data: configData } = await supabaseClient
+      .from("configuracoes")
+      .select("horario_sugerido_texto")
+      .limit(1)
+      .single();
+
+    const scheduleText = configData?.horario_sugerido_texto || buildScheduleText();
     const leadName = nome || "";
 
     const message =
@@ -84,9 +95,7 @@ serve(async (req) => {
     const zapiData = await zapiResponse.json();
 
     // Update lead status in DB
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = supabaseClient;
 
     const whatsappStatus = zapiResponse.ok ? "enviado" : "erro_envio";
 
