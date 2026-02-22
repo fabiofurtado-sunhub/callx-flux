@@ -33,6 +33,8 @@ serve(async (req) => {
       observacoes: lead.observacoes || "",
       faturamento: lead.faturamento != null ? Number(lead.faturamento) : null,
       tomador_decisao: lead.tomador_decisao != null ? Boolean(lead.tomador_decisao) : null,
+      maior_gargalo_comercial: lead.maior_gargalo_comercial || null,
+      setor_empresa: lead.setor_empresa || null,
       origem: lead.origem || "core_ai_webhook",
       funil: "core_ai",
       status_funil: "lead",

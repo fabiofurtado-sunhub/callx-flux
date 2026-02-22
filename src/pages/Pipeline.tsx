@@ -1,7 +1,7 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
 import { FUNNEL_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState } from 'react';
-import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare } from 'lucide-react';
+import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
@@ -184,6 +184,24 @@ export default function Pipeline() {
                           <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
                             <Users className="w-3 h-3 flex-shrink-0 mt-0.5" />
                             <span className="truncate">{lead.grupo_anuncios}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Gargalo + Setor */}
+                    {(lead.maior_gargalo_comercial || lead.setor_empresa) && (
+                      <div className="space-y-1 border-t border-border/50 pt-2">
+                        {lead.maior_gargalo_comercial && (
+                          <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                            <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-warning" />
+                            <span className="truncate">{lead.maior_gargalo_comercial}</span>
+                          </div>
+                        )}
+                        {lead.setor_empresa && (
+                          <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                            <Building2 className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                            <span className="truncate">{lead.setor_empresa}</span>
                           </div>
                         )}
                       </div>
