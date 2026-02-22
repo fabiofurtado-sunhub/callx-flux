@@ -29,6 +29,8 @@ export interface Lead {
   faturamento: number | null;
   funil: string;
   tomador_decisao: boolean | null;
+  maior_gargalo_comercial: string | null;
+  setor_empresa: string | null;
 }
 
 interface Settings {
@@ -78,6 +80,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         faturamento: d.faturamento ? Number(d.faturamento) : null,
         funil: (d as any).funil || 'callx',
         tomador_decisao: (d as any).tomador_decisao ?? null,
+        maior_gargalo_comercial: (d as any).maior_gargalo_comercial ?? null,
+        setor_empresa: (d as any).setor_empresa ?? null,
       })));
     }
     setLoading(false);

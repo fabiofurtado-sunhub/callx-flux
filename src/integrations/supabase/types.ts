@@ -212,12 +212,14 @@ export type Database = {
           grupo_anuncios: string | null
           id: string
           lead_time: number | null
+          maior_gargalo_comercial: string | null
           motivo_perda: string | null
           nome: string
           observacoes: string | null
           origem: string | null
           probabilidade_fechamento: number
           score_lead: number
+          setor_empresa: string | null
           status_funil: Database["public"]["Enums"]["lead_status"]
           telefone: string
           tomador_decisao: boolean | null
@@ -241,12 +243,14 @@ export type Database = {
           grupo_anuncios?: string | null
           id?: string
           lead_time?: number | null
+          maior_gargalo_comercial?: string | null
           motivo_perda?: string | null
           nome: string
           observacoes?: string | null
           origem?: string | null
           probabilidade_fechamento?: number
           score_lead?: number
+          setor_empresa?: string | null
           status_funil?: Database["public"]["Enums"]["lead_status"]
           telefone: string
           tomador_decisao?: boolean | null
@@ -270,12 +274,14 @@ export type Database = {
           grupo_anuncios?: string | null
           id?: string
           lead_time?: number | null
+          maior_gargalo_comercial?: string | null
           motivo_perda?: string | null
           nome?: string
           observacoes?: string | null
           origem?: string | null
           probabilidade_fechamento?: number
           score_lead?: number
+          setor_empresa?: string | null
           status_funil?: Database["public"]["Enums"]["lead_status"]
           telefone?: string
           tomador_decisao?: boolean | null

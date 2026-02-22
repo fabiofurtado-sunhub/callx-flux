@@ -50,6 +50,8 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
         motivo_perda: form.motivo_perda,
         observacoes: form.observacoes,
         faturamento: form.faturamento,
+        maior_gargalo_comercial: form.maior_gargalo_comercial,
+        setor_empresa: form.setor_empresa,
         data_ultimo_movimento: new Date().toISOString(),
       }).eq('id', lead.id);
 
@@ -159,8 +161,18 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
             )}
           </div>
 
-          {/* Faturamento + Observações */}
+          {/* Gargalo + Setor + Faturamento + Observações */}
           <div className="space-y-3 border-t border-border pt-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground">Maior Gargalo Comercial</Label>
+                <Input value={form.maior_gargalo_comercial || ''} onChange={e => set('maior_gargalo_comercial', e.target.value || null)} className="mt-1 bg-background border-border" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Setor da Empresa</Label>
+                <Input value={form.setor_empresa || ''} onChange={e => set('setor_empresa', e.target.value || null)} className="mt-1 bg-background border-border" />
+              </div>
+            </div>
             <div>
               <Label className="text-xs text-muted-foreground">Faturamento Mensal (R$)</Label>
               <Input type="number" value={form.faturamento ?? ''} onChange={e => set('faturamento', e.target.value ? Number(e.target.value) : null)} className="mt-1 bg-background border-border" />
