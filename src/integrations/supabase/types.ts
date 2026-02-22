@@ -50,6 +50,7 @@ export type Database = {
       configuracoes: {
         Row: {
           google_sheets_url: string | null
+          horario_sugerido_texto: string | null
           id: string
           updated_at: string
           updated_by: string | null
@@ -59,6 +60,7 @@ export type Database = {
         }
         Insert: {
           google_sheets_url?: string | null
+          horario_sugerido_texto?: string | null
           id?: string
           updated_at?: string
           updated_by?: string | null
@@ -68,6 +70,7 @@ export type Database = {
         }
         Update: {
           google_sheets_url?: string | null
+          horario_sugerido_texto?: string | null
           id?: string
           updated_at?: string
           updated_by?: string | null

@@ -1,0 +1,1 @@
+ALTER TABLE public.configuracoes ADD COLUMN horario_sugerido_texto TEXT DEFAULT 'amanhã às 17:00 ou 18:00, ou no dia seguinte pela manhã';

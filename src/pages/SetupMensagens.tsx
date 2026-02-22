@@ -34,6 +34,8 @@ export default function SetupMensagens() {
   const [activeEtapa, setActiveEtapa] = useState('lead');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [horarioSugerido, setHorarioSugerido] = useState('');
+  const [savingHorario, setSavingHorario] = useState(false);
 
   const fetchTemplates = useCallback(async () => {
     const { data, error } = await supabase
@@ -46,9 +48,21 @@ export default function SetupMensagens() {
     setLoading(false);
   }, []);
 
+  const fetchHorario = useCallback(async () => {
+    const { data } = await supabase
+      .from('configuracoes')
+      .select('horario_sugerido_texto')
+      .limit(1)
+      .single();
+    if (data?.horario_sugerido_texto) {
+      setHorarioSugerido(data.horario_sugerido_texto);
+    }
+  }, []);
+
   useEffect(() => {
     fetchTemplates();
-  }, [fetchTemplates]);
+    fetchHorario();
+  }, [fetchTemplates, fetchHorario]);
 
   const filteredTemplates = templates.filter(
     t => t.funil === activeFunil && t.etapa === activeEtapa
@@ -170,6 +184,41 @@ export default function SetupMensagens() {
         ))}
       </div>
 
+      {/* Horário sugerido config */}
+      <Card className="p-5 space-y-3">
+        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Variável {'{{horario_sugerido}}'}
+        </Label>
+        <p className="text-xs text-muted-foreground">
+          Texto que substitui {'{{horario_sugerido}}'} nas mensagens. Ex: "amanhã às 17:00 ou 18:00"
+        </p>
+        <div className="flex gap-2">
+          <Input
+            value={horarioSugerido}
+            onChange={e => setHorarioSugerido(e.target.value)}
+            placeholder="amanhã às 17:00 ou 18:00, ou no dia seguinte pela manhã"
+            className="text-sm"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={savingHorario}
+            onClick={async () => {
+              setSavingHorario(true);
+              const { error } = await supabase
+                .from('configuracoes')
+                .update({ horario_sugerido_texto: horarioSugerido })
+                .eq('id', (await supabase.from('configuracoes').select('id').limit(1).single()).data?.id ?? '');
+              if (!error) toast.success('Horário sugerido salvo!');
+              else toast.error('Erro ao salvar');
+              setSavingHorario(false);
+            }}
+          >
+            <Save className="w-4 h-4" />
+          </Button>
+        </div>
+      </Card>
+
       {/* Templates list */}
       <div className="space-y-4">
         {filteredTemplates.map((template, idx) => (
@@ -220,7 +269,7 @@ export default function SetupMensagens() {
                 className="font-mono text-sm"
               />
               <p className="text-[10px] text-muted-foreground mt-1">
-                Variáveis disponíveis: {'{{nome}}'}, {'{{telefone}}'}, {'{{email}}'}
+                Variáveis disponíveis: {'{{nome}}'}, {'{{telefone}}'}, {'{{email}}'}, {'{{horario_sugerido}}'}
               </p>
             </div>
 
