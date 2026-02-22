@@ -28,6 +28,7 @@ export interface Lead {
   observacoes: string;
   faturamento: number | null;
   funil: string;
+  tomador_decisao: boolean | null;
 }
 
 interface Settings {
@@ -76,6 +77,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         valor_venda: d.valor_venda ? Number(d.valor_venda) : null,
         faturamento: d.faturamento ? Number(d.faturamento) : null,
         funil: (d as any).funil || 'callx',
+        tomador_decisao: (d as any).tomador_decisao ?? null,
       })));
     }
     setLoading(false);

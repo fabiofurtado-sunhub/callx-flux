@@ -220,6 +220,7 @@ export type Database = {
           score_lead: number
           status_funil: Database["public"]["Enums"]["lead_status"]
           telefone: string
+          tomador_decisao: boolean | null
           updated_at: string
           valor_proposta: number | null
           valor_venda: number | null
@@ -248,6 +249,7 @@ export type Database = {
           score_lead?: number
           status_funil?: Database["public"]["Enums"]["lead_status"]
           telefone: string
+          tomador_decisao?: boolean | null
           updated_at?: string
           valor_proposta?: number | null
           valor_venda?: number | null
@@ -276,6 +278,7 @@ export type Database = {
           score_lead?: number
           status_funil?: Database["public"]["Enums"]["lead_status"]
           telefone?: string
+          tomador_decisao?: boolean | null
           updated_at?: string
           valor_proposta?: number | null
           valor_venda?: number | null

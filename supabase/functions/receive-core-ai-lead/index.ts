@@ -31,6 +31,8 @@ serve(async (req) => {
       grupo_anuncios: lead.grupo_anuncios || "",
       vendedor_nome: lead.vendedor_nome || "",
       observacoes: lead.observacoes || "",
+      faturamento: lead.faturamento != null ? Number(lead.faturamento) : null,
+      tomador_decisao: lead.tomador_decisao != null ? Boolean(lead.tomador_decisao) : null,
       origem: lead.origem || "core_ai_webhook",
       funil: "core_ai",
       status_funil: "lead",
