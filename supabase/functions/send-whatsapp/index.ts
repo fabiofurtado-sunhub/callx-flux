@@ -10,20 +10,18 @@ const corsHeaders = {
 function buildScheduleText(): string {
   const now = new Date();
   const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+  const dias = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
 
-  if (dayOfWeek === 5) {
-    // Friday → suggest Monday
-    return "segunda-feira na parte da manhã ou na parte da tarde";
-  } else if (dayOfWeek === 6) {
-    // Saturday → suggest Monday
-    return "segunda-feira na parte da manhã ou na parte da tarde";
-  } else if (dayOfWeek === 0) {
-    // Sunday → suggest Monday
-    return "amanhã (segunda) na parte da manhã ou na parte da tarde";
-  } else {
-    // Mon-Thu → suggest tomorrow
-    return "amanhã na parte da manhã ou na parte da tarde";
-  }
+  // Get tomorrow and day after tomorrow
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const dayAfter = new Date(now);
+  dayAfter.setDate(dayAfter.getDate() + 2);
+
+  const tomorrowName = dias[tomorrow.getDay()];
+  const dayAfterName = dias[dayAfter.getDay()];
+
+  return `amanhã (${tomorrowName}) às 17:00 ou 18:00, ou na ${dayAfterName}-feira pela manhã`;
 }
 
 serve(async (req) => {
