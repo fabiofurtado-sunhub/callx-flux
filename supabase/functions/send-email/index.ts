@@ -93,8 +93,23 @@ serve(async (req) => {
       throw new Error("Failed to create email log: " + logError?.message);
     }
 
+    // Add email signature
+    const signatureUrl = `${supabaseUrl}/storage/v1/object/public/email-assets/assinatura-email.png`;
+    const signature = `
+      <br/><br/>
+      <table cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
+        <tr>
+          <td>
+            <a href="https://aceleradoramx3.com" target="_blank">
+              <img src="${signatureUrl}" alt="Assinatura MX3 - Fabio Furtado" width="600" style="max-width:100%;height:auto;display:block;" />
+            </a>
+          </td>
+        </tr>
+      </table>
+    `;
+
     // Add tracking to HTML
-    let finalHtml = html_body;
+    let finalHtml = html_body + signature;
     if (trackingEnabled) {
       finalHtml = wrapLinksWithTracking(finalHtml, supabaseUrl, emailLog.id);
       finalHtml += buildTrackingPixel(supabaseUrl, emailLog.id);
