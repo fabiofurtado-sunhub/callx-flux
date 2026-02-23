@@ -38,7 +38,7 @@ serve(async (req) => {
       throw new Error("ZAPI credentials not configured");
     }
 
-    const { lead_id, telefone, nome } = await req.json();
+    const { lead_id, telefone, nome, message_override } = await req.json();
 
     if (!telefone || !lead_id) {
       return new Response(
@@ -57,26 +57,34 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-    const { data: configData } = await supabaseClient
-      .from("configuracoes")
-      .select("horario_sugerido_texto")
-      .limit(1)
-      .single();
+    let message: string;
 
-    const scheduleText = configData?.horario_sugerido_texto || buildScheduleText();
-    const leadName = nome || "";
+    if (message_override) {
+      // Use the message provided by the cadencia system
+      message = message_override;
+    } else {
+      // Default CallX message
+      const { data: configData } = await supabaseClient
+        .from("configuracoes")
+        .select("horario_sugerido_texto")
+        .limit(1)
+        .single();
 
-    const message =
-      `Olá ${leadName}, aqui é o Fábio Furtado, CEO da MX3.\n\n` +
-      `Você se inscreveu na campanha da nossa IA comercial, o CallX (em nossa campanha do Meta) e pelo perfil da sua empresa, fiz questão de vir pessoalmente tratar do seu atendimento.\n\n` +
-      `Antes de avançarmos, quero entender:\n\n` +
-      `Hoje, o seu maior gargalo está em:\n\n` +
-      `1. Volume de lead qualificado\n` +
-      `2. Conversão do time\n` +
-      `3. Follow-up e perda de oportunidades\n` +
-      `4. Falta de previsibilidade comercial\n\n` +
-      `Se fizer sentido, eu mesmo bloqueio 30 minutos na minha agenda ainda essa semana para analisarmos sua operação e ver se o CallX faz sentido dentro da sua estratégia.\n\n` +
-      `Para você fica melhor ${scheduleText}?`;
+      const scheduleText = configData?.horario_sugerido_texto || buildScheduleText();
+      const leadName = nome || "";
+
+      message =
+        `Olá ${leadName}, aqui é o Fábio Furtado, CEO da MX3.\n\n` +
+        `Você se inscreveu na campanha da nossa IA comercial, o CallX (em nossa campanha do Meta) e pelo perfil da sua empresa, fiz questão de vir pessoalmente tratar do seu atendimento.\n\n` +
+        `Antes de avançarmos, quero entender:\n\n` +
+        `Hoje, o seu maior gargalo está em:\n\n` +
+        `1. Volume de lead qualificado\n` +
+        `2. Conversão do time\n` +
+        `3. Follow-up e perda de oportunidades\n` +
+        `4. Falta de previsibilidade comercial\n\n` +
+        `Se fizer sentido, eu mesmo bloqueio 30 minutos na minha agenda ainda essa semana para analisarmos sua operação e ver se o CallX faz sentido dentro da sua estratégia.\n\n` +
+        `Para você fica melhor ${scheduleText}?`;
+    }
 
     const zapiUrl = `https://api.z-api.io/instances/${ZAPI_INSTANCE_ID}/token/${ZAPI_TOKEN}/send-text`;
 
