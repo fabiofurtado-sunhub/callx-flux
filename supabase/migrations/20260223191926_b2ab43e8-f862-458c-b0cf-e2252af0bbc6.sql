@@ -1,0 +1,1 @@
+ALTER TABLE public.configuracoes ADD COLUMN link_agendamento text DEFAULT '';
