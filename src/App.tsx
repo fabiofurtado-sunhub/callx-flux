@@ -15,6 +15,7 @@ import Configuracoes from "@/pages/Configuracoes";
 import SetupMensagens from "@/pages/SetupMensagens";
 import Auth from "@/pages/Auth";
 import NotFound from "./pages/NotFound";
+import Agenda from "./pages/Agenda";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<AuthRoute />} />
+            <Route path="/agenda" element={<Agenda />} />
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>
         </BrowserRouter>

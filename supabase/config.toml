@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.process-cadencia]
 verify_jwt = false
+
+[functions.calendar-availability]
+verify_jwt = false
+
+[functions.calendar-book]
+verify_jwt = false
