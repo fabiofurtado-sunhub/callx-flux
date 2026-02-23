@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FUNNEL_STAGES } from '@/data/mockData';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import CadenciaTimeline from '@/components/CadenciaTimeline';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -161,6 +162,11 @@ export default function SetupMensagens() {
           ))}
         </TabsList>
       </Tabs>
+
+      {/* Cadência Timeline for Playbook MX3 */}
+      {activeFunil === 'playbook_mx3' && (
+        <CadenciaTimeline />
+      )}
 
       {/* Stage selector */}
       <div className="flex gap-2 overflow-x-auto pb-2">
