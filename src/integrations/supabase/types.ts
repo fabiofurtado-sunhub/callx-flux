@@ -195,6 +195,7 @@ export type Database = {
           google_sheets_url: string | null
           horario_sugerido_texto: string | null
           id: string
+          link_agendamento: string | null
           updated_at: string
           updated_by: string | null
           zapi_instance_id: string | null
@@ -211,6 +212,7 @@ export type Database = {
           google_sheets_url?: string | null
           horario_sugerido_texto?: string | null
           id?: string
+          link_agendamento?: string | null
           updated_at?: string
           updated_by?: string | null
           zapi_instance_id?: string | null
@@ -227,6 +229,7 @@ export type Database = {
           google_sheets_url?: string | null
           horario_sugerido_texto?: string | null
           id?: string
+          link_agendamento?: string | null
           updated_at?: string
           updated_by?: string | null
           zapi_instance_id?: string | null
