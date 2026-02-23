@@ -37,6 +37,21 @@ serve(async (req) => {
 
     let processed = 0;
     let skipped = 0;
+    let whatsappThrottled = 0;
+
+    // Check last WhatsApp send time from this cadence to enforce 3-min spacing
+    const { data: lastWhatsapp } = await supabase
+      .from("cadencia_execucoes")
+      .select("executado_em")
+      .eq("status", "executado")
+      .in("cadencia_etapa_id", pendingExecs.filter(e => e.cadencia_etapas?.canal === "whatsapp").map(e => e.cadencia_etapa_id))
+      .not("executado_em", "is", null)
+      .order("executado_em", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const lastWhatsappTime = lastWhatsapp?.executado_em ? new Date(lastWhatsapp.executado_em).getTime() : 0;
+    let whatsappSentInThisRun = false;
 
     for (const exec of pendingExecs) {
       const etapa = exec.cadencia_etapas;
@@ -101,6 +116,14 @@ serve(async (req) => {
           });
           result = await emailRes.json();
         } else if (etapa.canal === "whatsapp" && lead.telefone) {
+          // Throttle: max 1 WhatsApp per run, and at least 3 min since last send
+          const timeSinceLastWA = Date.now() - lastWhatsappTime;
+          if (whatsappSentInThisRun || timeSinceLastWA < 3 * 60 * 1000) {
+            // Leave as pending for next run
+            whatsappThrottled++;
+            continue;
+          }
+
           const message = await replaceVariables(etapa.conteudo, lead, supabase);
 
           const whatsappRes = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
@@ -117,6 +140,7 @@ serve(async (req) => {
             }),
           });
           result = await whatsappRes.json();
+          whatsappSentInThisRun = true;
         }
 
         await supabase
@@ -133,7 +157,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ processed, skipped, total: pendingExecs.length }),
+      JSON.stringify({ processed, skipped, whatsappThrottled, total: pendingExecs.length }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
