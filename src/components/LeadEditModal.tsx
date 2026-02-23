@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import MetaCapiLogs from '@/components/MetaCapiLogs';
 import GoogleAnalyticsLogs from '@/components/GoogleAnalyticsLogs';
+import LeadTimeline from '@/components/LeadTimeline';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -196,6 +197,14 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
             <div>
               <Label className="text-[10px] text-muted-foreground/60 uppercase">WhatsApp</Label>
               <p className="text-xs text-muted-foreground">{form.envio_whatsapp_status || '-'}</p>
+            </div>
+          </div>
+
+          {/* Timeline de Interações */}
+          <div className="border-t border-border pt-4 space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Histórico de Interações</h4>
+            <div className="max-h-64 overflow-y-auto">
+              <LeadTimeline leadId={lead.id} />
             </div>
           </div>
 
