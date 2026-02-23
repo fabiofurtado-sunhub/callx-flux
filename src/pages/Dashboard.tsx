@@ -8,14 +8,16 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LabelList,
 } from 'recharts';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 
 export default function Dashboard() {
   const { leads, settings } = useAppContext();
   const [alertas, setAlertas] = useState<any[]>([]);
+  const [activeFunil, setActiveFunil] = useState<string>('todos');
 
   const fetchAlertas = useCallback(async () => {
     const { data } = await supabase
@@ -41,12 +43,21 @@ export default function Dashboard() {
     setAlertas(prev => prev.filter(a => a.id !== id));
   };
 
-  const totalLeads = leads.length;
-  const leadsEtapaLead = leads.filter(l => l.status_funil === 'lead').length;
-  const mensagensEnviadas = leads.filter(l => l.status_funil === 'mensagem_enviada').length;
-  const reunioes = leads.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'no_show' || l.status_funil === 'reuniao_realizada' || l.status_funil === 'proposta' || l.status_funil === 'venda').length;
-  const propostas = leads.filter(l => l.status_funil === 'proposta' || l.status_funil === 'venda').length;
-  const vendas = leads.filter(l => l.status_funil === 'venda');
+  const funilLabels: Record<string, string> = { todos: 'Acumulado', callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3' };
+
+  const filteredByFunil = useMemo(() =>
+    activeFunil === 'todos' ? leads : leads.filter(l => (l.funil || 'callx') === activeFunil),
+    [leads, activeFunil]
+  );
+
+  const totalLeads = filteredByFunil.length;
+  const leadsEtapaLead = filteredByFunil.filter(l => l.status_funil === 'lead').length;
+  const mensagensEnviadas = filteredByFunil.filter(l => l.status_funil === 'mensagem_enviada').length;
+  const reunioes = filteredByFunil.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'no_show' || l.status_funil === 'reuniao_realizada' || l.status_funil === 'proposta' || l.status_funil === 'venda').length;
+  const propostasLeads = filteredByFunil.filter(l => l.status_funil === 'proposta' || l.status_funil === 'venda');
+  const propostas = propostasLeads.length;
+  const valorPropostas = propostasLeads.reduce((sum, l) => sum + (l.valor_proposta || 0), 0);
+  const vendas = filteredByFunil.filter(l => l.status_funil === 'venda');
   const vendasCount = vendas.length;
   const receitaTotal = vendas.reduce((sum, l) => sum + (l.valor_venda || 0), 0);
   const ticketMedio = vendasCount > 0 ? receitaTotal / vendasCount : 0;
@@ -57,7 +68,7 @@ export default function Dashboard() {
 
   // Leads por criativo (adset)
   const criativoMap = new Map<string, number>();
-  leads.forEach(l => { const key = l.adset || 'Sem criativo'; criativoMap.set(key, (criativoMap.get(key) || 0) + 1); });
+  filteredByFunil.forEach(l => { const key = l.adset || 'Sem criativo'; criativoMap.set(key, (criativoMap.get(key) || 0) + 1); });
   const leadsPorCriativo = Array.from(criativoMap, ([name, value]) => ({ name: name.substring(0, 20), value }));
 
   // Receita por vendedor
@@ -66,7 +77,7 @@ export default function Dashboard() {
   const receitaPorVendedor = Array.from(vendedorReceitaMap, ([name, value]) => ({ name: name.split(' ')[0], value }));
 
   // Motivos de perda
-  const perdidos = leads.filter(l => l.status_funil === 'perdido');
+  const perdidos = filteredByFunil.filter(l => l.status_funil === 'perdido');
   const motivoMap = new Map<string, number>();
   perdidos.forEach(l => { if (l.motivo_perda) motivoMap.set(l.motivo_perda, (motivoMap.get(l.motivo_perda) || 0) + 1); });
   const motivosPerda = Array.from(motivoMap, ([name, value]) => ({ name, value }));
@@ -81,7 +92,7 @@ export default function Dashboard() {
     { label: 'Acima 1M', min: 1000000, max: Infinity },
   ];
   const leadsPorFaturamento = faixas.map(f => {
-    const count = leads.filter(l => {
+    const count = filteredByFunil.filter(l => {
       if (f.min === -1) return !l.faturamento;
       return l.faturamento != null && l.faturamento >= f.min && l.faturamento <= f.max;
     }).length;
@@ -90,11 +101,11 @@ export default function Dashboard() {
 
   // Funil data
   const funnelData = [
-    { name: 'Lead', value: leads.filter(l => l.status_funil === 'lead').length },
+    { name: 'Lead', value: filteredByFunil.filter(l => l.status_funil === 'lead').length },
     { name: 'Msg Enviada', value: mensagensEnviadas },
-    { name: 'Reunião', value: leads.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'reuniao_realizada').length },
-    { name: 'No-Show', value: leads.filter(l => l.status_funil === 'no_show').length },
-    { name: 'Proposta', value: leads.filter(l => l.status_funil === 'proposta').length },
+    { name: 'Reunião', value: filteredByFunil.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'reuniao_realizada').length },
+    { name: 'No-Show', value: filteredByFunil.filter(l => l.status_funil === 'no_show').length },
+    { name: 'Proposta', value: filteredByFunil.filter(l => l.status_funil === 'proposta').length },
     { name: 'Venda', value: vendasCount },
     { name: 'Perdido', value: perdidos.length },
   ];
@@ -104,17 +115,33 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">Dashboard Executivo</h1>
-        <p className="text-sm text-muted-foreground mt-1">Visão geral da operação comercial</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-foreground">Dashboard Executivo</h1>
+          <p className="text-sm text-muted-foreground mt-1">Visão geral da operação comercial</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {['todos', 'callx', 'core_ai', 'playbook_mx3'].map(f => (
+            <Button
+              key={f}
+              size="sm"
+              variant={activeFunil === f ? 'default' : 'outline'}
+              onClick={() => setActiveFunil(f)}
+              className="text-xs"
+            >
+              {funilLabels[f]}
+            </Button>
+          ))}
+        </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <KpiCard title="Total Leads" value={totalLeads} icon={Users} variant="primary" />
         <KpiCard title="Msg Enviadas" value={mensagensEnviadas} icon={MessageSquare} />
         <KpiCard title="Reuniões" value={reunioes} icon={CalendarCheck} variant="warning" />
         <KpiCard title="Propostas" value={propostas} icon={FileText} />
+        <KpiCard title="Vlr Propostas" value={`R$ ${(valorPropostas / 1000).toFixed(0)}k`} icon={Target} variant="warning" />
         <KpiCard title="Vendas" value={vendasCount} icon={Trophy} variant="success" />
         <KpiCard title="Receita Total" value={`R$ ${(receitaTotal / 1000).toFixed(0)}k`} icon={DollarSign} variant="primary" />
       </div>
