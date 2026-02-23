@@ -2,15 +2,44 @@ import { useAppContext } from '@/contexts/AppContext';
 import KpiCard from '@/components/KpiCard';
 import {
   Users, CalendarCheck, FileText, Trophy, DollarSign, Target,
-  TrendingUp, Clock, ArrowRightLeft, MessageSquare
+  TrendingUp, Clock, ArrowRightLeft, MessageSquare, Flame, Bell, CheckCircle2
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LabelList,
 } from 'recharts';
+import { useEffect, useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
 export default function Dashboard() {
   const { leads, settings } = useAppContext();
+  const [alertas, setAlertas] = useState<any[]>([]);
+
+  const fetchAlertas = useCallback(async () => {
+    const { data } = await supabase
+      .from('alertas_comerciais')
+      .select('*, leads(nome, score_lead, vendedor_nome, status_funil)')
+      .eq('lido', false)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    if (data) setAlertas(data);
+  }, []);
+
+  useEffect(() => {
+    fetchAlertas();
+    const channel = supabase
+      .channel('alertas-dashboard')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alertas_comerciais' }, () => fetchAlertas())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchAlertas]);
+
+  const markAsRead = async (id: string) => {
+    await supabase.from('alertas_comerciais').update({ lido: true, lido_em: new Date().toISOString() }).eq('id', id);
+    setAlertas(prev => prev.filter(a => a.id !== id));
+  };
 
   const totalLeads = leads.length;
   const leadsEtapaLead = leads.filter(l => l.status_funil === 'lead').length;
@@ -96,6 +125,75 @@ export default function Dashboard() {
         <KpiCard title="Conv. Lead→Venda" value={`${taxaConversao}%`} icon={TrendingUp} variant="success" />
         <KpiCard title="Conv. Reunião→Venda" value={`${taxaReuniaoVenda}%`} icon={ArrowRightLeft} />
         <KpiCard title="Lead Time Médio" value={`${leadTimeMedio.toFixed(0)} dias`} icon={Clock} variant="warning" />
+      </div>
+
+      {/* Alertas Comerciais + Leads Quentes */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Alertas */}
+        <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <Bell className="w-4 h-4 text-destructive" />
+            <h3 className="text-sm font-display font-semibold text-card-foreground">Alertas Comerciais</h3>
+            {alertas.length > 0 && (
+              <Badge variant="destructive" className="text-[10px] px-1.5 py-0">{alertas.length}</Badge>
+            )}
+          </div>
+          {alertas.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-8">Nenhum alerta pendente</p>
+          ) : (
+            <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+              {alertas.map(a => (
+                <div key={a.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
+                  <Flame className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-card-foreground truncate">
+                      {a.leads?.nome || 'Lead'}
+                      {a.leads?.score_lead && (
+                        <span className="ml-2 text-[10px] text-destructive font-bold">Score {a.leads.score_lead}</span>
+                      )}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{a.mensagem}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">{format(new Date(a.created_at), 'dd/MM HH:mm')}</p>
+                  </div>
+                  <button onClick={() => markAsRead(a.id)} className="text-muted-foreground hover:text-success transition-colors flex-shrink-0" title="Marcar como lido">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Leads Quentes (score >= 91) */}
+        <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <Flame className="w-4 h-4 text-warning" />
+            <h3 className="text-sm font-display font-semibold text-card-foreground">Oportunidades Quentes</h3>
+            <Badge className="text-[10px] px-1.5 py-0 bg-warning/20 text-warning border-warning/30">Score ≥ 91</Badge>
+          </div>
+          {(() => {
+            const hotLeads = leads.filter(l => l.score_lead >= 91 && l.status_funil !== 'venda' && l.status_funil !== 'perdido');
+            if (hotLeads.length === 0) return <p className="text-xs text-muted-foreground text-center py-8">Nenhum lead com score ≥ 91</p>;
+            return (
+              <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                {hotLeads.sort((a, b) => b.score_lead - a.score_lead).slice(0, 10).map(l => (
+                  <div key={l.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
+                    <div className="w-8 h-8 rounded-full bg-warning/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold text-warning">{l.score_lead}</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-card-foreground truncate">{l.nome}</p>
+                      <p className="text-[10px] text-muted-foreground">{l.vendedor_nome || 'Sem vendedor'} · {l.status_funil.replace(/_/g, ' ')}</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] flex-shrink-0">
+                      {l.probabilidade_fechamento}%
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
       </div>
 
       {/* Charts Row 1 */}
