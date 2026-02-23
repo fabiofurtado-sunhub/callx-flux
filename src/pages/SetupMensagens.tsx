@@ -26,6 +26,7 @@ interface MessageTemplate {
 const FUNNEL_OPTIONS = [
   { key: 'callx', label: 'Funil CallX' },
   { key: 'core_ai', label: 'Funil Core AI' },
+  { key: 'playbook_mx3', label: 'Playbook MX3' },
 ];
 
 export default function SetupMensagens() {
