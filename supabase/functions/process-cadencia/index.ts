@@ -17,6 +17,18 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Check business hours (08:00-18:00 BRT)
+    const nowBRT = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const hour = nowBRT.getHours();
+    const dayOfWeek = nowBRT.getDay(); // 0=Sun, 6=Sat
+
+    if (hour < 8 || hour >= 18 || dayOfWeek === 0 || dayOfWeek === 6) {
+      return new Response(
+        JSON.stringify({ processed: 0, message: "Outside business hours (08-18h BRT, Mon-Fri). Skipping." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Find all pending executions that are due
     const now = new Date().toISOString();
     const { data: pendingExecs, error: fetchError } = await supabase
