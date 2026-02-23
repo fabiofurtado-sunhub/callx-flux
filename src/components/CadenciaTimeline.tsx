@@ -198,7 +198,7 @@ export default function CadenciaTimeline() {
                                 className="mt-1 font-mono text-xs"
                               />
                               <p className="text-[10px] text-muted-foreground mt-1">
-                                Variáveis: {'{{nome}}'}, {'{{email}}'}, {'{{telefone}}'}
+                                Variáveis: {'{{nome}}'}, {'{{email}}'}, {'{{telefone}}'}, {'{{LINK_AGENDAMENTO}}'}
                               </p>
                             </div>
                           </div>
