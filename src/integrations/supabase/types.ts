@@ -47,8 +47,151 @@ export type Database = {
         }
         Relationships: []
       }
+      alertas_comerciais: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string
+          lido: boolean
+          lido_em: string | null
+          lido_por: string | null
+          mensagem: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id: string
+          lido?: boolean
+          lido_em?: string | null
+          lido_por?: string | null
+          mensagem?: string
+          tipo?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string
+          lido?: boolean
+          lido_em?: string | null
+          lido_por?: string | null
+          mensagem?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alertas_comerciais_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cadencia_etapas: {
+        Row: {
+          ativo: boolean
+          canal: string
+          condicao_referencia_id: string | null
+          condicao_tipo: string | null
+          condicional: boolean
+          conteudo: string
+          created_at: string
+          dia: number
+          funil: string
+          id: string
+          ordem: number
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          canal?: string
+          condicao_referencia_id?: string | null
+          condicao_tipo?: string | null
+          condicional?: boolean
+          conteudo?: string
+          created_at?: string
+          dia?: number
+          funil?: string
+          id?: string
+          ordem?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          canal?: string
+          condicao_referencia_id?: string | null
+          condicao_tipo?: string | null
+          condicional?: boolean
+          conteudo?: string
+          created_at?: string
+          dia?: number
+          funil?: string
+          id?: string
+          ordem?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cadencia_execucoes: {
+        Row: {
+          agendado_para: string
+          cadencia_etapa_id: string
+          created_at: string
+          executado_em: string | null
+          id: string
+          lead_id: string
+          resultado: Json | null
+          status: string
+        }
+        Insert: {
+          agendado_para: string
+          cadencia_etapa_id: string
+          created_at?: string
+          executado_em?: string | null
+          id?: string
+          lead_id: string
+          resultado?: Json | null
+          status?: string
+        }
+        Update: {
+          agendado_para?: string
+          cadencia_etapa_id?: string
+          created_at?: string
+          executado_em?: string | null
+          id?: string
+          lead_id?: string
+          resultado?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cadencia_execucoes_cadencia_etapa_id_fkey"
+            columns: ["cadencia_etapa_id"]
+            isOneToOne: false
+            referencedRelation: "cadencia_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cadencia_execucoes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       configuracoes: {
         Row: {
+          email_from_address: string | null
+          email_from_name: string | null
+          email_provider: string | null
+          email_smtp_host: string | null
+          email_smtp_port: number | null
+          email_tracking_enabled: boolean | null
           google_sheets_url: string | null
           horario_sugerido_texto: string | null
           id: string
@@ -59,6 +202,12 @@ export type Database = {
           zapi_webhook: string | null
         }
         Insert: {
+          email_from_address?: string | null
+          email_from_name?: string | null
+          email_provider?: string | null
+          email_smtp_host?: string | null
+          email_smtp_port?: number | null
+          email_tracking_enabled?: boolean | null
           google_sheets_url?: string | null
           horario_sugerido_texto?: string | null
           id?: string
@@ -69,6 +218,12 @@ export type Database = {
           zapi_webhook?: string | null
         }
         Update: {
+          email_from_address?: string | null
+          email_from_name?: string | null
+          email_provider?: string | null
+          email_smtp_host?: string | null
+          email_smtp_port?: number | null
+          email_tracking_enabled?: boolean | null
           google_sheets_url?: string | null
           horario_sugerido_texto?: string | null
           id?: string
@@ -79,6 +234,69 @@ export type Database = {
           zapi_webhook?: string | null
         }
         Relationships: []
+      }
+      email_logs: {
+        Row: {
+          aberto: boolean
+          aberto_em: string | null
+          assunto: string
+          cadencia_etapa_id: string | null
+          clicado: boolean
+          clicado_em: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          lead_id: string
+          link_clicado: string | null
+          provider_response: Json | null
+          status: string
+        }
+        Insert: {
+          aberto?: boolean
+          aberto_em?: string | null
+          assunto?: string
+          cadencia_etapa_id?: string | null
+          clicado?: boolean
+          clicado_em?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id: string
+          link_clicado?: string | null
+          provider_response?: Json | null
+          status?: string
+        }
+        Update: {
+          aberto?: boolean
+          aberto_em?: string | null
+          assunto?: string
+          cadencia_etapa_id?: string | null
+          clicado?: boolean
+          clicado_em?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id?: string
+          link_clicado?: string | null
+          provider_response?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_cadencia_etapa_id_fkey"
+            columns: ["cadencia_etapa_id"]
+            isOneToOne: false
+            referencedRelation: "cadencia_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ga4_logs: {
         Row: {
@@ -200,9 +418,50 @@ export type Database = {
           },
         ]
       }
+      lead_score_events: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          evento: string
+          id: string
+          lead_id: string
+          pontos: number
+          referencia_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          evento: string
+          id?: string
+          lead_id: string
+          pontos?: number
+          referencia_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          evento?: string
+          id?: string
+          lead_id?: string
+          pontos?: number
+          referencia_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_score_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           adset: string | null
+          cadencia_inicio: string | null
+          cadencia_saida_motivo: string | null
+          cadencia_status: string | null
           campanha: string | null
           created_at: string
           data_entrada: string
@@ -234,6 +493,9 @@ export type Database = {
         }
         Insert: {
           adset?: string | null
+          cadencia_inicio?: string | null
+          cadencia_saida_motivo?: string | null
+          cadencia_status?: string | null
           campanha?: string | null
           created_at?: string
           data_entrada?: string
@@ -265,6 +527,9 @@ export type Database = {
         }
         Update: {
           adset?: string | null
+          cadencia_inicio?: string | null
+          cadencia_saida_motivo?: string | null
+          cadencia_status?: string | null
           campanha?: string | null
           created_at?: string
           data_entrada?: string
