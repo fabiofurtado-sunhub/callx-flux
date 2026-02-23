@@ -83,7 +83,7 @@ serve(async (req) => {
       try {
         if (etapa.canal === "email" && lead.email) {
           // Replace variables in content
-          const html = replaceVariables(etapa.conteudo, lead);
+          const html = await replaceVariables(etapa.conteudo, lead, supabase);
 
           const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
             method: "POST",
@@ -101,7 +101,7 @@ serve(async (req) => {
           });
           result = await emailRes.json();
         } else if (etapa.canal === "whatsapp" && lead.telefone) {
-          const message = replaceVariables(etapa.conteudo, lead);
+          const message = await replaceVariables(etapa.conteudo, lead, supabase);
 
           const whatsappRes = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
             method: "POST",
@@ -188,9 +188,22 @@ async function checkCondition(
   }
 }
 
-function replaceVariables(content: string, lead: any): string {
-  return content
+async function replaceVariables(content: string, lead: any, supabase: any): Promise<string> {
+  let result = content
     .replace(/\{\{nome\}\}/g, lead.nome || "")
+    .replace(/\{\{Nome\}\}/g, lead.nome || "")
     .replace(/\{\{email\}\}/g, lead.email || "")
     .replace(/\{\{telefone\}\}/g, lead.telefone || "");
+
+  // Replace {{LINK_AGENDAMENTO}} from config
+  if (result.includes("{{LINK_AGENDAMENTO}}")) {
+    const { data: config } = await supabase
+      .from("configuracoes")
+      .select("link_agendamento")
+      .limit(1)
+      .single();
+    result = result.replace(/\{\{LINK_AGENDAMENTO\}\}/g, config?.link_agendamento || "#");
+  }
+
+  return result;
 }
