@@ -17,6 +17,7 @@ export default function Leads() {
   const [vendedorFilter, setVendedorFilter] = useState<string>('todos');
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
+  const [funilFilter, setFunilFilter] = useState<string>('todos');
   const [syncing, setSyncing] = useState(false);
   const [page, setPage] = useState(0);
   const perPage = 25;
@@ -125,7 +126,8 @@ export default function Leads() {
       l.campanha.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === 'todos' || l.status_funil === statusFilter;
     const matchesVendedor = vendedorFilter === 'todos' || l.vendedor_nome === vendedorFilter;
-    return matchesSearch && matchesStatus && matchesVendedor;
+    const matchesFunil = funilFilter === 'todos' || l.funil === funilFilter;
+    return matchesSearch && matchesStatus && matchesVendedor && matchesFunil;
   });
 
   const sorted = useMemo(() => {
@@ -151,14 +153,17 @@ export default function Leads() {
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
       lead: 'bg-info/15 text-info border-info/30',
+      mensagem_enviada: 'bg-info/15 text-info border-info/30',
+      fup_1: 'bg-info/15 text-info border-info/30',
       reuniao: 'bg-warning/15 text-warning border-warning/30',
+      no_show: 'bg-destructive/15 text-destructive border-destructive/30',
       reuniao_realizada: 'bg-warning/15 text-warning border-warning/30',
       proposta: 'bg-primary/15 text-primary border-primary/30',
       venda: 'bg-success/15 text-success border-success/30',
       perdido: 'bg-destructive/15 text-destructive border-destructive/30',
     };
     const labels: Record<string, string> = {
-      lead: 'Lead', reuniao: 'Reunião', reuniao_realizada: 'Reunião Realizada', proposta: 'Proposta', venda: 'Venda', perdido: 'Perdido',
+      lead: 'Lead', mensagem_enviada: 'Msg Enviada', fup_1: 'FUP 1', reuniao: 'Reunião', no_show: 'No-Show', reuniao_realizada: 'Reunião Realizada', proposta: 'Proposta', venda: 'Venda', perdido: 'Perdido',
     };
     return <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${map[status]}`}>{labels[status]}</span>;
   };
@@ -220,6 +225,17 @@ export default function Leads() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={funilFilter} onValueChange={v => { setFunilFilter(v); setPage(0); }}>
+              <SelectTrigger className="w-full sm:w-44 bg-card border-border">
+                <SelectValue placeholder="Funil" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os Funis</SelectItem>
+                <SelectItem value="callx">Funil CallX</SelectItem>
+                <SelectItem value="core_ai">Funil Core AI</SelectItem>
+                <SelectItem value="playbook_mx3">Playbook MX3</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -230,6 +246,7 @@ export default function Leads() {
                 <tr className="border-b border-border">
                   <th onClick={() => toggleSort('nome')} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"><span className="inline-flex items-center">Nome<SortIcon column="nome" /></span></th>
                   <th onClick={() => toggleSort('telefone')} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"><span className="inline-flex items-center">Telefone<SortIcon column="telefone" /></span></th>
+                  <th className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Funil</th>
                   <th onClick={() => toggleSort('campanha')} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"><span className="inline-flex items-center">Campanha<SortIcon column="campanha" /></span></th>
                   <th onClick={() => toggleSort('vendedor')} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"><span className="inline-flex items-center">Vendedor<SortIcon column="vendedor" /></span></th>
                   <th onClick={() => toggleSort('funil')} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"><span className="inline-flex items-center">Funil<SortIcon column="funil" /></span></th>
@@ -246,6 +263,13 @@ export default function Leads() {
                       <p className="text-xs text-muted-foreground">{lead.email}</p>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{lead.telefone}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase ${
+                        lead.funil === 'playbook_mx3' ? 'bg-primary/10 text-primary' : lead.funil === 'core_ai' ? 'bg-accent/50 text-accent-foreground' : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {lead.funil === 'callx' ? 'CallX' : lead.funil === 'core_ai' ? 'Core AI' : 'Playbook'}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">{lead.campanha}</td>
                     <td className="px-4 py-3">
                       <Select value={lead.vendedor_nome || ''} onValueChange={v => handleVendedorChange(lead.id, v)}>

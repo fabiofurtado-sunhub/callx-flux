@@ -17,10 +17,12 @@ export default function Pipeline() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
-  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai'>('callx');
+  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3'>('callx');
+
+  const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3' };
+  const funilLabel = funilLabels[activeFunil] || activeFunil;
 
   const filteredLeads = leads.filter(l => (l.funil || 'callx') === activeFunil);
-  const funilLabel = activeFunil === 'callx' ? 'Funil CallX' : 'Funil Core AI';
 
   const handleDragStart = (leadId: string) => {
     setDraggedLead(leadId);
@@ -76,10 +78,11 @@ export default function Pipeline() {
             />
           </div>
         </div>
-        <Tabs value={activeFunil} onValueChange={v => setActiveFunil(v as 'callx' | 'core_ai')}>
+        <Tabs value={activeFunil} onValueChange={v => setActiveFunil(v as 'callx' | 'core_ai' | 'playbook_mx3')}>
           <TabsList>
             <TabsTrigger value="callx">Funil CallX</TabsTrigger>
             <TabsTrigger value="core_ai">Funil Core AI</TabsTrigger>
+            <TabsTrigger value="playbook_mx3">Playbook MX3</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
