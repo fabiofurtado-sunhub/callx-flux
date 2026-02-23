@@ -1,9 +1,10 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
 import { FUNNEL_STAGES, PLAYBOOK_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState } from 'react';
-import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2 } from 'lucide-react';
+import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import LeadEditModal from '@/components/LeadEditModal';
 import LossReasonDialog from '@/components/LossReasonDialog';
@@ -18,11 +19,17 @@ export default function Pipeline() {
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
   const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3'>('callx');
+  const [selectedVendedor, setSelectedVendedor] = useState<string>('todos');
 
   const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3' };
   const funilLabel = funilLabels[activeFunil] || activeFunil;
 
-  const filteredLeads = leads.filter(l => (l.funil || 'callx') === activeFunil);
+  const vendedores = Array.from(new Set(leads.map(l => l.vendedor_nome).filter(Boolean))) as string[];
+
+  const filteredLeads = leads.filter(l =>
+    (l.funil || 'callx') === activeFunil &&
+    (selectedVendedor === 'todos' || l.vendedor_nome === selectedVendedor)
+  );
 
   const handleDragStart = (leadId: string) => {
     setDraggedLead(leadId);
@@ -68,14 +75,28 @@ export default function Pipeline() {
             <h1 className="text-2xl font-display font-bold text-foreground">{funilLabel}</h1>
             <p className="text-sm text-muted-foreground mt-1">Arraste os leads entre as etapas</p>
           </div>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar por nome, telefone, campanha..."
-              className="pl-9 bg-background border-border"
-            />
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
+              <SelectTrigger className="w-full sm:w-48 bg-background border-border">
+                <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os vendedores</SelectItem>
+                {vendedores.map(v => (
+                  <SelectItem key={v} value={v}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Buscar por nome, telefone, campanha..."
+                className="pl-9 bg-background border-border"
+              />
+            </div>
           </div>
         </div>
         <Tabs value={activeFunil} onValueChange={v => setActiveFunil(v as 'callx' | 'core_ai' | 'playbook_mx3')}>
