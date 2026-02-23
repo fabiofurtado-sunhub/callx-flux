@@ -38,6 +38,18 @@ export const FUNNEL_STAGES: { key: LeadStatus; label: string; color: string }[] 
   { key: 'perdido', label: 'Perdido', color: 'hsl(var(--destructive))' },
 ];
 
+export const PLAYBOOK_STAGES: { key: LeadStatus; label: string; color: string; cadenciaDia?: string }[] = [
+  { key: 'lead', label: 'D+0 Reabertura', color: '#3b82f6', cadenciaDia: 'WhatsApp inicial' },
+  { key: 'mensagem_enviada', label: 'D+1 Reconexão', color: '#6366f1', cadenciaDia: 'Email insight' },
+  { key: 'fup_1', label: 'D+3–D+10 Cadência', color: '#8b5cf6', cadenciaDia: 'Emails + WhatsApp condicional' },
+  { key: 'reuniao', label: 'Reunião Agendada', color: '#f59e0b', cadenciaDia: 'Respondeu à cadência' },
+  { key: 'no_show', label: 'No-Show', color: 'hsl(var(--destructive))' },
+  { key: 'reuniao_realizada', label: 'Reunião Realizada', color: '#f59e0b' },
+  { key: 'proposta', label: 'Proposta', color: 'hsl(var(--primary))' },
+  { key: 'venda', label: 'Venda', color: '#22c55e' },
+  { key: 'perdido', label: 'Perdido', color: 'hsl(var(--destructive))' },
+];
+
 export function getScoreLabel(score: number): LeadScore {
   if (score <= 20) return 'frio';
   if (score <= 50) return 'morno';

@@ -1,5 +1,5 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
-import { FUNNEL_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
+import { FUNNEL_STAGES, PLAYBOOK_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState } from 'react';
 import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -88,7 +88,7 @@ export default function Pipeline() {
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {FUNNEL_STAGES.map(stage => {
+        {(activeFunil === 'playbook_mx3' ? PLAYBOOK_STAGES : FUNNEL_STAGES).map(stage => {
           const searchLower = search.toLowerCase();
           const stageLeads = filteredLeads.filter(l =>
             l.status_funil === stage.key &&
@@ -114,11 +114,16 @@ export default function Pipeline() {
               onDragLeave={() => setDragOverStage(null)}
             >
               <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: stage.color }} />
-                  <h3 className="text-sm font-display font-semibold text-card-foreground">{stage.label}</h3>
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: stage.color }} />
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-display font-semibold text-card-foreground truncate">{stage.label}</h3>
+                    {'cadenciaDia' in stage && (stage as any).cadenciaDia && (
+                      <p className="text-[10px] text-muted-foreground truncate">{(stage as any).cadenciaDia}</p>
+                    )}
+                  </div>
                 </div>
-                <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">
                   {stageLeads.length}
                 </span>
               </div>
