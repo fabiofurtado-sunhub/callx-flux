@@ -15,7 +15,7 @@ export default function Dashboard() {
   const totalLeads = leads.length;
   const leadsEtapaLead = leads.filter(l => l.status_funil === 'lead').length;
   const mensagensEnviadas = leads.filter(l => l.status_funil === 'mensagem_enviada').length;
-  const reunioes = leads.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'reuniao_realizada' || l.status_funil === 'proposta' || l.status_funil === 'venda').length;
+  const reunioes = leads.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'no_show' || l.status_funil === 'reuniao_realizada' || l.status_funil === 'proposta' || l.status_funil === 'venda').length;
   const propostas = leads.filter(l => l.status_funil === 'proposta' || l.status_funil === 'venda').length;
   const vendas = leads.filter(l => l.status_funil === 'venda');
   const vendasCount = vendas.length;
@@ -63,8 +63,8 @@ export default function Dashboard() {
   const funnelData = [
     { name: 'Lead', value: leads.filter(l => l.status_funil === 'lead').length },
     { name: 'Msg Enviada', value: mensagensEnviadas },
-    { name: 'Reunião', value: leads.filter(l => l.status_funil === 'reuniao').length },
-    { name: 'Reunião Real.', value: leads.filter(l => l.status_funil === 'reuniao_realizada').length },
+    { name: 'Reunião', value: leads.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'reuniao_realizada').length },
+    { name: 'No-Show', value: leads.filter(l => l.status_funil === 'no_show').length },
     { name: 'Proposta', value: leads.filter(l => l.status_funil === 'proposta').length },
     { name: 'Venda', value: vendasCount },
     { name: 'Perdido', value: perdidos.length },
