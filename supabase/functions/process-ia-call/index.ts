@@ -25,28 +25,45 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Find leads stuck in fup_1 for more than 4 hours (only callx funnel)
-    const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+    // Check if this is a retry request for leads already in ia_call
+    let body: any = {};
+    try { body = await req.json(); } catch (_) { /* empty body is fine */ }
+    const isRetry = body?.retry === true;
 
-    const { data: leads, error: fetchError } = await supabase
-      .from("leads")
-      .select("*")
-      .eq("status_funil", "fup_1")
-      .eq("funil", "callx")
-      .lte("data_ultimo_movimento", fourHoursAgo);
+    let leads: any[] = [];
 
-    if (fetchError) {
-      throw new Error(`Error fetching leads: ${fetchError.message}`);
+    if (isRetry) {
+      // Retry: fetch leads already moved to ia_call that need to be re-sent to CallX
+      const { data, error: fetchError } = await supabase
+        .from("leads")
+        .select("*")
+        .eq("status_funil", "ia_call")
+        .eq("funil", "callx");
+
+      if (fetchError) throw new Error(`Error fetching retry leads: ${fetchError.message}`);
+      leads = data || [];
+      console.log(`[RETRY] Found ${leads.length} leads in ia_call to resend to CallX`);
+    } else {
+      // Normal: find leads stuck in fup_1 for more than 4 hours
+      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+      const { data, error: fetchError } = await supabase
+        .from("leads")
+        .select("*")
+        .eq("status_funil", "fup_1")
+        .eq("funil", "callx")
+        .lte("data_ultimo_movimento", fourHoursAgo);
+
+      if (fetchError) throw new Error(`Error fetching leads: ${fetchError.message}`);
+      leads = data || [];
+      console.log(`Found ${leads.length} leads stuck in FUP 1 for 4+ hours`);
     }
 
-    if (!leads || leads.length === 0) {
+    if (leads.length === 0) {
       return new Response(
         JSON.stringify({ message: "No leads to process", processed: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    console.log(`Found ${leads.length} leads stuck in FUP 1 for 4+ hours`);
 
     const results = [];
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -54,28 +71,29 @@ Deno.serve(async (req) => {
     for (let i = 0; i < leads.length; i++) {
       const lead = leads[i];
 
-      // Wait 3 seconds between requests to avoid rate limiting
-      if (i > 0) await delay(3000);
+      // Wait 10 seconds between requests to avoid rate limiting
+      if (i > 0) await delay(10000);
       try {
-        // 1. Move lead to ia_call stage
-        const now = new Date().toISOString();
-        await supabase
-          .from("leads")
-          .update({
-            status_funil: "ia_call",
-            data_ultimo_movimento: now,
-            score_lead: 25,
-            probabilidade_fechamento: 25,
-          })
-          .eq("id", lead.id);
+        // 1. Move lead to ia_call stage (skip if retry — already moved)
+        if (!isRetry) {
+          const now = new Date().toISOString();
+          await supabase
+            .from("leads")
+            .update({
+              status_funil: "ia_call",
+              data_ultimo_movimento: now,
+              score_lead: 25,
+              probabilidade_fechamento: 25,
+            })
+            .eq("id", lead.id);
 
-        // 2. Log the stage change
-        await supabase.from("lead_logs").insert({
-          lead_id: lead.id,
-          acao: "Mudança de etapa (automático 4h)",
-          de: "fup_1",
-          para: "ia_call",
-        });
+          await supabase.from("lead_logs").insert({
+            lead_id: lead.id,
+            acao: "Mudança de etapa (automático 4h)",
+            de: "fup_1",
+            para: "ia_call",
+          });
+        }
 
         // 3. Parse name into first/last
         const nameParts = (lead.nome || "").trim().split(/\s+/);
