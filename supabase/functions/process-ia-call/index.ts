@@ -49,8 +49,13 @@ Deno.serve(async (req) => {
     console.log(`Found ${leads.length} leads stuck in FUP 1 for 4+ hours`);
 
     const results = [];
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-    for (const lead of leads) {
+    for (let i = 0; i < leads.length; i++) {
+      const lead = leads[i];
+
+      // Wait 3 seconds between requests to avoid rate limiting
+      if (i > 0) await delay(3000);
       try {
         // 1. Move lead to ia_call stage
         const now = new Date().toISOString();
