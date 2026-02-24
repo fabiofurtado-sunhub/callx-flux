@@ -84,17 +84,17 @@ Deno.serve(async (req) => {
       user_data: userData,
     };
 
-    if (new_stage === "venda" && lead_data?.valor_venda) {
+    if (new_stage === "venda") {
       eventData.custom_data = {
         currency: "BRL",
-        value: Number(lead_data.valor_venda),
+        value: Number(lead_data?.valor_venda || 0),
       };
     }
 
-    if (new_stage === "proposta" && lead_data?.valor_proposta) {
+    if (new_stage === "proposta") {
       eventData.custom_data = {
         currency: "BRL",
-        value: Number(lead_data.valor_proposta),
+        value: Number(lead_data?.valor_proposta || 0),
       };
     }
 
