@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.calendar-book]
 verify_jwt = false
+
+[functions.process-ia-call]
+verify_jwt = false
