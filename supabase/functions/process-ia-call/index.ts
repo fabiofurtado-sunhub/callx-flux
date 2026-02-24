@@ -91,6 +91,13 @@ Deno.serve(async (req) => {
       const firstName = nameParts[0] || "";
       const lastName = nameParts.slice(1).join(" ") || "";
 
+      // Ensure phone has +55 prefix
+      let phone = (lead.telefone || "").replace(/\D/g, "");
+      if (!phone.startsWith("55")) {
+        phone = "55" + phone;
+      }
+      phone = "+" + phone;
+
       return {
         first_name: firstName,
         last_name: lastName,
@@ -101,7 +108,7 @@ Deno.serve(async (req) => {
           vendedor: lead.vendedor_nome || "",
           funil: lead.funil,
         },
-        phone_number: lead.telefone,
+        phone_number: phone,
       };
     });
 
