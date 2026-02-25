@@ -7,6 +7,57 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const CORE_AI_PIXEL_ID = "598204086654379";
+const EVENT_SOURCE_URL = "https://coreai.aceleradoramx3.com";
+
+async function hashSHA256(value: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(value);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sendMetaCapiEvent(lead: any, accessToken: string) {
+  const now = Math.floor(Date.now() / 1000);
+
+  const userData: Record<string, any> = {};
+  if (lead.email) {
+    userData.em = [await hashSHA256(lead.email.toLowerCase().trim())];
+  }
+  if (lead.telefone) {
+    const phone = lead.telefone.replace(/\D/g, "");
+    userData.ph = [await hashSHA256(phone)];
+  }
+  if (lead.nome) {
+    const firstName = lead.nome.trim().split(/\s+/)[0].toLowerCase();
+    userData.fn = [await hashSHA256(firstName)];
+  }
+
+  const eventData = {
+    event_name: "Lead",
+    event_time: now,
+    action_source: "website",
+    event_source_url: EVENT_SOURCE_URL,
+    event_id: `core_ai_lead_${Date.now()}`,
+    user_data: userData,
+  };
+
+  const metaUrl = `https://graph.facebook.com/v21.0/${CORE_AI_PIXEL_ID}/events`;
+  const metaResponse = await fetch(metaUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      data: [eventData],
+      access_token: accessToken,
+    }),
+  });
+
+  const metaResult = await metaResponse.json();
+  console.log("Meta CAPI Core AI response:", JSON.stringify(metaResult));
+  return metaResult;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -18,8 +69,6 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-
-    // Accept single lead or array of leads
     const leadsToInsert = Array.isArray(body) ? body : [body];
 
     const rows = leadsToInsert.map((lead: any) => ({
@@ -49,6 +98,34 @@ serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Send Meta CAPI Lead event for each lead
+    const accessToken = Deno.env.get("META_CAPI_ACCESS_TOKEN");
+    if (accessToken) {
+      for (const lead of leadsToInsert) {
+        try {
+          const metaResult = await sendMetaCapiEvent(lead, accessToken);
+          const isSuccess = metaResult?.events_received >= 1;
+          const errorMsg = metaResult?.error?.error_user_msg || metaResult?.error?.message || null;
+          const insertedLead = data?.find((d: any) => d.nome === (lead.nome || "Sem nome"));
+
+          if (insertedLead) {
+            await supabase.from("meta_capi_logs").insert({
+              lead_id: insertedLead.id,
+              event_name: "Lead",
+              stage: "lead",
+              status: isSuccess ? "success" : "error",
+              meta_response: metaResult,
+              error_message: errorMsg,
+            });
+          }
+        } catch (capiErr) {
+          console.error("Meta CAPI error for lead:", lead.nome, capiErr);
+        }
+      }
+    } else {
+      console.warn("META_CAPI_ACCESS_TOKEN not set, skipping CAPI event");
     }
 
     return new Response(
