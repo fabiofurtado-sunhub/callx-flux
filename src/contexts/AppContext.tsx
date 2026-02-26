@@ -133,6 +133,70 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     await supabase.from('leads').update(updates).eq('id', leadId);
 
+    // Auto-send WhatsApp when lead moves to 'ultima_mensagem'
+    if (newStage === 'ultima_mensagem') {
+      // Check last WhatsApp send time to ensure 3-min delay
+      const { data: lastInteraction } = await supabase
+        .from('interacoes_whatsapp')
+        .select('created_at')
+        .eq('lead_id', leadId)
+        .eq('tipo', 'envio')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      const now = Date.now();
+      const lastSendTime = lastInteraction?.created_at ? new Date(lastInteraction.created_at).getTime() : 0;
+      const timeSinceLastSend = now - lastSendTime;
+      const threeMinMs = 3 * 60 * 1000;
+
+      const delayMs = timeSinceLastSend < threeMinMs ? threeMinMs - timeSinceLastSend : 0;
+
+      // Fire-and-forget with delay
+      setTimeout(async () => {
+        try {
+          // Fetch active template for ultima_mensagem
+          const { data: templateData } = await supabase
+            .from('message_templates')
+            .select('conteudo')
+            .eq('funil', lead.funil || 'callx')
+            .eq('etapa', 'ultima_mensagem')
+            .eq('ativo', true)
+            .order('ordem', { ascending: true })
+            .limit(1)
+            .single();
+
+          if (templateData?.conteudo) {
+            // Fetch configuracoes for variables
+            const { data: configData } = await supabase
+              .from('configuracoes')
+              .select('horario_sugerido_texto, link_agendamento')
+              .limit(1)
+              .single();
+
+            let msg = templateData.conteudo;
+            msg = msg.replace(/\{\{nome\}\}/gi, lead.nome || '');
+            msg = msg.replace(/\{\{telefone\}\}/gi, lead.telefone || '');
+            msg = msg.replace(/\{\{email\}\}/gi, lead.email || '');
+            msg = msg.replace(/\{\{horario_sugerido\}\}/gi, configData?.horario_sugerido_texto || '');
+            msg = msg.replace(/\{\{LINK_AGENDAMENTO\}\}/gi, configData?.link_agendamento || '');
+
+            await supabase.functions.invoke('send-whatsapp', {
+              body: {
+                lead_id: leadId,
+                telefone: lead.telefone,
+                nome: lead.nome,
+                message_override: msg,
+              },
+            });
+            console.log('Última mensagem WhatsApp enviada para:', lead.nome);
+          }
+        } catch (err) {
+          console.error('Erro ao enviar última mensagem:', err);
+        }
+      }, delayMs);
+    }
+
     // Log movement
     if (user) {
       await supabase.from('lead_logs').insert({
