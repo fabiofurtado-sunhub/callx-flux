@@ -107,14 +107,18 @@ serve(async (req) => {
 
     const whatsappStatus = zapiResponse.ok ? "enviado" : "erro_envio";
 
-    // Update WhatsApp status and move to 'mensagem_enviada' stage
+    // Update WhatsApp status (don't change stage if message_override was used, e.g. cadencia/ultima_mensagem)
+    const updatePayload: Record<string, any> = {
+      envio_whatsapp_status: whatsappStatus,
+      envio_whatsapp_data: new Date().toISOString(),
+    };
+    if (!message_override && zapiResponse.ok) {
+      updatePayload.status_funil = "mensagem_enviada";
+    }
+
     await supabase
       .from("leads")
-      .update({
-        envio_whatsapp_status: whatsappStatus,
-        envio_whatsapp_data: new Date().toISOString(),
-        ...(zapiResponse.ok ? { status_funil: "mensagem_enviada" } : {}),
-      })
+      .update(updatePayload)
       .eq("id", lead_id);
 
     // Log the interaction
