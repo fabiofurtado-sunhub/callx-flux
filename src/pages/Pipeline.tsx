@@ -1,7 +1,7 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
 import { FUNNEL_STAGES, PLAYBOOK_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState } from 'react';
-import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter } from 'lucide-react';
+import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,15 +20,35 @@ export default function Pipeline() {
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
   const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3'>('callx');
   const [selectedVendedor, setSelectedVendedor] = useState<string>('todos');
+  const [selectedFaturamento, setSelectedFaturamento] = useState<string>('todos');
 
   const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3' };
   const funilLabel = funilLabels[activeFunil] || activeFunil;
 
   const vendedores = Array.from(new Set(leads.map(l => l.vendedor_nome).filter(Boolean))) as string[];
 
+  const faturamentoRanges: { label: string; value: string; min: number; max: number }[] = [
+    { label: 'Sem info', value: 'sem_info', min: -1, max: -1 },
+    { label: 'Até 50k', value: 'ate_50k', min: 0, max: 50000 },
+    { label: '50k – 100k', value: '50k_100k', min: 50000, max: 100000 },
+    { label: '100k – 500k', value: '100k_500k', min: 100000, max: 500000 },
+    { label: '500k – 1M', value: '500k_1m', min: 500000, max: 1000000 },
+    { label: 'Acima de 1M', value: 'acima_1m', min: 1000000, max: Infinity },
+  ];
+
+  const matchesFaturamento = (lead: Lead) => {
+    if (selectedFaturamento === 'todos') return true;
+    const range = faturamentoRanges.find(r => r.value === selectedFaturamento);
+    if (!range) return true;
+    if (range.value === 'sem_info') return lead.faturamento == null;
+    if (lead.faturamento == null) return false;
+    return lead.faturamento >= range.min && lead.faturamento < range.max;
+  };
+
   const filteredLeads = leads.filter(l =>
     (l.funil || 'callx') === activeFunil &&
-    (selectedVendedor === 'todos' || l.vendedor_nome === selectedVendedor)
+    (selectedVendedor === 'todos' || l.vendedor_nome === selectedVendedor) &&
+    matchesFaturamento(l)
   );
 
   const handleDragStart = (leadId: string) => {
@@ -85,6 +105,18 @@ export default function Pipeline() {
                 <SelectItem value="todos">Todos os vendedores</SelectItem>
                 {vendedores.map(v => (
                   <SelectItem key={v} value={v}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedFaturamento} onValueChange={setSelectedFaturamento}>
+              <SelectTrigger className="w-full sm:w-48 bg-background border-border">
+                <DollarSign className="w-4 h-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Faturamento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos faturamentos</SelectItem>
+                {faturamentoRanges.map(r => (
+                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
