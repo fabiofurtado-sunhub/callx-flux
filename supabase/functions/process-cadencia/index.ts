@@ -159,6 +159,35 @@ serve(async (req) => {
           .from("cadencia_execucoes")
           .update({ status: "executado", executado_em: now, resultado: result })
           .eq("id", exec.id);
+
+        // Auto-advance lead stage based on cadencia day
+        const stageForDay: Record<number, string> = {
+          0: "lead",
+          1: "mensagem_enviada",
+          3: "fup_1",
+          6: "fup_1",
+          8: "fup_1",
+          10: "fup_1",
+        };
+        const targetStage = stageForDay[etapa.dia];
+        if (targetStage && lead.status_funil !== targetStage) {
+          // Only advance forward, never regress
+          const stageOrder = ["lead", "mensagem_enviada", "fup_1", "ia_call", "ultima_mensagem", "reuniao", "no_show", "reuniao_realizada", "proposta", "venda", "perdido"];
+          const currentIdx = stageOrder.indexOf(lead.status_funil);
+          const targetIdx = stageOrder.indexOf(targetStage);
+          if (targetIdx > currentIdx) {
+            await supabase
+              .from("leads")
+              .update({
+                status_funil: targetStage,
+                data_ultimo_movimento: now,
+                score_lead: targetIdx * 5 + 10,
+                probabilidade_fechamento: targetIdx * 5 + 10,
+              })
+              .eq("id", lead.id);
+          }
+        }
+
         processed++;
       } catch (execError) {
         await supabase
