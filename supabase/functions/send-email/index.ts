@@ -152,20 +152,25 @@ serve(async (req) => {
 
     const status = graphResponse.ok ? "enviado" : "erro";
     let errorMessage = null;
+    let responseBody: any = null;
 
     if (!graphResponse.ok) {
       const errBody = await graphResponse.text();
       errorMessage = errBody.substring(0, 500);
       console.error("Graph API error:", errBody);
+      responseBody = { status: graphResponse.status, error: errorMessage };
+    } else {
+      responseBody = { status: graphResponse.status, to: to_email, subject };
+      console.log(`Email sent OK to ${to_email} | subject: ${subject}`);
     }
 
-    // Update email log
+    // Update email log with full details
     await supabase
       .from("email_logs")
       .update({
         status,
         error_message: errorMessage,
-        provider_response: { status: graphResponse.status },
+        provider_response: responseBody,
       })
       .eq("id", emailLog.id);
 
