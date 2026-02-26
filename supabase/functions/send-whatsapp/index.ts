@@ -107,19 +107,43 @@ serve(async (req) => {
 
     const whatsappStatus = zapiResponse.ok ? "enviado" : "erro_envio";
 
-    // Update WhatsApp status (don't change stage if message_override was used, e.g. cadencia/ultima_mensagem)
+    // Fetch lead's current status to decide stage advancement
+    const { data: currentLead } = await supabase
+      .from("leads")
+      .select("status_funil, funil")
+      .eq("id", lead_id)
+      .single();
+
+    const currentStatus = currentLead?.status_funil || "lead";
+
+    // Update WhatsApp status and conditionally advance stage
     const updatePayload: Record<string, any> = {
       envio_whatsapp_status: whatsappStatus,
       envio_whatsapp_data: new Date().toISOString(),
     };
-    if (!message_override && zapiResponse.ok) {
+
+    // Advance to mensagem_enviada if lead is at 'lead' stage (works for both callx and core_ai initial sends)
+    if (zapiResponse.ok && currentStatus === "lead") {
       updatePayload.status_funil = "mensagem_enviada";
+      updatePayload.data_ultimo_movimento = new Date().toISOString();
+      updatePayload.score_lead = 15;
+      updatePayload.probabilidade_fechamento = 15;
     }
 
     await supabase
       .from("leads")
       .update(updatePayload)
       .eq("id", lead_id);
+
+    // Log stage change if it happened
+    if (zapiResponse.ok && currentStatus === "lead") {
+      await supabase.from("lead_logs").insert({
+        lead_id,
+        acao: "WhatsApp inicial enviado",
+        de: "lead",
+        para: "mensagem_enviada",
+      });
+    }
 
     // Log the interaction
     await supabase.from("interacoes_whatsapp").insert({
