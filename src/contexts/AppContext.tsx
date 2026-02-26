@@ -57,8 +57,10 @@ const defaultSettings: Settings = {
   metaReceitaMensal: 500000,
 };
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+// Global tracker for WhatsApp send scheduling (ensures 3-min gap across all leads)
+let nextAvailableSendTime = 0;
 
+const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [settings, setSettings] = useState<Settings>(defaultSettings);
@@ -135,22 +137,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     // Auto-send WhatsApp when lead moves to 'ultima_mensagem'
     if (newStage === 'ultima_mensagem') {
-      // Check last WhatsApp send time to ensure 3-min delay
-      const { data: lastInteraction } = await supabase
-        .from('interacoes_whatsapp')
-        .select('created_at')
-        .eq('lead_id', leadId)
-        .eq('tipo', 'envio')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      const now = Date.now();
-      const lastSendTime = lastInteraction?.created_at ? new Date(lastInteraction.created_at).getTime() : 0;
-      const timeSinceLastSend = now - lastSendTime;
       const threeMinMs = 3 * 60 * 1000;
+      const now = Date.now();
 
-      const delayMs = timeSinceLastSend < threeMinMs ? threeMinMs - timeSinceLastSend : 0;
+      // Calculate delay based on global queue tracker (ensures 3-min gap between ANY sends)
+      const earliestSend = Math.max(now, nextAvailableSendTime);
+      const delayMs = earliestSend - now;
+
+      // Reserve the slot for this lead
+      nextAvailableSendTime = earliestSend + threeMinMs;
+
+      console.log(`Última mensagem para ${lead.nome}: delay de ${Math.round(delayMs / 1000)}s`);
 
       // Fire-and-forget with delay + business hours check (06:30–23:00 BRT)
       const scheduleWithTimeWindow = (execDelayMs: number) => {
