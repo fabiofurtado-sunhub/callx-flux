@@ -152,8 +152,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const delayMs = timeSinceLastSend < threeMinMs ? threeMinMs - timeSinceLastSend : 0;
 
-      // Fire-and-forget with delay
-      setTimeout(async () => {
+      // Fire-and-forget with delay + business hours check (06:30–23:00 BRT)
+      const scheduleWithTimeWindow = (execDelayMs: number) => {
+        setTimeout(async () => {
+          // Check if current time in Brazil is within 06:30–23:00
+          const nowBrt = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+          const hour = nowBrt.getHours();
+          const minutes = nowBrt.getMinutes();
+          const currentMinutes = hour * 60 + minutes;
+          const windowStart = 6 * 60 + 30; // 06:30
+          const windowEnd = 23 * 60; // 23:00
+
+          if (currentMinutes < windowStart || currentMinutes >= windowEnd) {
+            // Outside window — reschedule for next 06:30 BRT
+            const next0630 = new Date(nowBrt);
+            if (currentMinutes >= windowEnd) {
+              next0630.setDate(next0630.getDate() + 1);
+            }
+            next0630.setHours(6, 30, 0, 0);
+            const retryMs = next0630.getTime() - nowBrt.getTime();
+            console.log(`Última mensagem fora do horário (${hour}:${String(minutes).padStart(2,'0')}). Reagendando em ${Math.round(retryMs / 60000)} min.`);
+            scheduleWithTimeWindow(retryMs);
+            return;
+          }
         try {
           // Fetch active template for ultima_mensagem
           const { data: templateData } = await supabase
@@ -194,7 +215,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         } catch (err) {
           console.error('Erro ao enviar última mensagem:', err);
         }
-      }, delayMs);
+        }, execDelayMs);
+      };
+
+      scheduleWithTimeWindow(delayMs);
     }
 
     // Log movement
