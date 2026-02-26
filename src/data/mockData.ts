@@ -1,4 +1,4 @@
-export type LeadStatus = 'lead' | 'mensagem_enviada' | 'fup_1' | 'ia_call' | 'reuniao' | 'no_show' | 'reuniao_realizada' | 'proposta' | 'venda' | 'perdido';
+export type LeadStatus = 'lead' | 'mensagem_enviada' | 'fup_1' | 'ia_call' | 'ultima_mensagem' | 'reuniao' | 'no_show' | 'reuniao_realizada' | 'proposta' | 'venda' | 'perdido';
 export type LeadScore = 'frio' | 'morno' | 'quente' | 'oportunidade';
 export type WhatsAppStatus = 'enviado' | 'entregue' | 'falha' | 'erro_envio' | 'pendente';
 export type UserRole = 'admin' | 'gestor' | 'vendedor';
@@ -31,6 +31,7 @@ export const FUNNEL_STAGES: { key: LeadStatus; label: string; color: string }[] 
   { key: 'mensagem_enviada', label: 'Mensagem Enviada', color: 'hsl(var(--info))' },
   { key: 'fup_1', label: 'FUP 1', color: 'hsl(var(--info))' },
   { key: 'ia_call', label: 'IA Call', color: 'hsl(var(--primary))' },
+  { key: 'ultima_mensagem', label: 'Última Mensagem', color: 'hsl(var(--primary))' },
   { key: 'reuniao', label: 'Reunião Agendada', color: 'hsl(var(--warning))' },
   { key: 'no_show', label: 'No-Show', color: 'hsl(var(--destructive))' },
   { key: 'reuniao_realizada', label: 'Reunião Realizada', color: 'hsl(var(--warning))' },
