@@ -145,7 +145,7 @@ serve(async (req) => {
               },
             },
           },
-          saveToSentItems: false,
+          saveToSentItems: true,
         }),
       }
     );
