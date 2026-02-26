@@ -93,23 +93,42 @@ serve(async (req) => {
       throw new Error("Failed to create email log: " + logError?.message);
     }
 
+    // Format plain text content into proper HTML if needed
+    let formattedBody = html_body;
+    // If content doesn't contain HTML block tags, treat as plain text and wrap in paragraphs
+    if (!/<(div|p|table|br|h[1-6]|ul|ol|li)/i.test(formattedBody)) {
+      formattedBody = formattedBody
+        .split(/\n{2,}/)
+        .map((p: string) => `<p style="margin:0 0 16px 0;line-height:1.6;color:#333333;font-size:15px;">${p.trim()}</p>`)
+        .join("")
+        .replace(/\n/g, "<br/>");
+    }
+
+    // Wrap in a styled container
+    const styledBody = `
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#333333;font-size:15px;line-height:1.6;">
+        ${formattedBody}
+      </div>
+    `;
+
     // Add email signature
     const signatureUrl = `${supabaseUrl}/storage/v1/object/public/email-assets/assinatura-email.png`;
     const signature = `
-      <br/><br/>
-      <table cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
-        <tr>
-          <td>
-            <a href="https://aceleradoramx3.com" target="_blank">
-              <img src="${signatureUrl}" alt="Assinatura MX3 - Fabio Furtado" width="600" style="max-width:100%;height:auto;display:block;" />
-            </a>
-          </td>
-        </tr>
-      </table>
+      <div style="max-width:600px;margin:0 auto;padding:0 20px;">
+        <table cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;border-top:1px solid #e0e0e0;padding-top:16px;">
+          <tr>
+            <td>
+              <a href="https://aceleradoramx3.com" target="_blank">
+                <img src="${signatureUrl}" alt="Assinatura MX3 - Fabio Furtado" width="600" style="max-width:100%;height:auto;display:block;" />
+              </a>
+            </td>
+          </tr>
+        </table>
+      </div>
     `;
 
     // Add tracking to HTML
-    let finalHtml = html_body + signature;
+    let finalHtml = styledBody + signature;
     if (trackingEnabled) {
       finalHtml = wrapLinksWithTracking(finalHtml, supabaseUrl, emailLog.id);
       finalHtml += buildTrackingPixel(supabaseUrl, emailLog.id);
