@@ -16,78 +16,21 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // 1. Get Google Sheets URL from configuracoes
+    // 1. Get Google Sheets URLs from configuracoes
     const { data: config, error: cfgError } = await supabase
       .from("configuracoes")
-      .select("google_sheets_url")
+      .select("google_sheets_url, google_sheets_url_core_ai")
       .limit(1)
       .single();
 
-    if (cfgError || !config?.google_sheets_url) {
+    if (cfgError) {
       return new Response(
-        JSON.stringify({ ok: false, message: "Google Sheets URL não configurada" }),
+        JSON.stringify({ ok: false, message: "Erro ao buscar configurações" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 2. Build CSV URL - support both regular and published URLs
-    const sheetUrl: string = config.google_sheets_url;
-    let csvUrl: string;
-    const pubMatch = sheetUrl.match(/\/d\/e\/(2PACX[a-zA-Z0-9_-]+)/);
-    const regularMatch = sheetUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
-
-    if (pubMatch) {
-      csvUrl = `https://docs.google.com/spreadsheets/d/e/${pubMatch[1]}/pub?output=csv`;
-    } else if (regularMatch) {
-      csvUrl = `https://docs.google.com/spreadsheets/d/${regularMatch[1]}/export?format=csv`;
-    } else {
-      return new Response(
-        JSON.stringify({ ok: false, message: "URL de planilha inválida" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 3. Fetch CSV from public Google Sheet
-    const csvResp = await fetch(csvUrl);
-    if (!csvResp.ok) {
-      const body = await csvResp.text();
-      return new Response(
-        JSON.stringify({ ok: false, message: "Erro ao buscar planilha", detail: body }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    const csvText = await csvResp.text();
-
-    // 4. Parse CSV rows
-    const rows = parseCSV(csvText);
-    if (rows.length < 2) {
-      return new Response(
-        JSON.stringify({ ok: true, inserted: 0, message: "Planilha vazia ou sem dados" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const headers = rows[0].map((h) => h.trim().toLowerCase());
-    const dataRows = rows.slice(1).filter((r) => r.some((c) => c.trim() !== ""));
-
-    // Map column indices (flexible header matching)
-    const colMap = {
-      nome: findCol(headers, ["nome", "name", "cliente"]),
-      telefone: findCol(headers, ["telefone", "phone", "tel", "whatsapp", "celular"]),
-      email: findCol(headers, ["email", "e-mail"]),
-      campanha: findCol(headers, ["campanha", "campaign", "utm_campaign"]),
-      adset: findCol(headers, ["adset", "ad_set", "conjunto", "anuncio", "anúncio", "ad_name"]),
-      grupo_anuncios: findCol(headers, ["grupo_anuncios", "grupo", "ad_group", "grupo de anuncio", "grupo de anúncio", "grupo_de_anuncio"]),
-      faturamento: findCol(headers, ["faturamento", "receita", "revenue", "faturamento mensal"]),
-    };
-    if (colMap.nome === -1 || colMap.telefone === -1) {
-      return new Response(
-        JSON.stringify({ ok: false, message: "Colunas 'nome' e 'telefone' são obrigatórias na planilha" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 5. Get existing phone numbers to deduplicate
+    // 5. Get existing phone numbers to deduplicate (shared across both sheets)
     const { data: existingLeads } = await supabase
       .from("leads")
       .select("telefone");
@@ -96,47 +39,27 @@ Deno.serve(async (req) => {
       (existingLeads || []).map((l: { telefone: string }) => normalizePhone(l.telefone))
     );
 
-    // 6. Build new leads
-    const newLeads: Record<string, unknown>[] = [];
-    for (const row of dataRows) {
-      const phone = normalizePhone(row[colMap.telefone] || "");
-      if (!phone || existingPhones.has(phone)) continue;
+    const results: Record<string, any> = {};
 
-      const nome = (row[colMap.nome] || "").trim();
-      if (!nome) continue;
-
-      existingPhones.add(phone); // prevent dupes within same batch
-
-      newLeads.push({
-        nome,
-        telefone: phone,
-        email: colMap.email !== -1 ? (row[colMap.email] || "").trim() : "",
-        campanha: colMap.campanha !== -1 ? (row[colMap.campanha] || "").trim() : "",
-        adset: colMap.adset !== -1 ? (row[colMap.adset] || "").trim() : "",
-        grupo_anuncios: colMap.grupo_anuncios !== -1 ? (row[colMap.grupo_anuncios] || "").trim() : "",
-        faturamento: colMap.faturamento !== -1 ? parseNumber(row[colMap.faturamento] || "") : null,
-        origem: "google_sheets",
-        status_funil: "lead",
-      });
+    // Process CallX sheet
+    if (config?.google_sheets_url) {
+      results.callx = await processSheet(config.google_sheets_url, "callx", supabase, existingPhones);
     }
 
-    // 7. Insert new leads
-    let inserted = 0;
-    if (newLeads.length > 0) {
-      // Insert in batches of 50
-      for (let i = 0; i < newLeads.length; i += 50) {
-        const batch = newLeads.slice(i, i + 50);
-        const { error: insertError } = await supabase.from("leads").insert(batch);
-        if (!insertError) {
-          inserted += batch.length;
-        } else {
-          console.error("Insert error:", insertError);
-        }
-      }
+    // Process Core AI sheet
+    if (config?.google_sheets_url_core_ai) {
+      results.core_ai = await processSheet(config.google_sheets_url_core_ai, "core_ai", supabase, existingPhones);
+    }
+
+    if (!config?.google_sheets_url && !config?.google_sheets_url_core_ai) {
+      return new Response(
+        JSON.stringify({ ok: false, message: "Nenhuma URL de planilha configurada" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     return new Response(
-      JSON.stringify({ ok: true, inserted, total_rows: dataRows.length }),
+      JSON.stringify({ ok: true, results }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
@@ -148,6 +71,119 @@ Deno.serve(async (req) => {
   }
 });
 
+// ---- Process a single sheet ----
+
+async function processSheet(
+  sheetUrl: string,
+  funil: string,
+  supabase: any,
+  existingPhones: Set<string>
+): Promise<Record<string, any>> {
+  // Build CSV URL
+  let csvUrl: string;
+  const pubMatch = sheetUrl.match(/\/d\/e\/(2PACX[a-zA-Z0-9_-]+)/);
+  const regularMatch = sheetUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+
+  if (pubMatch) {
+    csvUrl = `https://docs.google.com/spreadsheets/d/e/${pubMatch[1]}/pub?output=csv`;
+  } else if (regularMatch) {
+    csvUrl = `https://docs.google.com/spreadsheets/d/${regularMatch[1]}/export?format=csv`;
+  } else {
+    return { ok: false, message: "URL de planilha inválida" };
+  }
+
+  const csvResp = await fetch(csvUrl);
+  if (!csvResp.ok) {
+    const body = await csvResp.text();
+    return { ok: false, message: "Erro ao buscar planilha", detail: body };
+  }
+  const csvText = await csvResp.text();
+
+  const rows = parseCSV(csvText);
+  if (rows.length < 2) {
+    return { ok: true, inserted: 0, message: "Planilha vazia ou sem dados" };
+  }
+
+  const headers = rows[0].map((h) => h.trim().toLowerCase());
+  const dataRows = rows.slice(1).filter((r) => r.some((c) => c.trim() !== ""));
+
+  // Map column indices (flexible header matching)
+  const colMap = {
+    nome: findCol(headers, ["nome", "name", "cliente", "first_name"]),
+    telefone: findCol(headers, ["telefone", "phone", "tel", "whatsapp", "celular", "whatsapp_(dd+número)", "whatsapp_(dd+numero)"]),
+    email: findCol(headers, ["email", "e-mail"]),
+    campanha: findCol(headers, ["campanha", "campaign", "utm_campaign", "campaign_name"]),
+    adset: findCol(headers, ["adset", "ad_set", "conjunto", "anuncio", "anúncio", "ad_name", "adset_name"]),
+    grupo_anuncios: findCol(headers, ["grupo_anuncios", "grupo", "ad_group", "grupo de anuncio", "grupo de anúncio", "grupo_de_anuncio"]),
+    faturamento: findCol(headers, ["faturamento", "receita", "revenue", "faturamento mensal", "qual_seu_faturamento_mensal?", "qual seu faturamento mensal?"]),
+    tomador_decisao: findCol(headers, ["tomador_decisao", "tomador de decisao", "decisor", "você_é_o_tomador_de_decisão?", "voce e o tomador de decisao"]),
+    gargalo: findCol(headers, ["maior_gargalo_comercial", "gargalo", "qual_seu_maior_gargalo_comercial?", "maior gargalo comercial"]),
+    setor: findCol(headers, ["setor_empresa", "setor", "segmento", "qual_o_setor_da_sua_empresa?", "setor da empresa"]),
+  };
+
+  if (colMap.nome === -1 || colMap.telefone === -1) {
+    return { ok: false, message: "Colunas 'nome' e 'telefone' são obrigatórias na planilha" };
+  }
+
+  // Build new leads
+  const newLeads: Record<string, unknown>[] = [];
+  for (const row of dataRows) {
+    const phone = normalizePhone(row[colMap.telefone] || "");
+    if (!phone || existingPhones.has(phone)) continue;
+
+    const nome = (row[colMap.nome] || "").trim();
+    if (!nome) continue;
+
+    existingPhones.add(phone);
+
+    const lead: Record<string, unknown> = {
+      nome,
+      telefone: phone,
+      email: colMap.email !== -1 ? (row[colMap.email] || "").trim() : "",
+      campanha: colMap.campanha !== -1 ? (row[colMap.campanha] || "").trim() : "",
+      adset: colMap.adset !== -1 ? (row[colMap.adset] || "").trim() : "",
+      grupo_anuncios: colMap.grupo_anuncios !== -1 ? (row[colMap.grupo_anuncios] || "").trim() : "",
+      faturamento: colMap.faturamento !== -1 ? parseNumber(row[colMap.faturamento] || "") : null,
+      origem: "google_sheets",
+      funil,
+      status_funil: "lead",
+      envio_whatsapp_status: "pendente",
+    };
+
+    // Core AI specific fields
+    if (funil === "core_ai") {
+      if (colMap.tomador_decisao !== -1) {
+        const val = (row[colMap.tomador_decisao] || "").trim().toLowerCase();
+        lead.tomador_decisao = val === "sim" || val === "yes" || val === "true" || val === "1";
+      }
+      if (colMap.gargalo !== -1) {
+        lead.maior_gargalo_comercial = (row[colMap.gargalo] || "").trim() || null;
+      }
+      if (colMap.setor !== -1) {
+        lead.setor_empresa = (row[colMap.setor] || "").trim() || null;
+      }
+    }
+
+    newLeads.push(lead);
+  }
+
+  // Insert new leads
+  let inserted = 0;
+  if (newLeads.length > 0) {
+    for (let i = 0; i < newLeads.length; i += 50) {
+      const batch = newLeads.slice(i, i + 50);
+      const { error: insertError } = await supabase.from("leads").insert(batch);
+      if (!insertError) {
+        inserted += batch.length;
+      } else {
+        console.error(`Insert error (${funil}):`, insertError);
+      }
+    }
+  }
+
+  return { ok: true, inserted, total_rows: dataRows.length };
+}
+
 // ---- Helpers ----
 
 function normalizePhone(phone: string): string {
@@ -156,30 +192,25 @@ function normalizePhone(phone: string): string {
 
 function parseNumber(val: string): number | null {
   if (!val || !val.trim()) return null;
-  const lower = val.toLowerCase().replace(/[^a-z0-9.,_\- ]/g, "");
 
-  // Handle Brazilian text ranges like "acima_de_r$_1_milhão" or "acima de 1 milhao"
   if (/acima.*milh/i.test(val)) return 1500000;
   if (/acima/i.test(val)) {
-    // "acima_de_r$_500.000" → extract number
     const m = val.match(/[\d.]+/);
     if (m) {
       const n = parseFloat(m[0].replace(/\./g, "").replace(",", "."));
-      return isNaN(n) ? null : n * 1.5; // midpoint above
+      return isNaN(n) ? null : n * 1.5;
     }
     return 1500000;
   }
   if (/abaixo/i.test(val)) {
-    // "abaixo_de_r$_50.000" → value below the threshold
     const m = val.match(/[\d.]+/);
     if (m) {
       const n = parseFloat(m[0].replace(/\./g, "").replace(",", "."));
-      return isNaN(n) ? null : n * 0.5; // midpoint below
+      return isNaN(n) ? null : n * 0.5;
     }
     return 25000;
   }
   if (/de_r|de r/i.test(val) && /a_r|a r/i.test(val)) {
-    // "de_r$_50.000_a_r$_100.000" → extract both numbers and take midpoint
     const matches = val.match(/[\d.]+/g);
     if (matches && matches.length >= 2) {
       const n1 = parseFloat(matches[0].replace(/\./g, "").replace(",", "."));
@@ -188,11 +219,9 @@ function parseNumber(val: string): number | null {
     }
   }
 
-  // Fallback: extract first number segment
   const rangeMatch = val.match(/[\d.,]+/);
   if (!rangeMatch) return null;
   let cleaned = rangeMatch[0];
-  // Brazilian format: dots are thousands, comma is decimal
   cleaned = cleaned.replace(/\./g, "").replace(",", ".");
   const num = parseFloat(cleaned);
   return isNaN(num) ? null : num;
