@@ -13,6 +13,7 @@ import Intelligence from "@/pages/Intelligence";
 import Investimentos from "@/pages/Investimentos";
 import Configuracoes from "@/pages/Configuracoes";
 import SetupMensagens from "@/pages/SetupMensagens";
+import Chamadas from "@/pages/Chamadas";
 import Auth from "@/pages/Auth";
 import NotFound from "./pages/NotFound";
 import Agenda from "./pages/Agenda";
@@ -42,6 +43,7 @@ function ProtectedRoutes() {
           <Route path="/inteligencia" element={<Intelligence />} />
           <Route path="/investimentos" element={<Investimentos />} />
           <Route path="/configuracoes" element={<Configuracoes />} />
+          <Route path="/chamadas" element={<Chamadas />} />
           <Route path="/setup-mensagens" element={<SetupMensagens />} />
         </Route>
         <Route path="*" element={<NotFound />} />

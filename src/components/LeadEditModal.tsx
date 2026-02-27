@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Save, X, Trash2, Plus } from 'lucide-react';
 import { Lead, LeadStatus } from '@/contexts/AppContext';
+import LeadCallHistory from '@/components/LeadCallHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FUNNEL_STAGES, VENDEDORES } from '@/data/mockData';
@@ -306,6 +307,12 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
             <div className="max-h-64 overflow-y-auto">
               <LeadTimeline leadId={lead.id} />
             </div>
+          </div>
+
+          {/* Histórico de Chamadas IA */}
+          <div className="border-t border-border pt-4 space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Chamadas IA</h4>
+            <LeadCallHistory leadId={lead.id} />
           </div>
 
           {/* Meta CAPI Events */}
