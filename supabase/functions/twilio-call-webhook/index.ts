@@ -57,9 +57,11 @@ Deno.serve(async (req) => {
       console.error("Error updating call_log:", error);
     }
 
-    // If call completed, try to fetch transcription from ElevenLabs
+    // If call completed, try to fetch transcription from ElevenLabs (with delay for processing)
     if (callStatus === "completed") {
-      // Fetch conversation data from ElevenLabs (fire-and-forget)
+      // Wait a few seconds for ElevenLabs to finalize the conversation
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
       fetchAndStoreTranscription(supabase, callSid).catch(err => {
         console.error("Transcription fetch error:", err);
       });
@@ -76,7 +78,7 @@ async function fetchAndStoreTranscription(supabase: any, callSid: string) {
   const elevenlabsApiKey = Deno.env.get("ELEVENLABS_API_KEY");
   if (!elevenlabsApiKey) return;
 
-  // Get call_log to find metadata with conversation info
+  // Get call_log to find stored conversation_id
   const { data: callLog } = await supabase
     .from("call_logs")
     .select("id, metadata")
@@ -85,40 +87,75 @@ async function fetchAndStoreTranscription(supabase: any, callSid: string) {
 
   if (!callLog) return;
 
-  // Try to get recent conversations from ElevenLabs
-  const agentId = "agent_5301kjfk4npye2ttq6k12d4jk6d0";
-  
-  const res = await fetch(
-    `https://api.elevenlabs.io/v1/convai/conversations?agent_id=${agentId}&page_size=20`,
+  const conversationId = callLog.metadata?.conversation_id;
+
+  if (!conversationId) {
+    console.log(`No conversation_id stored for call ${callSid}, trying recent conversations`);
+    // Fallback: try to find by timing (legacy calls without conversation_id)
+    await fetchTranscriptionByRecent(supabase, callLog, callSid, elevenlabsApiKey);
+    return;
+  }
+
+  console.log(`Fetching transcription for conversation ${conversationId}`);
+
+  // Fetch full conversation details with transcript using stored conversation_id
+  const detailRes = await fetch(
+    `https://api.elevenlabs.io/v1/convai/conversations/${conversationId}`,
     {
       headers: { "xi-api-key": elevenlabsApiKey },
     }
   );
 
-  if (!res.ok) {
-    console.error("ElevenLabs conversations list error:", res.status);
+  if (!detailRes.ok) {
+    const errText = await detailRes.text();
+    console.error(`ElevenLabs conversation detail error [${detailRes.status}]: ${errText}`);
+    // Retry after 10 more seconds (conversation might not be ready yet)
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    const retryRes = await fetch(
+      `https://api.elevenlabs.io/v1/convai/conversations/${conversationId}`,
+      { headers: { "xi-api-key": elevenlabsApiKey } }
+    );
+    if (!retryRes.ok) {
+      console.error(`Retry also failed for conversation ${conversationId}`);
+      return;
+    }
+    const retryDetail = await retryRes.json();
+    await storeTranscription(supabase, callLog.id, conversationId, retryDetail);
     return;
   }
+
+  const detail = await detailRes.json();
+  await storeTranscription(supabase, callLog.id, conversationId, detail);
+}
+
+async function fetchTranscriptionByRecent(supabase: any, callLog: any, callSid: string, apiKey: string) {
+  const agentId = "agent_5301kjfk4npye2ttq6k12d4jk6d0";
+  
+  const res = await fetch(
+    `https://api.elevenlabs.io/v1/convai/conversations?agent_id=${agentId}&page_size=5`,
+    { headers: { "xi-api-key": apiKey } }
+  );
+
+  if (!res.ok) return;
 
   const { conversations } = await res.json();
   if (!conversations?.length) return;
 
-  // Try to match by timing — get the most recent conversation
+  // Use the most recent (fallback only for old calls)
   const conv = conversations[0];
   
-  // Fetch full conversation details with transcript
   const detailRes = await fetch(
     `https://api.elevenlabs.io/v1/convai/conversations/${conv.conversation_id}`,
-    {
-      headers: { "xi-api-key": elevenlabsApiKey },
-    }
+    { headers: { "xi-api-key": apiKey } }
   );
 
   if (!detailRes.ok) return;
 
   const detail = await detailRes.json();
-  
-  // Build transcription from messages
+  await storeTranscription(supabase, callLog.id, conv.conversation_id, detail);
+}
+
+async function storeTranscription(supabase: any, callLogId: string, conversationId: string, detail: any) {
   let transcricao = "";
   if (detail.transcript) {
     transcricao = detail.transcript
@@ -138,13 +175,12 @@ async function fetchAndStoreTranscription(supabase: any, callSid: string) {
       resumo,
       sentimento,
       metadata: {
-        ...(callLog.metadata || {}),
-        conversation_id: conv.conversation_id,
+        conversation_id: conversationId,
         elevenlabs_status: detail.status,
         call_duration_secs: detail.metadata?.call_duration_secs,
       },
     })
-    .eq("id", callLog.id);
+    .eq("id", callLogId);
 
-  console.log(`Transcription stored for call ${callSid}`);
+  console.log(`Transcription stored for call_log ${callLogId} (conversation: ${conversationId})`);
 }
