@@ -136,11 +136,19 @@ Deno.serve(async (req) => {
       body: formData.toString(),
     });
 
-    const twilioData = await twilioRes.json();
-    console.log(`Twilio call response [${twilioRes.status}]:`, JSON.stringify(twilioData));
+    // Handle Twilio response - may be JSON or XML on error
+    const twilioResponseText = await twilioRes.text();
+    console.log(`Twilio call response [${twilioRes.status}]:`, twilioResponseText);
 
     if (!twilioRes.ok) {
-      throw new Error(`Twilio call failed [${twilioRes.status}]: ${JSON.stringify(twilioData)}`);
+      throw new Error(`Twilio call failed [${twilioRes.status}]: ${twilioResponseText}`);
+    }
+
+    let twilioData: any;
+    try {
+      twilioData = JSON.parse(twilioResponseText);
+    } catch {
+      throw new Error(`Twilio returned non-JSON response: ${twilioResponseText.substring(0, 500)}`);
     }
 
     // Save call log with conversation_id in metadata
@@ -166,6 +174,7 @@ Deno.serve(async (req) => {
         success: true,
         call_sid: twilioData.sid,
         phone,
+        conversation_id: conversationId,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
