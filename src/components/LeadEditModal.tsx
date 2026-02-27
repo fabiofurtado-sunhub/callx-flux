@@ -8,11 +8,22 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save, X, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Save, X, Trash2, Plus } from 'lucide-react';
 import { Lead, LeadStatus } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FUNNEL_STAGES, VENDEDORES } from '@/data/mockData';
+
+const ORIGENS = [
+  'Tráfego Pago - Meta',
+  'LinkedIn',
+  'Sales Navigator',
+  'Outbound IA',
+  'Tráfego Pago Google',
+  'Prospecação',
+  'Indicação',
+];
 
 interface LeadEditModalProps {
   lead: Lead | null;
@@ -25,14 +36,29 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
   const [form, setForm] = useState<Partial<Lead>>({});
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
-    if (lead) setForm({ ...lead });
+    if (lead) setForm({ ...lead, tags: lead.tags || [] });
   }, [lead]);
 
   if (!lead) return null;
 
   const set = (field: string, value: unknown) => setForm(prev => ({ ...prev, [field]: value }));
+
+  const addTag = () => {
+    const tag = newTag.trim();
+    if (!tag) return;
+    const current = form.tags || [];
+    if (!current.includes(tag)) {
+      set('tags', [...current, tag]);
+    }
+    setNewTag('');
+  };
+
+  const removeTag = (tag: string) => {
+    set('tags', (form.tags || []).filter((t: string) => t !== tag));
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -48,13 +74,18 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
         status_funil: form.status_funil,
         valor_proposta: form.valor_proposta,
         valor_venda: form.valor_venda,
+        valor_entrada: form.valor_entrada,
+        valor_mrr: form.valor_mrr,
         motivo_perda: form.motivo_perda,
         observacoes: form.observacoes,
         faturamento: form.faturamento,
         maior_gargalo_comercial: form.maior_gargalo_comercial,
         setor_empresa: form.setor_empresa,
+        origem: form.origem,
+        tags: form.tags || [],
+        score_lead: form.score_lead,
         data_ultimo_movimento: new Date().toISOString(),
-      }).eq('id', lead.id);
+      } as any).eq('id', lead.id);
 
       if (error) throw error;
       toast.success('Lead atualizado com sucesso!');
@@ -90,6 +121,49 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
               <div>
                 <Label className="text-xs text-muted-foreground">Email</Label>
                 <Input value={form.email || ''} onChange={e => set('email', e.target.value)} className="mt-1 bg-background border-border" />
+              </div>
+            </div>
+          </div>
+
+          {/* Origem + Tags */}
+          <div className="space-y-3 border-t border-border pt-4">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Origem & Tags</h4>
+            <div>
+              <Label className="text-xs text-muted-foreground">Origem</Label>
+              <Select value={form.origem || ''} onValueChange={v => set('origem', v)}>
+                <SelectTrigger className="mt-1 bg-background border-border">
+                  <SelectValue placeholder="Selecione a origem" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ORIGENS.map(o => (
+                    <SelectItem key={o} value={o}>{o}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Tags</Label>
+              <div className="flex flex-wrap gap-1.5 mt-1 mb-2">
+                {(form.tags || []).map((tag: string) => (
+                  <Badge key={tag} variant="secondary" className="gap-1 text-xs">
+                    {tag}
+                    <button onClick={() => removeTag(tag)} className="ml-0.5 hover:text-destructive">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={newTag}
+                  onChange={e => setNewTag(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  placeholder="Adicionar tag..."
+                  className="bg-background border-border text-sm"
+                />
+                <Button type="button" size="sm" variant="outline" onClick={addTag}>
+                  <Plus className="w-3.5 h-3.5" />
+                </Button>
               </div>
             </div>
           </div>
@@ -144,9 +218,24 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
                 </Select>
               </div>
             </div>
+
+            {/* Temperatura (score_lead) editável */}
+            <div>
+              <Label className="text-xs text-muted-foreground">Temperatura (Score: 0–100)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={form.score_lead ?? ''}
+                onChange={e => set('score_lead', e.target.value ? Number(e.target.value) : 0)}
+                className="mt-1 bg-background border-border"
+              />
+            </div>
+
+            {/* Valores */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Valor Proposta (R$)</Label>
+                <Label className="text-xs text-muted-foreground">VGV (R$)</Label>
                 <Input type="number" value={form.valor_proposta ?? ''} onChange={e => set('valor_proposta', e.target.value ? Number(e.target.value) : null)} className="mt-1 bg-background border-border" />
               </div>
               <div>
@@ -154,6 +243,17 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
                 <Input type="number" value={form.valor_venda ?? ''} onChange={e => set('valor_venda', e.target.value ? Number(e.target.value) : null)} className="mt-1 bg-background border-border" />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground">Valor de Entrada (R$)</Label>
+                <Input type="number" value={form.valor_entrada ?? ''} onChange={e => set('valor_entrada', e.target.value ? Number(e.target.value) : null)} className="mt-1 bg-background border-border" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Valor MRR (R$)</Label>
+                <Input type="number" value={form.valor_mrr ?? ''} onChange={e => set('valor_mrr', e.target.value ? Number(e.target.value) : null)} className="mt-1 bg-background border-border" />
+              </div>
+            </div>
+
             {form.status_funil === 'perdido' && (
               <div>
                 <Label className="text-xs text-muted-foreground">Motivo da Perda</Label>

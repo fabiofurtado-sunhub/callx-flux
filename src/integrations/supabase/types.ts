@@ -489,9 +489,12 @@ export type Database = {
           score_lead: number
           setor_empresa: string | null
           status_funil: Database["public"]["Enums"]["lead_status"]
+          tags: string[] | null
           telefone: string
           tomador_decisao: boolean | null
           updated_at: string
+          valor_entrada: number | null
+          valor_mrr: number | null
           valor_proposta: number | null
           valor_venda: number | null
           vendedor_id: string | null
@@ -523,9 +526,12 @@ export type Database = {
           score_lead?: number
           setor_empresa?: string | null
           status_funil?: Database["public"]["Enums"]["lead_status"]
+          tags?: string[] | null
           telefone: string
           tomador_decisao?: boolean | null
           updated_at?: string
+          valor_entrada?: number | null
+          valor_mrr?: number | null
           valor_proposta?: number | null
           valor_venda?: number | null
           vendedor_id?: string | null
@@ -557,9 +563,12 @@ export type Database = {
           score_lead?: number
           setor_empresa?: string | null
           status_funil?: Database["public"]["Enums"]["lead_status"]
+          tags?: string[] | null
           telefone?: string
           tomador_decisao?: boolean | null
           updated_at?: string
+          valor_entrada?: number | null
+          valor_mrr?: number | null
           valor_proposta?: number | null
           valor_venda?: number | null
           vendedor_id?: string | null
