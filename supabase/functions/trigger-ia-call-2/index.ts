@@ -100,10 +100,14 @@ Deno.serve(async (req) => {
       `<Parameter name="lead_funil" value="${esc(lead.funil || '')}"/>` +
       `</Stream></Connect></Response>`;
 
+    const statusCallbackUrl = `${supabaseUrl}/functions/v1/twilio-call-webhook`;
+
     const formData = new URLSearchParams();
     formData.append("To", phone);
     formData.append("From", twilioPhone);
     formData.append("Twiml", twiml);
+    formData.append("StatusCallback", statusCallbackUrl);
+    formData.append("StatusCallbackEvent", "initiated ringing answered completed");
 
     const twilioRes = await fetch(twilioUrl, {
       method: "POST",
@@ -120,6 +124,15 @@ Deno.serve(async (req) => {
     if (!twilioRes.ok) {
       throw new Error(`Twilio call failed [${twilioRes.status}]: ${JSON.stringify(twilioData)}`);
     }
+
+    // Save call log
+    await supabase.from("call_logs").insert({
+      lead_id,
+      call_sid: twilioData.sid,
+      agent_type: "ia_call_2",
+      status: "initiated",
+      telefone: phone,
+    });
 
     // Log the call attempt
     await supabase.from("lead_logs").insert({
