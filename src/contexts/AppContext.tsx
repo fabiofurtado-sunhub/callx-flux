@@ -19,6 +19,8 @@ export interface Lead {
   data_ultimo_movimento: string;
   valor_proposta: number | null;
   valor_venda: number | null;
+  valor_entrada: number | null;
+  valor_mrr: number | null;
   motivo_perda: string | null;
   score_lead: number;
   probabilidade_fechamento: number;
@@ -31,6 +33,8 @@ export interface Lead {
   tomador_decisao: boolean | null;
   maior_gargalo_comercial: string | null;
   setor_empresa: string | null;
+  origem: string | null;
+  tags: string[];
 }
 
 interface Settings {
@@ -84,6 +88,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         tomador_decisao: (d as any).tomador_decisao ?? null,
         maior_gargalo_comercial: (d as any).maior_gargalo_comercial ?? null,
         setor_empresa: (d as any).setor_empresa ?? null,
+        origem: (d as any).origem ?? null,
+        tags: (d as any).tags ?? [],
+        valor_entrada: (d as any).valor_entrada ? Number((d as any).valor_entrada) : null,
+        valor_mrr: (d as any).valor_mrr ? Number((d as any).valor_mrr) : null,
       })));
     }
     setLoading(false);
