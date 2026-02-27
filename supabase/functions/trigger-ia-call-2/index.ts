@@ -70,12 +70,35 @@ Deno.serve(async (req) => {
     const { token } = await tokenRes.json();
 
     // Step 2: Initiate outbound call via Twilio with ElevenLabs TwiML
-    // The TwiML connects the call to a WebSocket stream that pipes audio to/from ElevenLabs
-    const twimlUrl = `https://api.elevenlabs.io/v1/convai/twilio/inbound?agent_id=${AGENT_ID}`;
-
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Calls.json`;
 
-    const twiml = `<Response><Connect><Stream url="wss://api.elevenlabs.io/v1/convai/twilio/audio?agent_id=${AGENT_ID}&amp;xi-api-key=${elevenlabsApiKey}"><Parameter name="lead_id" value="${lead_id}"/><Parameter name="lead_nome" value="${lead.nome || ''}"/></Stream></Connect></Response>`;
+    // Extract first name for the agent greeting
+    const nameParts = (lead.nome || "").trim().split(/\s+/);
+    const firstName = nameParts[0] || "";
+
+    // Format current date in Brazilian format
+    const now = new Date();
+    const brDate = now.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+
+    // Escape XML special characters
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+
+    // Build TwiML with all lead data as Parameters (become dynamic variables in ElevenLabs)
+    const twiml = `<Response><Connect><Stream url="wss://api.elevenlabs.io/v1/convai/twilio/audio?agent_id=${AGENT_ID}&amp;xi-api-key=${elevenlabsApiKey}">` +
+      `<Parameter name="first_name" value="${esc(firstName)}"/>` +
+      `<Parameter name="now" value="${esc(brDate)}"/>` +
+      `<Parameter name="date" value="${esc(brDate)}"/>` +
+      `<Parameter name="lead_id" value="${lead_id}"/>` +
+      `<Parameter name="lead_nome" value="${esc(lead.nome || '')}"/>` +
+      `<Parameter name="lead_email" value="${esc(lead.email || '')}"/>` +
+      `<Parameter name="lead_telefone" value="${esc(lead.telefone || '')}"/>` +
+      `<Parameter name="lead_campanha" value="${esc(lead.campanha || '')}"/>` +
+      `<Parameter name="lead_vendedor" value="${esc(lead.vendedor_nome || '')}"/>` +
+      `<Parameter name="lead_faturamento" value="${lead.faturamento != null ? String(lead.faturamento) : ''}"/>` +
+      `<Parameter name="lead_setor" value="${esc(lead.setor_empresa || '')}"/>` +
+      `<Parameter name="lead_gargalo" value="${esc(lead.maior_gargalo_comercial || '')}"/>` +
+      `<Parameter name="lead_funil" value="${esc(lead.funil || '')}"/>` +
+      `</Stream></Connect></Response>`;
 
     const formData = new URLSearchParams();
     formData.append("To", phone);
