@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { format } from 'date-fns';
 import LeadEditModal from '@/components/LeadEditModal';
 import LossReasonDialog from '@/components/LossReasonDialog';
+import VoiceAgentButton from '@/components/VoiceAgentButton';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Pipeline() {
@@ -341,6 +342,8 @@ export default function Pipeline() {
         }}
         onConfirm={handleLossConfirm}
       />
+
+      <VoiceAgentButton />
     </div>
   );
 }
