@@ -135,6 +135,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     await supabase.from('leads').update(updates).eq('id', leadId);
 
+    // Auto-trigger ElevenLabs + Twilio call when lead moves to ia_call_2
+    if (newStage === 'ia_call_2') {
+      supabase.functions.invoke('trigger-ia-call-2', {
+        body: { lead_id: leadId },
+      }).then(({ data, error }) => {
+        if (error) console.error('IA Call 2 trigger error:', error);
+        else console.log('IA Call 2 ligação disparada:', data);
+      });
+    }
+
     // Auto-send WhatsApp when lead moves to 'ultima_mensagem'
     if (newStage === 'ultima_mensagem') {
       const threeMinMs = 3 * 60 * 1000;

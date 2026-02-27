@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.elevenlabs-conversation-token]
 verify_jwt = false
+
+[functions.trigger-ia-call-2]
+verify_jwt = false
