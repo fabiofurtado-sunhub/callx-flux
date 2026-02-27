@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export type LeadStatus = 'lead' | 'mensagem_enviada' | 'fup_1' | 'ia_call' | 'ultima_mensagem' | 'reuniao' | 'no_show' | 'reuniao_realizada' | 'proposta' | 'venda' | 'perdido';
+export type LeadStatus = 'lead' | 'mensagem_enviada' | 'fup_1' | 'ia_call' | 'ia_call_2' | 'ultima_mensagem' | 'reuniao' | 'no_show' | 'reuniao_realizada' | 'proposta' | 'venda' | 'perdido';
 
 export interface Lead {
   id: string;
@@ -117,8 +117,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const lead = leads.find(l => l.id === leadId);
     if (!lead) return;
 
-    const scoreMap: Record<LeadStatus, number> = { lead: 10, mensagem_enviada: 15, fup_1: 20, ia_call: 25, ultima_mensagem: 28, reuniao: 30, no_show: 25, reuniao_realizada: 45, proposta: 60, venda: 100, perdido: 5 };
-    const probMap: Record<LeadStatus, number> = { lead: 10, mensagem_enviada: 15, fup_1: 20, ia_call: 25, ultima_mensagem: 28, reuniao: 30, no_show: 15, reuniao_realizada: 45, proposta: 60, venda: 100, perdido: 0 };
+    const scoreMap: Record<LeadStatus, number> = { lead: 10, mensagem_enviada: 15, fup_1: 20, ia_call: 25, ia_call_2: 28, ultima_mensagem: 28, reuniao: 30, no_show: 25, reuniao_realizada: 45, proposta: 60, venda: 100, perdido: 5 };
+    const probMap: Record<LeadStatus, number> = { lead: 10, mensagem_enviada: 15, fup_1: 20, ia_call: 25, ia_call_2: 28, ultima_mensagem: 28, reuniao: 30, no_show: 15, reuniao_realizada: 45, proposta: 60, venda: 100, perdido: 0 };
 
     const updates: Record<string, any> = {
       status_funil: newStage,

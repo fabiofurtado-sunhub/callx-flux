@@ -739,6 +739,7 @@ export type Database = {
         | "mensagem_enviada"
         | "fup_1"
         | "ia_call"
+        | "ia_call_2"
         | "ultima_mensagem"
         | "reuniao"
         | "no_show"
@@ -885,6 +886,7 @@ export const Constants = {
         "mensagem_enviada",
         "fup_1",
         "ia_call",
+        "ia_call_2",
         "ultima_mensagem",
         "reuniao",
         "no_show",
