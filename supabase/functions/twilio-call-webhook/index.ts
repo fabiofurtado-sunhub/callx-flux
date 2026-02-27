@@ -26,25 +26,26 @@ Deno.serve(async (req) => {
       const formData = await req.formData();
       callSid = formData.get("CallSid")?.toString() || "";
       callStatus = formData.get("CallStatus")?.toString() || "";
-      callDuration = formData.get("CallDuration")?.toString() || "";
+      // Twilio sends Duration or CallDuration depending on context
+      callDuration = formData.get("CallDuration")?.toString() || formData.get("Duration")?.toString() || "";
     } else {
       const body = await req.json();
       callSid = body.CallSid || body.call_sid || "";
       callStatus = body.CallStatus || body.status || "";
-      callDuration = body.CallDuration || body.duration || "";
+      callDuration = body.CallDuration || body.Duration || body.duration || "";
     }
 
     if (!callSid) {
       return new Response("OK", { status: 200, headers: corsHeaders });
     }
 
-    console.log(`Webhook: ${callSid} -> ${callStatus} (${callDuration}s)`);
+    console.log(`Webhook: ${callSid} -> ${callStatus} (duration: ${callDuration}s)`);
 
     const updates: Record<string, unknown> = {
       status: callStatus,
     };
 
-    if (callDuration) {
+    if (callDuration && parseInt(callDuration, 10) > 0) {
       updates.duration_seconds = parseInt(callDuration, 10);
     }
 
@@ -57,10 +58,10 @@ Deno.serve(async (req) => {
       console.error("Error updating call_log:", error);
     }
 
-    // If call completed, try to fetch transcription from ElevenLabs (with delay for processing)
+    // If call completed, fetch transcription from ElevenLabs
     if (callStatus === "completed") {
-      // Wait a few seconds for ElevenLabs to finalize the conversation
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // Wait for ElevenLabs to finalize the conversation
+      await new Promise(resolve => setTimeout(resolve, 8000));
       
       fetchAndStoreTranscription(supabase, callSid).catch(err => {
         console.error("Transcription fetch error:", err);
@@ -81,7 +82,7 @@ async function fetchAndStoreTranscription(supabase: any, callSid: string) {
   // Get call_log to find stored conversation_id
   const { data: callLog } = await supabase
     .from("call_logs")
-    .select("id, metadata")
+    .select("id, metadata, lead_id")
     .eq("call_sid", callSid)
     .single();
 
@@ -90,74 +91,55 @@ async function fetchAndStoreTranscription(supabase: any, callSid: string) {
   const conversationId = callLog.metadata?.conversation_id;
 
   if (!conversationId) {
-    console.log(`No conversation_id stored for call ${callSid}, trying recent conversations`);
-    // Fallback: try to find by timing (legacy calls without conversation_id)
-    await fetchTranscriptionByRecent(supabase, callLog, callSid, elevenlabsApiKey);
+    console.log(`No conversation_id stored for call ${callSid}, skipping transcription`);
     return;
   }
 
   console.log(`Fetching transcription for conversation ${conversationId}`);
 
-  // Fetch full conversation details with transcript using stored conversation_id
-  const detailRes = await fetch(
-    `https://api.elevenlabs.io/v1/convai/conversations/${conversationId}`,
-    {
-      headers: { "xi-api-key": elevenlabsApiKey },
-    }
-  );
+  // Fetch conversation details with transcript
+  let detail: any = null;
 
-  if (!detailRes.ok) {
-    const errText = await detailRes.text();
-    console.error(`ElevenLabs conversation detail error [${detailRes.status}]: ${errText}`);
-    // Retry after 10 more seconds (conversation might not be ready yet)
-    await new Promise(resolve => setTimeout(resolve, 10000));
-    const retryRes = await fetch(
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const detailRes = await fetch(
       `https://api.elevenlabs.io/v1/convai/conversations/${conversationId}`,
       { headers: { "xi-api-key": elevenlabsApiKey } }
     );
-    if (!retryRes.ok) {
-      console.error(`Retry also failed for conversation ${conversationId}`);
-      return;
+
+    if (detailRes.ok) {
+      detail = await detailRes.json();
+      // Check if transcript is available
+      if (detail.transcript && detail.transcript.length > 0) {
+        break;
+      }
+      console.log(`Attempt ${attempt + 1}: transcript not ready yet`);
+    } else {
+      console.log(`Attempt ${attempt + 1}: ElevenLabs returned ${detailRes.status}`);
     }
-    const retryDetail = await retryRes.json();
-    await storeTranscription(supabase, callLog.id, conversationId, retryDetail);
+
+    // Wait before retry
+    if (attempt < 2) {
+      await new Promise(resolve => setTimeout(resolve, 10000));
+    }
+  }
+
+  if (!detail) {
+    console.error(`Failed to fetch conversation ${conversationId} after 3 attempts`);
     return;
   }
 
-  const detail = await detailRes.json();
-  await storeTranscription(supabase, callLog.id, conversationId, detail);
+  await storeTranscription(supabase, callLog.id, conversationId, detail, callLog.metadata);
 }
 
-async function fetchTranscriptionByRecent(supabase: any, callLog: any, callSid: string, apiKey: string) {
-  const agentId = "agent_5301kjfk4npye2ttq6k12d4jk6d0";
-  
-  const res = await fetch(
-    `https://api.elevenlabs.io/v1/convai/conversations?agent_id=${agentId}&page_size=5`,
-    { headers: { "xi-api-key": apiKey } }
-  );
-
-  if (!res.ok) return;
-
-  const { conversations } = await res.json();
-  if (!conversations?.length) return;
-
-  // Use the most recent (fallback only for old calls)
-  const conv = conversations[0];
-  
-  const detailRes = await fetch(
-    `https://api.elevenlabs.io/v1/convai/conversations/${conv.conversation_id}`,
-    { headers: { "xi-api-key": apiKey } }
-  );
-
-  if (!detailRes.ok) return;
-
-  const detail = await detailRes.json();
-  await storeTranscription(supabase, callLog.id, conv.conversation_id, detail);
-}
-
-async function storeTranscription(supabase: any, callLogId: string, conversationId: string, detail: any) {
+async function storeTranscription(
+  supabase: any,
+  callLogId: string,
+  conversationId: string,
+  detail: any,
+  existingMetadata: any
+) {
   let transcricao = "";
-  if (detail.transcript) {
+  if (detail.transcript && detail.transcript.length > 0) {
     transcricao = detail.transcript
       .map((msg: any) => `${msg.role === "agent" ? "🤖 Agente" : "👤 Lead"}: ${msg.message}`)
       .join("\n\n");
@@ -168,19 +150,33 @@ async function storeTranscription(supabase: any, callLogId: string, conversation
     ? JSON.stringify(detail.analysis.evaluation_criteria_results)
     : null;
 
+  // Get duration from ElevenLabs if available
+  const elDurationSecs = detail.metadata?.call_duration_secs;
+
+  // MERGE metadata instead of overwriting
+  const mergedMetadata = {
+    ...(existingMetadata || {}),
+    conversation_id: conversationId,
+    elevenlabs_status: detail.status,
+    call_duration_secs: elDurationSecs,
+  };
+
+  const updates: Record<string, unknown> = {
+    transcricao: transcricao || null,
+    resumo,
+    sentimento,
+    metadata: mergedMetadata,
+  };
+
+  // Use ElevenLabs duration if Twilio didn't provide one
+  if (elDurationSecs && elDurationSecs > 0) {
+    updates.duration_seconds = Math.round(elDurationSecs);
+  }
+
   await supabase
     .from("call_logs")
-    .update({
-      transcricao,
-      resumo,
-      sentimento,
-      metadata: {
-        conversation_id: conversationId,
-        elevenlabs_status: detail.status,
-        call_duration_secs: detail.metadata?.call_duration_secs,
-      },
-    })
+    .update(updates)
     .eq("id", callLogId);
 
-  console.log(`Transcription stored for call_log ${callLogId} (conversation: ${conversationId})`);
+  console.log(`Transcription stored for call_log ${callLogId} (conversation: ${conversationId}, duration: ${elDurationSecs}s)`);
 }
