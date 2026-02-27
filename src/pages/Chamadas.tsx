@@ -87,15 +87,17 @@ export default function Chamadas() {
   // === Computed analytics ===
   const analytics = useMemo(() => {
     const total = calls.length;
-    const completed = calls.filter(c => c.status === 'completed');
-    const answered = completed.length;
-    const unanswered = calls.filter(c => ['failed', 'busy', 'no-answer', 'canceled'].includes(c.status)).length;
+    // A call is truly "connected" only if completed AND duration > 0
+    const connected = calls.filter(c => c.status === 'completed' && (c.duration_seconds || 0) > 0);
+    const completedNoTalk = calls.filter(c => c.status === 'completed' && (c.duration_seconds || 0) === 0);
+    const answered = connected.length;
+    const unanswered = calls.filter(c => ['failed', 'busy', 'no-answer', 'canceled'].includes(c.status)).length + completedNoTalk.length;
     const inProgress = calls.filter(c => ['initiated', 'ringing', 'in-progress'].includes(c.status)).length;
     const connectRate = total > 0 ? ((answered / total) * 100).toFixed(1) : '0';
 
-    const totalTalkSeconds = completed.reduce((sum, c) => sum + (c.duration_seconds || 0), 0);
+    const totalTalkSeconds = connected.reduce((sum, c) => sum + (c.duration_seconds || 0), 0);
     const avgTalkSeconds = answered > 0 ? Math.round(totalTalkSeconds / answered) : 0;
-    const longestCall = completed.reduce((max, c) => Math.max(max, c.duration_seconds || 0), 0);
+    const longestCall = connected.reduce((max, c) => Math.max(max, c.duration_seconds || 0), 0);
     const withTranscription = calls.filter(c => c.transcricao).length;
 
     // Calls per day
@@ -104,7 +106,7 @@ export default function Chamadas() {
       const day = new Date(c.created_at).toISOString().split('T')[0];
       const entry = dailyMap.get(day) || { total: 0, answered: 0, talkSeconds: 0 };
       entry.total++;
-      if (c.status === 'completed') {
+      if (c.status === 'completed' && (c.duration_seconds || 0) > 0) {
         entry.answered++;
         entry.talkSeconds += c.duration_seconds || 0;
       }
@@ -123,8 +125,8 @@ export default function Chamadas() {
 
     // Status breakdown for donut
     const statusBreakdown = [
-      { name: 'Atendidas', value: answered, color: CHART_GREEN },
-      { name: 'Sem Resposta', value: unanswered, color: CHART_BLUE },
+      { name: 'Conectadas', value: answered, color: CHART_GREEN },
+      { name: 'Não Conectou', value: unanswered, color: CHART_RED },
       { name: 'Em Andamento', value: inProgress, color: CHART_ORANGE },
     ].filter(s => s.value > 0);
 
@@ -186,8 +188,8 @@ export default function Chamadas() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             {[
               { label: 'Total Chamadas', value: analytics.total.toLocaleString(), color: 'text-primary' },
-              { label: 'Atendidas', value: analytics.answered.toLocaleString(), color: 'text-emerald-400' },
-              { label: 'Sem Resposta', value: analytics.unanswered.toLocaleString(), color: 'text-red-400' },
+              { label: 'Conectadas', value: analytics.answered.toLocaleString(), color: 'text-emerald-400' },
+              { label: 'Não Conectou', value: analytics.unanswered.toLocaleString(), color: 'text-red-400' },
               { label: 'Taxa Conexão', value: `${analytics.connectRate}%`, color: 'text-emerald-400' },
               { label: 'Tempo Total', value: formatDuration(analytics.totalTalkSeconds), color: 'text-blue-400' },
               { label: 'Duração Média', value: formatDuration(analytics.avgTalkSeconds), color: 'text-violet-400' },
@@ -218,9 +220,9 @@ export default function Chamadas() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <MetricCard icon={PhoneIncoming} label="Total de Tentativas" value={analytics.total} color="text-blue-400" subtitle="Todas as chamadas realizadas" />
-                <MetricCard icon={TrendingUp} label="Taxa de Conexão" value={`${analytics.connectRate}%`} color="text-emerald-400" subtitle="(Atendidas ÷ Total)" />
-                <MetricCard icon={CheckCircle} label="Atendidas" value={analytics.answered} color="text-emerald-400" subtitle="Chamadas atendidas com sucesso" />
-                <MetricCard icon={PhoneMissed} label="Não Atendidas" value={analytics.unanswered} color="text-red-400" subtitle="Chamadas sem resposta ou falharam" />
+                <MetricCard icon={TrendingUp} label="Taxa de Conexão" value={`${analytics.connectRate}%`} color="text-emerald-400" subtitle="(Conectadas ÷ Total)" />
+                <MetricCard icon={CheckCircle} label="Conectadas" value={analytics.answered} color="text-emerald-400" subtitle="Chamadas com conversa real (>0s)" />
+                <MetricCard icon={PhoneMissed} label="Não Conectou" value={analytics.unanswered} color="text-red-400" subtitle="Sem conversa, falha ou sem resposta" />
               </div>
             </CardContent>
           </Card>
@@ -470,7 +472,12 @@ export default function Chamadas() {
                 </thead>
                 <tbody>
                   {calls.slice(0, 50).map((call) => {
-                    const cfg = statusConfig[call.status] || statusConfig.initiated;
+                    // If completed but 0 duration, show as "Não Conectou"
+                    const isCompletedNoTalk = call.status === 'completed' && (call.duration_seconds || 0) === 0;
+                    const effectiveStatus = isCompletedNoTalk ? 'no-connect' : call.status;
+                    const cfg = effectiveStatus === 'no-connect'
+                      ? { label: 'Não Conectou', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20', icon: PhoneOff }
+                      : (statusConfig[call.status] || statusConfig.initiated);
                     const StatusIcon = cfg.icon;
                     return (
                       <tr
