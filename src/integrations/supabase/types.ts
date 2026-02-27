@@ -184,6 +184,68 @@ export type Database = {
           },
         ]
       }
+      call_logs: {
+        Row: {
+          agent_type: string
+          call_sid: string | null
+          created_at: string
+          duration_seconds: number | null
+          erro: string | null
+          gravacao_url: string | null
+          id: string
+          lead_id: string
+          metadata: Json | null
+          resumo: string | null
+          sentimento: string | null
+          status: string
+          telefone: string | null
+          transcricao: string | null
+          updated_at: string
+        }
+        Insert: {
+          agent_type?: string
+          call_sid?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          erro?: string | null
+          gravacao_url?: string | null
+          id?: string
+          lead_id: string
+          metadata?: Json | null
+          resumo?: string | null
+          sentimento?: string | null
+          status?: string
+          telefone?: string | null
+          transcricao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agent_type?: string
+          call_sid?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          erro?: string | null
+          gravacao_url?: string | null
+          id?: string
+          lead_id?: string
+          metadata?: Json | null
+          resumo?: string | null
+          sentimento?: string | null
+          status?: string
+          telefone?: string | null
+          transcricao?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       configuracoes: {
         Row: {
           email_from_address: string | null
