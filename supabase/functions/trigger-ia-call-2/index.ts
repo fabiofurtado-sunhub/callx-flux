@@ -97,17 +97,24 @@ Deno.serve(async (req) => {
       }
     );
 
+    const registerText = await registerRes.text();
+
     if (!registerRes.ok) {
-      const errText = await registerRes.text();
-      throw new Error(`ElevenLabs register-call error [${registerRes.status}]: ${errText}`);
+      throw new Error(`ElevenLabs register-call error [${registerRes.status}]: ${registerText}`);
     }
 
-    const registerData = await registerRes.json();
-    const twiml = registerData.twiml;
-    const conversationId = registerData.conversation_id;
+    // ElevenLabs register-call returns TwiML XML directly
+    // Extract conversation_id from XML: <Parameter name="conversation_id" value="conv_xxx" />
+    let twiml = registerText;
+    let conversationId = "";
 
-    if (!twiml) {
-      throw new Error("No TwiML returned from ElevenLabs register-call");
+    const convMatch = registerText.match(/name="conversation_id"\s+value="([^"]+)"/);
+    if (convMatch) {
+      conversationId = convMatch[1];
+    }
+
+    if (!twiml || !twiml.includes("<Response>")) {
+      throw new Error("No valid TwiML returned from ElevenLabs register-call");
     }
 
     console.log("ElevenLabs register-call success, conversation_id:", conversationId);
