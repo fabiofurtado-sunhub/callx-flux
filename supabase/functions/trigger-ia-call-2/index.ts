@@ -107,7 +107,10 @@ Deno.serve(async (req) => {
     formData.append("From", twilioPhone);
     formData.append("Twiml", twiml);
     formData.append("StatusCallback", statusCallbackUrl);
-    formData.append("StatusCallbackEvent", "initiated ringing answered completed");
+    formData.append("StatusCallbackEvent", "initiated");
+    formData.append("StatusCallbackEvent", "ringing");
+    formData.append("StatusCallbackEvent", "answered");
+    formData.append("StatusCallbackEvent", "completed");
 
     const twilioRes = await fetch(twilioUrl, {
       method: "POST",
