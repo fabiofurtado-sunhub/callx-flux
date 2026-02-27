@@ -104,12 +104,13 @@ Deno.serve(async (req) => {
 
     const registerData = await registerRes.json();
     const twiml = registerData.twiml;
+    const conversationId = registerData.conversation_id;
 
     if (!twiml) {
       throw new Error("No TwiML returned from ElevenLabs register-call");
     }
 
-    console.log("ElevenLabs register-call success, got TwiML");
+    console.log("ElevenLabs register-call success, conversation_id:", conversationId);
 
     // Step 2: Initiate outbound call via Twilio with ElevenLabs TwiML
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Calls.json`;
@@ -142,13 +143,14 @@ Deno.serve(async (req) => {
       throw new Error(`Twilio call failed [${twilioRes.status}]: ${JSON.stringify(twilioData)}`);
     }
 
-    // Save call log
+    // Save call log with conversation_id in metadata
     await supabase.from("call_logs").insert({
       lead_id,
       call_sid: twilioData.sid,
       agent_type: "ia_call_2",
       status: "initiated",
       telefone: phone,
+      metadata: { conversation_id: conversationId },
     });
 
     // Log the call attempt
