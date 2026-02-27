@@ -54,24 +54,6 @@ Deno.serve(async (req) => {
     }
     phone = "+" + phone;
 
-    // Step 1: Get a conversation token from ElevenLabs
-    const tokenRes = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${AGENT_ID}`,
-      {
-        headers: { "xi-api-key": elevenlabsApiKey },
-      }
-    );
-
-    if (!tokenRes.ok) {
-      const errText = await tokenRes.text();
-      throw new Error(`ElevenLabs token error [${tokenRes.status}]: ${errText}`);
-    }
-
-    const { token } = await tokenRes.json();
-
-    // Step 2: Initiate outbound call via Twilio with ElevenLabs TwiML
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Calls.json`;
-
     // Extract first name for the agent greeting
     const nameParts = (lead.nome || "").trim().split(/\s+/);
     const firstName = nameParts[0] || "";
@@ -80,25 +62,57 @@ Deno.serve(async (req) => {
     const now = new Date();
     const brDate = now.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
-    // Escape XML special characters
-    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+    // Step 1: Register the call with ElevenLabs to get TwiML with dynamic variables
+    const registerRes = await fetch(
+      "https://api.elevenlabs.io/v1/convai/twilio/register-call",
+      {
+        method: "POST",
+        headers: {
+          "xi-api-key": elevenlabsApiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          agent_id: AGENT_ID,
+          from_number: twilioPhone,
+          to_number: phone,
+          direction: "outbound",
+          conversation_initiation_client_data: {
+            dynamic_variables: {
+              first_name: firstName,
+              now: brDate,
+              date: brDate,
+              lead_id: lead_id,
+              lead_nome: lead.nome || "",
+              lead_email: lead.email || "",
+              lead_telefone: lead.telefone || "",
+              lead_campanha: lead.campanha || "",
+              lead_vendedor: lead.vendedor_nome || "",
+              lead_faturamento: lead.faturamento != null ? String(lead.faturamento) : "",
+              lead_setor: lead.setor_empresa || "",
+              lead_gargalo: lead.maior_gargalo_comercial || "",
+              lead_funil: lead.funil || "",
+            },
+          },
+        }),
+      }
+    );
 
-    // Build TwiML with all lead data as Parameters (become dynamic variables in ElevenLabs)
-    const twiml = `<Response><Connect><Stream url="wss://api.elevenlabs.io/v1/convai/twilio/audio?agent_id=${AGENT_ID}&amp;xi-api-key=${elevenlabsApiKey}">` +
-      `<Parameter name="first_name" value="${esc(firstName)}"/>` +
-      `<Parameter name="now" value="${esc(brDate)}"/>` +
-      `<Parameter name="date" value="${esc(brDate)}"/>` +
-      `<Parameter name="lead_id" value="${lead_id}"/>` +
-      `<Parameter name="lead_nome" value="${esc(lead.nome || '')}"/>` +
-      `<Parameter name="lead_email" value="${esc(lead.email || '')}"/>` +
-      `<Parameter name="lead_telefone" value="${esc(lead.telefone || '')}"/>` +
-      `<Parameter name="lead_campanha" value="${esc(lead.campanha || '')}"/>` +
-      `<Parameter name="lead_vendedor" value="${esc(lead.vendedor_nome || '')}"/>` +
-      `<Parameter name="lead_faturamento" value="${lead.faturamento != null ? String(lead.faturamento) : ''}"/>` +
-      `<Parameter name="lead_setor" value="${esc(lead.setor_empresa || '')}"/>` +
-      `<Parameter name="lead_gargalo" value="${esc(lead.maior_gargalo_comercial || '')}"/>` +
-      `<Parameter name="lead_funil" value="${esc(lead.funil || '')}"/>` +
-      `</Stream></Connect></Response>`;
+    if (!registerRes.ok) {
+      const errText = await registerRes.text();
+      throw new Error(`ElevenLabs register-call error [${registerRes.status}]: ${errText}`);
+    }
+
+    const registerData = await registerRes.json();
+    const twiml = registerData.twiml;
+
+    if (!twiml) {
+      throw new Error("No TwiML returned from ElevenLabs register-call");
+    }
+
+    console.log("ElevenLabs register-call success, got TwiML");
+
+    // Step 2: Initiate outbound call via Twilio with ElevenLabs TwiML
+    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Calls.json`;
 
     const statusCallbackUrl = `${supabaseUrl}/functions/v1/twilio-call-webhook`;
 
