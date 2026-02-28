@@ -26,6 +26,24 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // 0. Clean up stale "initiated" calls (stuck for > 10min)
+    const staleThreshold = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { data: staleCalls } = await supabase
+      .from("call_logs")
+      .select("id")
+      .eq("agent_type", "ia_call_2")
+      .eq("status", "initiated")
+      .lt("created_at", staleThreshold);
+
+    if (staleCalls && staleCalls.length > 0) {
+      const staleIds = staleCalls.map((c: any) => c.id);
+      await supabase
+        .from("call_logs")
+        .update({ status: "failed", erro: "Timeout: stuck in initiated" })
+        .in("id", staleIds);
+      console.log(`Cleaned up ${staleIds.length} stale initiated calls`);
+    }
+
     // 1. Count active calls
     const { count: activeCalls } = await supabase
       .from("call_logs")
