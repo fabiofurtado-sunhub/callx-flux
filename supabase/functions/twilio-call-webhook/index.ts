@@ -198,4 +198,102 @@ async function storeTranscription(
     .eq("id", callLogId);
 
   console.log(`Transcription stored for call_log ${callLogId} (conversation: ${conversationId}, duration: ${elDurationSecs}s, voicemail: ${detectedVoicemail})`);
+
+  // If not voicemail and there's a real conversation, analyze for interest/meeting signals
+  if (!detectedVoicemail && transcricao && transcricao.length > 200) {
+    // Get lead info
+    const { data: callLog } = await supabase
+      .from("call_logs")
+      .select("lead_id")
+      .eq("id", callLogId)
+      .single();
+
+    if (callLog?.lead_id) {
+      analyzeTranscriptForInterest(supabase, callLog.lead_id, callLogId, transcricao).catch(err => {
+        console.error("Interest analysis error:", err);
+      });
+    }
+  }
+}
+
+async function analyzeTranscriptForInterest(
+  supabase: any,
+  leadId: string,
+  callLogId: string,
+  transcricao: string
+) {
+  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!lovableApiKey) {
+    console.log("LOVABLE_API_KEY not set, skipping interest analysis");
+    return;
+  }
+
+  const { data: lead } = await supabase
+    .from("leads")
+    .select("nome")
+    .eq("id", leadId)
+    .single();
+
+  const leadNome = lead?.nome || "Lead";
+
+  const prompt = `Analise esta transcrição de uma ligação comercial e determine se o lead demonstrou INTERESSE REAL ou AGENDOU/CONFIRMOU uma reunião.
+
+REGRAS:
+- Respostas de caixa postal, secretária eletrônica ou "entrego seu recado" NÃO contam como interesse
+- O lead precisa ter FALADO e demonstrado interesse genuíno (ex: "me conta mais", "quero agendar", "pode sim", "vamos marcar")
+- Apenas confirmar que está na linha ou pedir para esperar NÃO conta como interesse
+- Se a conversa foi apenas com caixa postal/secretária, responda "nenhum"
+
+Responda APENAS com um JSON:
+{"sinal": "interesse" | "agendamento" | "nenhum", "resumo": "frase curta explicando"}
+
+TRANSCRIÇÃO:
+${transcricao.substring(0, 3000)}`;
+
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${lovableApiKey}`,
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 200,
+      }),
+    });
+
+    if (!res.ok) {
+      console.error(`AI analysis failed: ${res.status}`);
+      return;
+    }
+
+    const aiData = await res.json();
+    const content = aiData.choices?.[0]?.message?.content || "";
+    
+    // Extract JSON from response
+    const jsonMatch = content.match(/\{[^}]+\}/);
+    if (!jsonMatch) return;
+
+    const analysis = JSON.parse(jsonMatch[0]);
+    console.log(`Interest analysis for ${leadNome}: ${analysis.sinal} - ${analysis.resumo}`);
+
+    if (analysis.sinal === "interesse" || analysis.sinal === "agendamento") {
+      const tipo = analysis.sinal === "agendamento" ? "agendamento" : "oportunidade";
+      const mensagem = analysis.sinal === "agendamento"
+        ? `🗓️ ${leadNome} confirmou interesse em agendar reunião durante ligação IA: "${analysis.resumo}"`
+        : `🔥 ${leadNome} demonstrou interesse durante ligação IA: "${analysis.resumo}"`;
+
+      await supabase.from("alertas_comerciais").insert({
+        lead_id: leadId,
+        tipo,
+        mensagem,
+      });
+
+      console.log(`Alert created for lead ${leadNome}: ${tipo}`);
+    }
+  } catch (err) {
+    console.error("AI analysis parse error:", err);
+  }
 }
