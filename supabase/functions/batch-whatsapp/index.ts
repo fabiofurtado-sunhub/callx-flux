@@ -6,8 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const DELAY_MS = 3 * 60 * 1000; // 3 minutes between sends
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -52,14 +50,14 @@ Deno.serve(async (req) => {
       templateContent = template.conteudo;
     }
 
-    // Get config for link_agendamento
+    // Get config
     const { data: config } = await supabase
       .from("configuracoes")
       .select("link_agendamento, horario_sugerido_texto")
       .limit(1)
       .single();
 
-    // Fetch all leads
+    // Fetch leads
     const { data: leads } = await supabase
       .from("leads")
       .select("id, nome, telefone, email")
@@ -72,20 +70,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Starting queued dispatch: ${leads.length} leads, 3min interval`);
-
-    const results: any[] = [];
-
-    for (let i = 0; i < leads.length; i++) {
-      const lead = leads[i];
-
-      // Wait 3 minutes between sends (skip first)
-      if (i > 0) {
-        console.log(`Waiting 3 minutes before sending to ${lead.nome} (${i + 1}/${leads.length})...`);
-        await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
-      }
-
-      // Replace template variables
+    // Build personalized messages and insert into queue
+    const queueItems = leads.map((lead: any) => {
       let message = templateContent!;
       message = message.replace(/\{\{nome\}\}/gi, lead.nome || "");
       message = message.replace(/\{\{telefone\}\}/gi, lead.telefone || "");
@@ -93,53 +79,27 @@ Deno.serve(async (req) => {
       message = message.replace(/\{\{LINK_AGENDAMENTO\}\}/gi, config?.link_agendamento || "");
       message = message.replace(/\{\{horario_sugerido\}\}/gi, config?.horario_sugerido_texto || "");
 
-      try {
-        // Call send-whatsapp with message_override to avoid status changes
-        const sendRes = await fetch(
-          `${supabaseUrl}/functions/v1/send-whatsapp`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${supabaseKey}`,
-            },
-            body: JSON.stringify({
-              lead_id: lead.id,
-              telefone: lead.telefone,
-              nome: lead.nome,
-              message_override: message,
-            }),
-          }
-        );
+      return {
+        lead_id: lead.id,
+        message,
+        status: "pending",
+      };
+    });
 
-        const sendData = await sendRes.json().catch(() => ({}));
-        const success = sendRes.ok;
+    const { error: insertError } = await supabase
+      .from("whatsapp_queue")
+      .insert(queueItems);
 
-        results.push({
-          lead_id: lead.id,
-          nome: lead.nome,
-          status: success ? "sent" : "error",
-          error: success ? undefined : sendData.error,
-        });
-
-        console.log(`${success ? "✅" : "❌"} ${lead.nome} (${i + 1}/${leads.length})`);
-      } catch (err) {
-        results.push({
-          lead_id: lead.id,
-          nome: lead.nome,
-          status: "error",
-          error: (err as Error).message,
-        });
-        console.error(`❌ ${lead.nome}: ${(err as Error).message}`);
-      }
+    if (insertError) {
+      throw new Error(`Failed to enqueue: ${insertError.message}`);
     }
+
+    console.log(`Enqueued ${queueItems.length} messages for dispatch`);
 
     return new Response(
       JSON.stringify({
-        total: leads.length,
-        sent: results.filter((r) => r.status === "sent").length,
-        errors: results.filter((r) => r.status === "error").length,
-        results,
+        queued: queueItems.length,
+        message: `${queueItems.length} mensagens na fila. Serão enviadas 1 a cada 3 minutos.`,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
