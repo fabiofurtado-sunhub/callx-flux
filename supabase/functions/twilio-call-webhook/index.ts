@@ -128,12 +128,29 @@ async function fetchAndStoreTranscription(supabase: any, callSid: string) {
     return;
   }
 
-  await storeTranscription(supabase, callLog.id, conversationId, detail, callLog.metadata);
+  await storeTranscription(supabase, callLog.id, callSid, conversationId, detail, callLog.metadata);
+}
+
+const VOICEMAIL_PATTERNS = [
+  "vamos entregar o seu recado",
+  "caixa postal",
+  "deixe sua mensagem",
+  "após o sinal",
+  "leave a message",
+  "voicemail",
+  "não está disponível no momento",
+  "celular estiver disponível",
+];
+
+function isVoicemail(transcricao: string): boolean {
+  const lower = transcricao.toLowerCase();
+  return VOICEMAIL_PATTERNS.some((p) => lower.includes(p));
 }
 
 async function storeTranscription(
   supabase: any,
   callLogId: string,
+  callSid: string,
   conversationId: string,
   detail: any,
   existingMetadata: any
@@ -150,15 +167,17 @@ async function storeTranscription(
     ? JSON.stringify(detail.analysis.evaluation_criteria_results)
     : null;
 
-  // Get duration from ElevenLabs if available
   const elDurationSecs = detail.metadata?.call_duration_secs;
 
-  // MERGE metadata instead of overwriting
+  // Detect voicemail from transcript content
+  const detectedVoicemail = transcricao ? isVoicemail(transcricao) : false;
+
   const mergedMetadata = {
     ...(existingMetadata || {}),
     conversation_id: conversationId,
     elevenlabs_status: detail.status,
     call_duration_secs: elDurationSecs,
+    ...(detectedVoicemail ? { voicemail: true } : {}),
   };
 
   const updates: Record<string, unknown> = {
@@ -166,9 +185,9 @@ async function storeTranscription(
     resumo,
     sentimento,
     metadata: mergedMetadata,
+    ...(detectedVoicemail ? { status: "caixa_postal" } : {}),
   };
 
-  // Use ElevenLabs duration if Twilio didn't provide one
   if (elDurationSecs && elDurationSecs > 0) {
     updates.duration_seconds = Math.round(elDurationSecs);
   }
@@ -178,5 +197,5 @@ async function storeTranscription(
     .update(updates)
     .eq("id", callLogId);
 
-  console.log(`Transcription stored for call_log ${callLogId} (conversation: ${conversationId}, duration: ${elDurationSecs}s)`);
+  console.log(`Transcription stored for call_log ${callLogId} (conversation: ${conversationId}, duration: ${elDurationSecs}s, voicemail: ${detectedVoicemail})`);
 }

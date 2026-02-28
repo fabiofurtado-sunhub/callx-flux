@@ -20,6 +20,7 @@ const statusLabels: Record<string, { label: string; color: string }> = {
   busy: { label: 'Ocupado', color: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
   'no-answer': { label: 'Sem Resposta', color: 'bg-muted text-muted-foreground border-border' },
   'in-progress': { label: 'Em Andamento', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+  'caixa_postal': { label: 'Caixa Postal', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
 };
 
 export default function LeadCallHistory({ leadId }: { leadId: string }) {
