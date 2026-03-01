@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Save, CheckCircle2, FileText, CalendarIcon, X, ClipboardList, Sparkles, Loader2, Send, Copy, AlertTriangle } from 'lucide-react';
+import { Save, CheckCircle2, FileText, CalendarIcon, X, ClipboardList, Sparkles, Loader2, Send, Copy, AlertTriangle, ArrowUpRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -759,26 +759,53 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
           </div>
 
           {/* Footer com ações */}
-          <div className="border-t border-border px-6 py-3 flex items-center justify-between bg-card">
-            <Button variant="outline" onClick={() => handleSave(false)} disabled={saving} className="gap-2">
-              <Save className="w-4 h-4" />
-              {saving ? 'Salvando...' : 'Salvar Rascunho'}
-            </Button>
-            <div className="flex items-center gap-2">
-              {status === 'finalizado' && (
-                <Button variant="secondary" className="gap-2" onClick={handleGenerateReport} disabled={generatingReport}>
-                  {generatingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-                  {generatingReport ? 'Gerando...' : 'Gerar Relatório'}
-                  {lead.email && <Send className="w-3 h-3 ml-1" />}
-                </Button>
-              )}
-              {(activeTab === 'fechamento' || activeTab === 'negociacao') && status !== 'finalizado' && (
-                <Button onClick={() => handleSave(true)} disabled={saving} className="gap-2 bg-green-600 hover:bg-green-700 text-white">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Finalizar Diagnóstico
-                </Button>
-              )}
+          <div className="border-t border-border px-6 py-3 space-y-3 bg-card">
+            <div className="flex items-center justify-between">
+              <Button variant="outline" onClick={() => handleSave(false)} disabled={saving} className="gap-2">
+                <Save className="w-4 h-4" />
+                {saving ? 'Salvando...' : 'Salvar Rascunho'}
+              </Button>
+              <div className="flex items-center gap-2">
+                {status === 'finalizado' && (
+                  <Button variant="secondary" className="gap-2" onClick={handleGenerateReport} disabled={generatingReport}>
+                    {generatingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                    {generatingReport ? 'Gerando...' : 'Gerar Relatório'}
+                    {lead.email && <Send className="w-3 h-3 ml-1" />}
+                  </Button>
+                )}
+                {(activeTab === 'fechamento' || activeTab === 'negociacao') && status !== 'finalizado' && (
+                  <Button onClick={() => handleSave(true)} disabled={saving} className="gap-2 bg-green-600 hover:bg-green-700 text-white">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Finalizar Diagnóstico
+                  </Button>
+                )}
+              </div>
             </div>
+
+            {status === 'finalizado' && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs font-medium tracking-wide" style={{ color: '#8899AA' }}>Próximo passo:</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => window.open('https://pitchcomercial.aceleradoramx3.com/revos', '_blank')}
+                  className="w-full flex items-center justify-center gap-2 font-bold text-base rounded-lg transition-transform duration-200 hover:scale-[1.02]"
+                  style={{
+                    height: '56px',
+                    backgroundColor: '#00FF78',
+                    color: '#080C16',
+                    fontSize: '16px',
+                    borderRadius: '8px',
+                  }}
+                >
+                  <ArrowUpRight className="w-5 h-5" />
+                  INICIAR APRESENTAÇÃO COMERCIAL →
+                </button>
+              </div>
+            )}
           </div>
         </Tabs>
       </DialogContent>
