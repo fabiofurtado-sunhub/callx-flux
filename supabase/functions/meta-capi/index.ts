@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
       custom_data: customData,
     };
 
-    const metaUrl = `https://graph.facebook.com/v21.0/${PIXEL_ID}/events`;
+    const metaUrl = `https://graph.facebook.com/v25.0/${PIXEL_ID}/events`;
     const metaResponse = await fetch(metaUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
