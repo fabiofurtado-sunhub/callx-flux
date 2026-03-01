@@ -502,6 +502,246 @@ export type Database = {
           },
         ]
       }
+      hub_activity_events: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          tipo_evento: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tipo_evento: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tipo_evento?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      hub_courses: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          drip_enabled: boolean
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          drip_enabled?: boolean
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          drip_enabled?: boolean
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hub_lessons: {
+        Row: {
+          created_at: string
+          duracao_total: number | null
+          id: string
+          material_url: string | null
+          module_id: string
+          nome: string
+          ordem: number
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          duracao_total?: number | null
+          id?: string
+          material_url?: string | null
+          module_id: string
+          nome: string
+          ordem?: number
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          duracao_total?: number | null
+          id?: string
+          material_url?: string | null
+          module_id?: string
+          nome?: string
+          ordem?: number
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "hub_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hub_login_logs: {
+        Row: {
+          created_at: string
+          id: string
+          ip: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      hub_modules: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "hub_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hub_profiles: {
+        Row: {
+          created_at: string
+          crm_contact_id: string | null
+          dias_consecutivos: number
+          engagement_score: number
+          id: string
+          nome: string
+          status: string
+          telefone: string | null
+          total_login_count: number
+          ultimo_login: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          crm_contact_id?: string | null
+          dias_consecutivos?: number
+          engagement_score?: number
+          id?: string
+          nome?: string
+          status?: string
+          telefone?: string | null
+          total_login_count?: number
+          ultimo_login?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          crm_contact_id?: string | null
+          dias_consecutivos?: number
+          engagement_score?: number
+          id?: string
+          nome?: string
+          status?: string
+          telefone?: string | null
+          total_login_count?: number
+          ultimo_login?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      hub_user_progress: {
+        Row: {
+          concluida: boolean
+          created_at: string
+          data_conclusao: string | null
+          id: string
+          lesson_id: string
+          porcentagem: number
+          tempo_assistido: number
+          ultimo_acesso: string
+          user_id: string
+        }
+        Insert: {
+          concluida?: boolean
+          created_at?: string
+          data_conclusao?: string | null
+          id?: string
+          lesson_id: string
+          porcentagem?: number
+          tempo_assistido?: number
+          ultimo_acesso?: string
+          user_id: string
+        }
+        Update: {
+          concluida?: boolean
+          created_at?: string
+          data_conclusao?: string | null
+          id?: string
+          lesson_id?: string
+          porcentagem?: number
+          tempo_assistido?: number
+          ultimo_acesso?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_user_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "hub_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interacoes_whatsapp: {
         Row: {
           conteudo: string

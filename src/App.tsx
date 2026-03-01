@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { HubAuthProvider, useHubAuth } from "@/contexts/HubAuthContext";
 import { AppProvider } from "@/contexts/AppContext";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
@@ -15,6 +16,8 @@ import Configuracoes from "@/pages/Configuracoes";
 import SetupMensagens from "@/pages/SetupMensagens";
 import Chamadas from "@/pages/Chamadas";
 import Auth from "@/pages/Auth";
+import HubLogin from "@/pages/hub/HubLogin";
+import HubDashboard from "@/pages/hub/HubDashboard";
 import NotFound from "./pages/NotFound";
 import Agenda from "./pages/Agenda";
 
@@ -59,19 +62,48 @@ function AuthRoute() {
   return <Auth />;
 }
 
+function HubAuthRoute() {
+  const { session, loading, isHubUser } = useHubAuth();
+  if (loading) return null;
+  if (session && isHubUser) return <Navigate to="/plataforma/dashboard" replace />;
+  return <HubLogin />;
+}
+
+function HubProtectedRoutes() {
+  const { session, loading, isHubUser } = useHubAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#111111' }}>
+        <div className="animate-pulse text-sm" style={{ color: '#666' }}>Carregando...</div>
+      </div>
+    );
+  }
+  if (!session || !isHubUser) return <Navigate to="/plataforma" replace />;
+  return (
+    <Routes>
+      <Route path="/dashboard" element={<HubDashboard />} />
+      <Route path="*" element={<Navigate to="/plataforma/dashboard" replace />} />
+    </Routes>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/auth" element={<AuthRoute />} />
-            <Route path="/agenda" element={<Agenda />} />
-            <Route path="/*" element={<ProtectedRoutes />} />
-          </Routes>
-        </BrowserRouter>
+        <HubAuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/auth" element={<AuthRoute />} />
+              <Route path="/agenda" element={<Agenda />} />
+              <Route path="/plataforma" element={<HubAuthRoute />} />
+              <Route path="/plataforma/*" element={<HubProtectedRoutes />} />
+              <Route path="/*" element={<ProtectedRoutes />} />
+            </Routes>
+          </BrowserRouter>
+        </HubAuthProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
