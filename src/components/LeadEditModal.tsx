@@ -80,6 +80,7 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
         motivo_perda: form.motivo_perda,
         observacoes: form.observacoes,
         faturamento: form.faturamento,
+        empresa: form.empresa,
         maior_gargalo_comercial: form.maior_gargalo_comercial,
         setor_empresa: form.setor_empresa,
         origem: form.origem,
@@ -263,8 +264,12 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
             )}
           </div>
 
-          {/* Gargalo + Setor + Faturamento + Observações */}
+          {/* Empresa + Gargalo + Setor + Faturamento + Observações */}
           <div className="space-y-3 border-t border-border pt-4">
+            <div>
+              <Label className="text-xs text-muted-foreground">Empresa</Label>
+              <Input value={form.empresa || ''} onChange={e => set('empresa', e.target.value)} className="mt-1 bg-background border-border" />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-muted-foreground">Maior Gargalo Comercial</Label>

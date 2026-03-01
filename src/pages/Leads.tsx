@@ -234,6 +234,7 @@ export default function Leads() {
                 <SelectItem value="callx">Funil CallX</SelectItem>
                 <SelectItem value="core_ai">Funil Core AI</SelectItem>
                 <SelectItem value="playbook_mx3">Playbook MX3</SelectItem>
+                <SelectItem value="revenue_os">Revenue OS</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -265,9 +266,9 @@ export default function Leads() {
                     <td className="px-4 py-3 text-muted-foreground">{lead.telefone}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase ${
-                        lead.funil === 'playbook_mx3' ? 'bg-primary/10 text-primary' : lead.funil === 'core_ai' ? 'bg-accent/50 text-accent-foreground' : 'bg-muted text-muted-foreground'
+                        lead.funil === 'playbook_mx3' ? 'bg-primary/10 text-primary' : lead.funil === 'core_ai' ? 'bg-accent/50 text-accent-foreground' : lead.funil === 'revenue_os' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
                       }`}>
-                        {lead.funil === 'callx' ? 'CallX' : lead.funil === 'core_ai' ? 'Core AI' : 'Playbook'}
+                        {lead.funil === 'callx' ? 'CallX' : lead.funil === 'core_ai' ? 'Core AI' : lead.funil === 'revenue_os' ? 'Revenue OS' : 'Playbook'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">{lead.campanha}</td>
