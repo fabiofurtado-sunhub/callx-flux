@@ -248,22 +248,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         para: newStage,
       });
 
-      // Send Meta Conversions API event (fire-and-forget)
-      supabase.functions.invoke('meta-capi', {
-        body: {
-          lead_id: leadId,
-          new_stage: newStage,
-          lead_data: {
-            email: lead.email,
-            telefone: lead.telefone,
-            valor_proposta: lead.valor_proposta,
-            valor_venda: lead.valor_venda,
-          },
-        },
-      }).then(({ error }) => {
-        if (error) console.error('Meta CAPI error:', error);
-        else console.log('Meta CAPI event sent:', newStage);
-      });
+      // Meta CAPI events are now fired automatically via database trigger
 
       // Send Google Analytics event (fire-and-forget)
       supabase.functions.invoke('google-analytics', {
