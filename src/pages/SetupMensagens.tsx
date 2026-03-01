@@ -28,6 +28,7 @@ const FUNNEL_OPTIONS = [
   { key: 'callx', label: 'Funil CallX' },
   { key: 'core_ai', label: 'Funil Core AI' },
   { key: 'playbook_mx3', label: 'Playbook MX3' },
+  { key: 'revenue_os', label: 'Revenue OS' },
 ];
 
 export default function SetupMensagens() {
