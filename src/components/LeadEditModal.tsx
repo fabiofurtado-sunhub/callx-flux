@@ -9,12 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Save, X, Trash2, Plus } from 'lucide-react';
+import { Save, X, Trash2, Plus, ClipboardList } from 'lucide-react';
 import { Lead, LeadStatus } from '@/contexts/AppContext';
 import LeadCallHistory from '@/components/LeadCallHistory';
+import DiagnosticoModal from '@/components/DiagnosticoModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FUNNEL_STAGES, VENDEDORES } from '@/data/mockData';
+import { cn } from '@/lib/utils';
 
 const ORIGENS = [
   'Tráfego Pago - Meta',
@@ -38,6 +40,16 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [newTag, setNewTag] = useState('');
+  const [diagnosticoOpen, setDiagnosticoOpen] = useState(false);
+  const [diagnosticoStatus, setDiagnosticoStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (lead?.funil === 'revenue_os') {
+      supabase.from('diagnosticos').select('status').eq('lead_id', lead.id).maybeSingle().then(({ data }) => {
+        setDiagnosticoStatus(data?.status || null);
+      });
+    }
+  }, [lead?.id, lead?.funil]);
 
   useEffect(() => {
     if (lead) setForm({ ...lead, tags: lead.tags || [] });
@@ -332,6 +344,23 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
             <GoogleAnalyticsLogs leadId={lead.id} limit={5} />
           </div>
 
+          {/* Botão Diagnóstico - Revenue OS */}
+          {lead.funil === 'revenue_os' && (
+            <div className="border-t border-border pt-4">
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => setDiagnosticoOpen(true)}
+              >
+                <ClipboardList className="w-4 h-4" />
+                📋 Diagnóstico Comercial
+                <Badge variant={diagnosticoStatus === 'finalizado' ? 'default' : 'secondary'} className={cn("ml-auto text-[10px]", diagnosticoStatus === 'finalizado' ? 'bg-green-600 text-white' : '')}>
+                  {diagnosticoStatus === 'finalizado' ? 'Preenchido' : 'Pendente'}
+                </Badge>
+              </Button>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Button onClick={handleSave} disabled={saving || deleting} className="flex-1 gap-2">
               <Save className="w-4 h-4" />
@@ -363,6 +392,20 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
           </div>
         </div>
       </DialogContent>
+
+      {diagnosticoOpen && (
+        <DiagnosticoModal
+          lead={lead}
+          open={diagnosticoOpen}
+          onOpenChange={setDiagnosticoOpen}
+          onSaved={() => {
+            onSaved?.();
+            supabase.from('diagnosticos').select('status').eq('lead_id', lead.id).maybeSingle().then(({ data }) => {
+              setDiagnosticoStatus(data?.status || null);
+            });
+          }}
+        />
+      )}
     </Dialog>
   );
 }

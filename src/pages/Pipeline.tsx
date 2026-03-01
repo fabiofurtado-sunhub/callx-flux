@@ -1,15 +1,18 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
 import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
-import { useState } from 'react';
-import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import LeadEditModal from '@/components/LeadEditModal';
 import LossReasonDialog from '@/components/LossReasonDialog';
+import DiagnosticoModal from '@/components/DiagnosticoModal';
 import VoiceAgentButton from '@/components/VoiceAgentButton';
 import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
 
 export default function Pipeline() {
   const { leads, moveLeadToStage, refreshLeads } = useAppContext();
@@ -22,9 +25,26 @@ export default function Pipeline() {
   const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os'>('callx');
   const [selectedVendedor, setSelectedVendedor] = useState<string>('todos');
   const [selectedFaturamento, setSelectedFaturamento] = useState<string>('todos');
+  const [diagnosticoLead, setDiagnosticoLead] = useState<Lead | null>(null);
+  const [diagnosticoStatuses, setDiagnosticoStatuses] = useState<Record<string, string>>({});
 
   const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS' };
   const funilLabel = funilLabels[activeFunil] || activeFunil;
+
+  // Load diagnostico statuses for Revenue OS leads
+  useEffect(() => {
+    if (activeFunil !== 'revenue_os') return;
+    const revenueLeadIds = leads.filter(l => (l.funil || 'callx') === 'revenue_os').map(l => l.id);
+    if (revenueLeadIds.length === 0) return;
+    (async () => {
+      const { data } = await supabase.from('diagnosticos').select('lead_id, status').in('lead_id', revenueLeadIds);
+      if (data) {
+        const map: Record<string, string> = {};
+        data.forEach((d: any) => { map[d.lead_id] = d.status; });
+        setDiagnosticoStatuses(map);
+      }
+    })();
+  }, [activeFunil, leads]);
 
   const vendedores = Array.from(new Set(leads.map(l => l.vendedor_nome).filter(Boolean))) as string[];
 
@@ -320,6 +340,24 @@ export default function Pipeline() {
                         {lead.observacoes}
                       </p>
                     )}
+
+                    {/* Botão Diagnóstico - apenas Revenue OS */}
+                    {activeFunil === 'revenue_os' && (
+                      <div className="border-t border-border/50 pt-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDiagnosticoLead(lead); }}
+                          className="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-xs font-medium bg-muted/50 hover:bg-muted transition-colors"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <ClipboardList className="w-3.5 h-3.5" />
+                            Diagnóstico Comercial
+                          </span>
+                          <Badge variant={diagnosticoStatuses[lead.id] === 'finalizado' ? 'default' : 'secondary'} className={cn("text-[10px] px-1.5 py-0", diagnosticoStatuses[lead.id] === 'finalizado' ? 'bg-green-600 text-white' : '')}>
+                            {diagnosticoStatuses[lead.id] === 'finalizado' ? 'Preenchido' : 'Pendente'}
+                          </Badge>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
                 {stageLeads.length === 0 && (
@@ -346,6 +384,26 @@ export default function Pipeline() {
         }}
         onConfirm={handleLossConfirm}
       />
+
+      {diagnosticoLead && (
+        <DiagnosticoModal
+          lead={diagnosticoLead}
+          open={!!diagnosticoLead}
+          onOpenChange={(open) => { if (!open) setDiagnosticoLead(null); }}
+          onSaved={() => {
+            refreshLeads();
+            // Refresh diagnostico statuses
+            const revenueLeadIds = leads.filter(l => (l.funil || 'callx') === 'revenue_os').map(l => l.id);
+            supabase.from('diagnosticos').select('lead_id, status').in('lead_id', revenueLeadIds).then(({ data }) => {
+              if (data) {
+                const map: Record<string, string> = {};
+                data.forEach((d: any) => { map[d.lead_id] = d.status; });
+                setDiagnosticoStatuses(map);
+              }
+            });
+          }}
+        />
+      )}
 
       <VoiceAgentButton />
     </div>
