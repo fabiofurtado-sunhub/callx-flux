@@ -306,6 +306,65 @@ export type Database = {
         }
         Relationships: []
       }
+      diagnosticos: {
+        Row: {
+          closer_id: string | null
+          closer_nome: string | null
+          created_at: string
+          data_reuniao: string | null
+          fechamento: Json | null
+          id: string
+          lead_id: string
+          negociacao: Json | null
+          spin_implicacao: Json | null
+          spin_necessidade: Json | null
+          spin_problema: Json | null
+          spin_situacao: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          closer_id?: string | null
+          closer_nome?: string | null
+          created_at?: string
+          data_reuniao?: string | null
+          fechamento?: Json | null
+          id?: string
+          lead_id: string
+          negociacao?: Json | null
+          spin_implicacao?: Json | null
+          spin_necessidade?: Json | null
+          spin_problema?: Json | null
+          spin_situacao?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          closer_id?: string | null
+          closer_nome?: string | null
+          created_at?: string
+          data_reuniao?: string | null
+          fechamento?: Json | null
+          id?: string
+          lead_id?: string
+          negociacao?: Json | null
+          spin_implicacao?: Json | null
+          spin_necessidade?: Json | null
+          spin_problema?: Json | null
+          spin_situacao?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diagnosticos_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: true
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_logs: {
         Row: {
           aberto: boolean
