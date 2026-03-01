@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Save, CheckCircle2, FileText, CalendarIcon, X, ClipboardList, Sparkles, Loader2, Send } from 'lucide-react';
+import { Save, CheckCircle2, FileText, CalendarIcon, X, ClipboardList, Sparkles, Loader2, Send, Copy, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,6 +46,41 @@ const DORES = [
   'Perda de leads sem diagnóstico',
   'Meta atingida no "feeling"',
 ];
+
+const ANCORAS_MAP: Record<string, { solucao: string; frase: string }> = {
+  'Falta de previsibilidade de receita': {
+    solucao: 'Dashboard de forecast + pipeline por etapa',
+    frase: 'Você me disse que projeta no feeling — aqui a previsão vem do histórico real do seu funil.',
+  },
+  'Dependência do gestor no operacional': {
+    solucao: 'Playbook + processo que funciona sem o dono',
+    frase: 'Você falou que o comercial para quando você sai — com o playbook, o processo guia sem precisar de você.',
+  },
+  'Time sem processo replicável': {
+    solucao: 'Playbook documentado + onboarding de vendedor',
+    frase: 'Cada vendedor vende do seu jeito hoje — no Revenue OS o processo é o mesmo, independente de quem vende.',
+  },
+  'Pipeline invisível / desatualizado': {
+    solucao: 'CRM com atualização obrigatória por etapa',
+    frase: 'Você não sabe onde está cada deal sem perguntar — aqui o pipeline é atualizado em tempo real por cada vendedor.',
+  },
+  'Taxa de conversão desconhecida': {
+    solucao: 'Dashboards de KPIs por etapa do funil',
+    frase: 'Você me disse que não sabe sua taxa de conversão — aqui ela aparece automaticamente, por etapa e por vendedor.',
+  },
+  'Follow-up inconsistente': {
+    solucao: 'Cadência estruturada + alertas no CRM',
+    frase: 'Lead sem follow-up é oportunidade esquecida — o sistema avisa quando e como retomar cada contato.',
+  },
+  'Perda de leads sem diagnóstico': {
+    solucao: 'Relatório de motivo de perda + aprendizado',
+    frase: 'Você não sabe por que está perdendo — no Revenue OS cada perda tem motivo registrado e vira melhoria de processo.',
+  },
+  'Meta atingida no "feeling"': {
+    solucao: 'Meta por indicador + acompanhamento semanal',
+    frase: 'Meta no feeling é aposta, não gestão — com o Revenue OS você acompanha pelo número, não pela sensação.',
+  },
+};
 
 export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: DiagnosticoModalProps) {
   const [activeTab, setActiveTab] = useState('dados');
@@ -230,10 +265,48 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
     negociacao: { ...negociacao, ancoras },
   }), [lead.id, dataReuniao, closerNome, situacao, situacaoResumo, problema, doresMap, doresExatas, implicacao, implicacaoExtras, necessidade, necessidadeExtras, fechamento, dataProximoContato, negociacao, ancoras]);
 
+  const generateAncorasFromDores = useCallback(() => {
+    const checkedDores = Object.entries(doresMap)
+      .filter(([_, v]) => v.checked)
+      .sort((a, b) => b[1].intensidade - a[1].intensidade)
+      .slice(0, 3);
+
+    if (checkedDores.length === 0) return [];
+
+    return checkedDores.map(([dor]) => ({
+      dor,
+      solucao: ANCORAS_MAP[dor]?.solucao || '',
+      frase: ANCORAS_MAP[dor]?.frase || '',
+    }));
+  }, [doresMap]);
+
+  const handleCopyAncoras = () => {
+    const text = ancoras
+      .filter(a => a.frase)
+      .map((a, i) => `${i + 1}. ${a.frase}`)
+      .join('\n\n');
+    if (!text) { toast.error('Nenhuma âncora para copiar'); return; }
+    navigator.clipboard.writeText(text);
+    toast.success('Âncoras copiadas!');
+  };
+
   const handleSave = async (finalizar = false) => {
     setSaving(true);
     try {
-      const payload = { ...buildPayload(), status: finalizar ? 'finalizado' : 'rascunho' };
+      let currentAncoras = ancoras;
+      if (finalizar) {
+        const generated = generateAncorasFromDores();
+        if (generated.length > 0) {
+          currentAncoras = generated;
+          setAncoras(generated);
+        }
+      }
+
+      const payload = {
+        ...buildPayload(),
+        negociacao: { ...negociacao, ancoras: currentAncoras },
+        status: finalizar ? 'finalizado' : 'rascunho',
+      };
 
       if (diagnosticoId) {
         const { error } = await supabase.from('diagnosticos').update(payload as any).eq('id', diagnosticoId);
@@ -244,7 +317,10 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
         setDiagnosticoId(data.id);
       }
 
-      if (finalizar) setStatus('finalizado');
+      if (finalizar) {
+        setStatus('finalizado');
+        setActiveTab('negociacao');
+      }
       toast.success(finalizar ? 'Diagnóstico finalizado!' : 'Rascunho salvo!');
       onSaved?.();
     } catch (err) {
@@ -578,17 +654,34 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
               </div>
 
               {/* Tabela de Âncoras */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase">Tabela de Âncoras</h4>
+              <div className="space-y-3 border border-primary/20 rounded-lg p-4 bg-primary/5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">🎯 Tabela de Âncoras</h4>
+                  <Button type="button" size="sm" variant="outline" onClick={handleCopyAncoras} className="text-xs gap-1.5">
+                    <Copy className="w-3 h-3" /> Copiar âncoras
+                  </Button>
+                </div>
+                {ancoras.every(a => !a.dor && !a.frase) && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-md p-3">
+                    <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+                    Marque as dores identificadas no Diagnóstico para gerar as âncoras automaticamente.
+                  </div>
+                )}
                 <div className="space-y-3">
                   {ancoras.map((a, i) => (
                     <div key={i} className="grid grid-cols-3 gap-2 bg-muted/30 rounded-lg p-3">
                       <div><Label className="text-[10px] text-muted-foreground">Dor do cliente</Label><Input value={a.dor} onChange={e => { const n = [...ancoras]; n[i].dor = e.target.value; setAncoras(n); }} className="mt-1 bg-background border-border text-sm" /></div>
                       <div><Label className="text-[10px] text-muted-foreground">Solução no Revenue OS</Label><Input value={a.solucao} onChange={e => { const n = [...ancoras]; n[i].solucao = e.target.value; setAncoras(n); }} className="mt-1 bg-background border-border text-sm" /></div>
-                      <div><Label className="text-[10px] text-muted-foreground">Frase de âncora</Label><Textarea value={a.frase} onChange={e => { const n = [...ancoras]; n[i].frase = e.target.value; setAncoras(n); }} rows={1} className="mt-1 bg-background border-border resize-none text-sm" /></div>
+                      <div><Label className="text-[10px] text-muted-foreground">Frase de âncora</Label><Textarea value={a.frase} onChange={e => { const n = [...ancoras]; n[i].frase = e.target.value; setAncoras(n); }} rows={2} className="mt-1 bg-background border-border resize-none text-sm" /></div>
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Probabilidade de fechamento - logo abaixo das âncoras */}
+              <div className="border border-border rounded-lg p-4 bg-muted/20">
+                <Label className="text-xs text-muted-foreground">Probabilidade de fechamento ({negociacao.probabilidadeFechamento || 50}%)</Label>
+                <Slider min={0} max={100} step={5} value={[negociacao.probabilidadeFechamento || 50]} onValueChange={([v]) => setNegociacao(p => ({ ...p, probabilidadeFechamento: v }))} className="mt-2" />
               </div>
 
               {/* Campos Finais */}
@@ -618,10 +711,6 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
               </div>
               <div><Label className="text-xs text-muted-foreground">Argumento principal de valor</Label><Textarea value={negociacao.argumentoValor || ''} onChange={e => setNegociacao(p => ({ ...p, argumentoValor: e.target.value }))} rows={2} className="mt-1 bg-background border-border resize-none" /></div>
               <div><Label className="text-xs text-muted-foreground">Maior risco de perda do deal</Label><Input value={negociacao.maiorRisco || ''} onChange={e => setNegociacao(p => ({ ...p, maiorRisco: e.target.value }))} className="mt-1 bg-background border-border" /></div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Probabilidade de fechamento ({negociacao.probabilidadeFechamento || 50}%)</Label>
-                <Slider min={0} max={100} step={5} value={[negociacao.probabilidadeFechamento || 50]} onValueChange={([v]) => setNegociacao(p => ({ ...p, probabilidadeFechamento: v }))} className="mt-2" />
-              </div>
               <div><Label className="text-xs text-muted-foreground">Notas estratégicas do closer</Label><Textarea value={negociacao.notasEstrategicas || ''} onChange={e => setNegociacao(p => ({ ...p, notasEstrategicas: e.target.value }))} rows={4} className="mt-1 bg-background border-border resize-none" /></div>
             </TabsContent>
           </div>
@@ -640,7 +729,7 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
                   {lead.email && <Send className="w-3 h-3 ml-1" />}
                 </Button>
               )}
-              {activeTab === 'negociacao' && status !== 'finalizado' && (
+              {(activeTab === 'fechamento' || activeTab === 'negociacao') && status !== 'finalizado' && (
                 <Button onClick={() => handleSave(true)} disabled={saving} className="gap-2 bg-green-600 hover:bg-green-700 text-white">
                   <CheckCircle2 className="w-4 h-4" />
                   Finalizar Diagnóstico
