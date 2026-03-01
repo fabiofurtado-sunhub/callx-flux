@@ -19,6 +19,15 @@ import { toast } from 'sonner';
 import { Lead } from '@/contexts/AppContext';
 import { VENDEDORES } from '@/data/mockData';
 
+function SpinQuestion({ id, text, value, onChange }: { id: string; text: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-sm font-semibold text-foreground">{id} — {text}</Label>
+      <Textarea value={value} onChange={e => onChange(e.target.value)} rows={3} className="bg-background border-border resize-none" placeholder="Resposta do cliente..." />
+    </div>
+  );
+}
+
 interface DiagnosticoModalProps {
   lead: Lead;
   open: boolean;
@@ -166,12 +175,7 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
     }
   };
 
-  const SpinQuestion = ({ id, text, value, onChange }: { id: string; text: string; value: string; onChange: (v: string) => void }) => (
-    <div className="space-y-1.5">
-      <Label className="text-sm font-semibold text-foreground">{id} — {text}</Label>
-      <Textarea value={value} onChange={e => onChange(e.target.value)} rows={3} className="bg-background border-border resize-none" placeholder="Resposta do cliente..." />
-    </div>
-  );
+  // SpinQuestion moved outside the component to avoid focus loss
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
