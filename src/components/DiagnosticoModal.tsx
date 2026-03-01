@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { supabase as sbClient } from '@/integrations/supabase/client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,6 +50,7 @@ const DORES = [
 export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: DiagnosticoModalProps) {
   const [activeTab, setActiveTab] = useState('dados');
   const [saving, setSaving] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [diagnosticoId, setDiagnosticoId] = useState<string | null>(null);
   const [status, setStatus] = useState('rascunho');
 
@@ -137,6 +139,30 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
       }
     })();
   }, [lead?.id, open]);
+
+  const handleAutoFillResumo = async () => {
+    const hasContent = Object.values(situacao).some(v => v && v.trim().length > 0);
+    if (!hasContent) { toast.error('Preencha pelo menos uma resposta de Situação primeiro'); return; }
+    setExtracting(true);
+    try {
+      const { data, error } = await sbClient.functions.invoke('extract-spin-resumo', {
+        body: { respostas: situacao },
+      });
+      if (error) throw error;
+      if (data) {
+        setSituacaoResumo(prev => ({
+          ...prev,
+          ...Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== '' && v != null)),
+        }));
+        toast.success('Resumo preenchido com IA!');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao extrair resumo');
+    } finally {
+      setExtracting(false);
+    }
+  };
 
   const buildPayload = useCallback(() => ({
     lead_id: lead.id,
@@ -280,7 +306,12 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
                   <SpinQuestion key={q.id} {...q} value={situacao[q.id] || ''} onChange={v => setSituacao(prev => ({ ...prev, [q.id]: v }))} />
                 ))}
                 <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase">Resumo da Situação</h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase">Resumo da Situação</h4>
+                    <Button type="button" size="sm" variant="outline" onClick={handleAutoFillResumo} disabled={extracting} className="text-xs gap-1.5">
+                      {extracting ? '⏳ Extraindo...' : '✨ Preencher com IA'}
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div><Label className="text-xs text-muted-foreground">Nº de vendedores</Label><Input type="number" value={situacaoResumo.numVendedores || ''} onChange={e => setSituacaoResumo(p => ({ ...p, numVendedores: e.target.value }))} className="mt-1 bg-background border-border" /></div>
                     <div><Label className="text-xs text-muted-foreground">Ticket médio</Label><Input value={situacaoResumo.ticketMedio || ''} onChange={e => setSituacaoResumo(p => ({ ...p, ticketMedio: e.target.value }))} className="mt-1 bg-background border-border" /></div>
