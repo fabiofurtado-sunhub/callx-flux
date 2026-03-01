@@ -10,9 +10,43 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { respostas } = await req.json();
+    const { respostas, type } = await req.json();
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
 
-    const prompt = `Você é um assistente que extrai dados estruturados de respostas de diagnóstico comercial SPIN.
+    let prompt: string;
+
+    if (type === "dores") {
+      prompt = `Você é um assistente que analisa respostas de diagnóstico comercial SPIN (seção Problema) e identifica quais dores comerciais o cliente possui.
+
+Com base nas respostas abaixo, analise e retorne um JSON com as seguintes dores comerciais. Para cada dor, retorne:
+- "checked": true se o cliente mencionou ou deu indícios dessa dor, false caso contrário
+- "intensidade": de 1 a 5, onde 1=leve e 5=crítica
+
+Dores a analisar:
+1. "Falta de previsibilidade de receita"
+2. "Dependência do gestor no operacional"
+3. "Time sem processo replicável"
+4. "Pipeline invisível / desatualizado"
+5. "Taxa de conversão desconhecida"
+6. "Follow-up inconsistente"
+7. "Perda de leads sem diagnóstico"
+8. "Meta atingida no \\"feeling\\""
+
+Retorne APENAS um JSON no formato:
+{
+  "Falta de previsibilidade de receita": {"checked": true, "intensidade": 4},
+  ...
+}
+
+Respostas SPIN - Problema:
+P1: ${respostas.P1 || ""}
+P2: ${respostas.P2 || ""}
+P3: ${respostas.P3 || ""}
+P4: ${respostas.P4 || ""}
+P5: ${respostas.P5 || ""}
+P6: ${respostas.P6 || ""}`;
+    } else {
+      prompt = `Você é um assistente que extrai dados estruturados de respostas de diagnóstico comercial SPIN.
 
 Com base nas respostas abaixo, extraia os seguintes campos em JSON:
 - numVendedores (número de vendedores/SDRs mencionados, string)
@@ -33,8 +67,8 @@ S3: ${respostas.S3 || ""}
 S4: ${respostas.S4 || ""}
 S5: ${respostas.S5 || ""}
 S6: ${respostas.S6 || ""}`;
+    }
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -51,7 +85,6 @@ S6: ${respostas.S6 || ""}`;
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "{}";
     
-    // Parse JSON from response, handling possible markdown wrapping
     let parsed;
     try {
       const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
