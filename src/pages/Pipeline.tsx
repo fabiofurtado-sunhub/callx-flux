@@ -1,5 +1,5 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
-import { FUNNEL_STAGES, PLAYBOOK_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
+import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState } from 'react';
 import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -19,11 +19,11 @@ export default function Pipeline() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
-  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3'>('callx');
+  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os'>('callx');
   const [selectedVendedor, setSelectedVendedor] = useState<string>('todos');
   const [selectedFaturamento, setSelectedFaturamento] = useState<string>('todos');
 
-  const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3' };
+  const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS' };
   const funilLabel = funilLabels[activeFunil] || activeFunil;
 
   const vendedores = Array.from(new Set(leads.map(l => l.vendedor_nome).filter(Boolean))) as string[];
@@ -132,17 +132,18 @@ export default function Pipeline() {
             </div>
           </div>
         </div>
-        <Tabs value={activeFunil} onValueChange={v => setActiveFunil(v as 'callx' | 'core_ai' | 'playbook_mx3')}>
+        <Tabs value={activeFunil} onValueChange={v => setActiveFunil(v as 'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os')}>
           <TabsList>
             <TabsTrigger value="callx">Funil CallX</TabsTrigger>
             <TabsTrigger value="core_ai">Funil Core AI</TabsTrigger>
             <TabsTrigger value="playbook_mx3">Playbook MX3</TabsTrigger>
+            <TabsTrigger value="revenue_os">Revenue OS</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {(activeFunil === 'playbook_mx3' ? PLAYBOOK_STAGES : FUNNEL_STAGES).map(stage => {
+        {(activeFunil === 'playbook_mx3' ? PLAYBOOK_STAGES : activeFunil === 'revenue_os' ? REVENUE_OS_STAGES : FUNNEL_STAGES).map(stage => {
           const searchLower = search.toLowerCase();
           const stageLeads = filteredLeads.filter(l =>
             l.status_funil === stage.key &&
@@ -204,6 +205,9 @@ export default function Pipeline() {
                         >
                           {stage.label}
                         </span>
+                        {lead.empresa && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{lead.empresa}</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
                         <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${getScoreColor(lead.score_lead)}`}>

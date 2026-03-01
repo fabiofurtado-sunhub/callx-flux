@@ -535,6 +535,7 @@ export type Database = {
           data_entrada: string
           data_ultimo_movimento: string
           email: string | null
+          empresa: string | null
           envio_whatsapp_data: string | null
           envio_whatsapp_status: Database["public"]["Enums"]["whatsapp_status"]
           faturamento: number | null
@@ -572,6 +573,7 @@ export type Database = {
           data_entrada?: string
           data_ultimo_movimento?: string
           email?: string | null
+          empresa?: string | null
           envio_whatsapp_data?: string | null
           envio_whatsapp_status?: Database["public"]["Enums"]["whatsapp_status"]
           faturamento?: number | null
@@ -609,6 +611,7 @@ export type Database = {
           data_entrada?: string
           data_ultimo_movimento?: string
           email?: string | null
+          empresa?: string | null
           envio_whatsapp_data?: string | null
           envio_whatsapp_status?: Database["public"]["Enums"]["whatsapp_status"]
           faturamento?: number | null

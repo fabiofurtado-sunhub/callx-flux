@@ -53,6 +53,21 @@ export const PLAYBOOK_STAGES: { key: LeadStatus; label: string; color: string; c
   { key: 'perdido', label: 'Perdido', color: 'hsl(var(--destructive))' },
 ];
 
+export const REVENUE_OS_STAGES: { key: LeadStatus; label: string; color: string }[] = [
+  { key: 'lead', label: 'Lead', color: 'hsl(var(--info))' },
+  { key: 'mensagem_enviada', label: 'Mensagem Enviada', color: 'hsl(var(--info))' },
+  { key: 'fup_1', label: 'FUP 1', color: 'hsl(var(--info))' },
+  { key: 'ia_call', label: 'IA Call', color: 'hsl(var(--primary))' },
+  { key: 'ia_call_2', label: 'IA Call 2', color: 'hsl(var(--primary))' },
+  { key: 'ultima_mensagem', label: 'Última Mensagem', color: 'hsl(var(--primary))' },
+  { key: 'reuniao', label: 'Reunião Agendada', color: 'hsl(var(--warning))' },
+  { key: 'no_show', label: 'No-Show', color: 'hsl(var(--destructive))' },
+  { key: 'reuniao_realizada', label: 'Reunião Realizada', color: 'hsl(var(--warning))' },
+  { key: 'proposta', label: 'Proposta Emitida', color: 'hsl(var(--primary))' },
+  { key: 'venda', label: 'Venda', color: 'hsl(var(--success))' },
+  { key: 'perdido', label: 'Perdido', color: 'hsl(var(--destructive))' },
+];
+
 export function getScoreLabel(score: number): LeadScore {
   if (score <= 20) return 'frio';
   if (score <= 50) return 'morno';

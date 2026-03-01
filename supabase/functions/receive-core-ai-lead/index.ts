@@ -84,6 +84,7 @@ serve(async (req) => {
       tomador_decisao: lead.tomador_decisao != null ? Boolean(lead.tomador_decisao) : null,
       maior_gargalo_comercial: lead.maior_gargalo_comercial || null,
       setor_empresa: lead.setor_empresa || null,
+      empresa: lead.empresa || "",
       origem: lead.origem || "core_ai_webhook",
       funil: "core_ai",
       status_funil: "lead",
