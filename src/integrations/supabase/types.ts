@@ -248,6 +248,17 @@ export type Database = {
       }
       configuracoes: {
         Row: {
+          diag_cor_alerta: string | null
+          diag_cor_card: string | null
+          diag_cor_destaque: string | null
+          diag_cor_fundo: string | null
+          diag_cor_primaria: string | null
+          diag_cor_secundaria: string | null
+          diag_cor_texto: string | null
+          diag_cor_texto_muted: string | null
+          diag_logo_url: string | null
+          diag_nome_marca: string | null
+          diag_slogan: string | null
           email_from_address: string | null
           email_from_name: string | null
           email_provider: string | null
@@ -267,6 +278,17 @@ export type Database = {
           zapi_webhook: string | null
         }
         Insert: {
+          diag_cor_alerta?: string | null
+          diag_cor_card?: string | null
+          diag_cor_destaque?: string | null
+          diag_cor_fundo?: string | null
+          diag_cor_primaria?: string | null
+          diag_cor_secundaria?: string | null
+          diag_cor_texto?: string | null
+          diag_cor_texto_muted?: string | null
+          diag_logo_url?: string | null
+          diag_nome_marca?: string | null
+          diag_slogan?: string | null
           email_from_address?: string | null
           email_from_name?: string | null
           email_provider?: string | null
@@ -286,6 +308,17 @@ export type Database = {
           zapi_webhook?: string | null
         }
         Update: {
+          diag_cor_alerta?: string | null
+          diag_cor_card?: string | null
+          diag_cor_destaque?: string | null
+          diag_cor_fundo?: string | null
+          diag_cor_primaria?: string | null
+          diag_cor_secundaria?: string | null
+          diag_cor_texto?: string | null
+          diag_cor_texto_muted?: string | null
+          diag_logo_url?: string | null
+          diag_nome_marca?: string | null
+          diag_slogan?: string | null
           email_from_address?: string | null
           email_from_name?: string | null
           email_provider?: string | null
