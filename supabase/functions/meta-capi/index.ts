@@ -67,13 +67,34 @@ Deno.serve(async (req) => {
     const eventName = STAGE_EVENT_MAP[new_stage] || "Other";
     const now = Math.floor(Date.now() / 1000);
 
-    const userData: Record<string, any> = {};
+    const userData: Record<string, any> = {
+      lead_id: lead_id,
+    };
     if (lead_data?.email) {
       userData.em = [await hashSHA256(lead_data.email.toLowerCase().trim())];
     }
     if (lead_data?.telefone) {
       const phone = lead_data.telefone.replace(/\D/g, "");
       userData.ph = [await hashSHA256(phone)];
+    }
+    if (lead_data?.nome) {
+      const firstName = lead_data.nome.split(" ")[0];
+      userData.fn = [await hashSHA256(firstName.toLowerCase().trim())];
+    }
+
+    const customData: Record<string, any> = {
+      event_source: "crm",
+      lead_event_source: "CallX CRM",
+    };
+
+    if (new_stage === "venda") {
+      customData.currency = "BRL";
+      customData.value = Number(lead_data?.valor_venda || 0);
+    }
+
+    if (new_stage === "proposta") {
+      customData.currency = "BRL";
+      customData.value = Number(lead_data?.valor_proposta || 0);
     }
 
     const eventData: Record<string, any> = {
@@ -82,21 +103,8 @@ Deno.serve(async (req) => {
       action_source: "system_generated",
       event_id: `${lead_id}_${new_stage}_${now}`,
       user_data: userData,
+      custom_data: customData,
     };
-
-    if (new_stage === "venda") {
-      eventData.custom_data = {
-        currency: "BRL",
-        value: Number(lead_data?.valor_venda || 0),
-      };
-    }
-
-    if (new_stage === "proposta") {
-      eventData.custom_data = {
-        currency: "BRL",
-        value: Number(lead_data?.valor_proposta || 0),
-      };
-    }
 
     const metaUrl = `https://graph.facebook.com/v21.0/${PIXEL_ID}/events`;
     const metaResponse = await fetch(metaUrl, {
