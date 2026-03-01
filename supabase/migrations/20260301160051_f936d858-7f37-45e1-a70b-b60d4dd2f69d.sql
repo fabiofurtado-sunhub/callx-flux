@@ -1,0 +1,1 @@
+ALTER TABLE public.configuracoes ADD COLUMN google_sheets_url_revenue_os text DEFAULT '';

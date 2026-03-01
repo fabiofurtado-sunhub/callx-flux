@@ -256,6 +256,7 @@ export type Database = {
           email_tracking_enabled: boolean | null
           google_sheets_url: string | null
           google_sheets_url_core_ai: string | null
+          google_sheets_url_revenue_os: string | null
           horario_sugerido_texto: string | null
           id: string
           link_agendamento: string | null
@@ -274,6 +275,7 @@ export type Database = {
           email_tracking_enabled?: boolean | null
           google_sheets_url?: string | null
           google_sheets_url_core_ai?: string | null
+          google_sheets_url_revenue_os?: string | null
           horario_sugerido_texto?: string | null
           id?: string
           link_agendamento?: string | null
@@ -292,6 +294,7 @@ export type Database = {
           email_tracking_enabled?: boolean | null
           google_sheets_url?: string | null
           google_sheets_url_core_ai?: string | null
+          google_sheets_url_revenue_os?: string | null
           horario_sugerido_texto?: string | null
           id?: string
           link_agendamento?: string | null
