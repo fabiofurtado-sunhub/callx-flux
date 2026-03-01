@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     // 1. Get Google Sheets URLs from configuracoes
     const { data: config, error: cfgError } = await supabase
       .from("configuracoes")
-      .select("google_sheets_url, google_sheets_url_core_ai")
+      .select("google_sheets_url, google_sheets_url_core_ai, google_sheets_url_revenue_os")
       .limit(1)
       .single();
 
@@ -51,7 +51,12 @@ Deno.serve(async (req) => {
       results.core_ai = await processSheet(config.google_sheets_url_core_ai, "core_ai", supabase, existingPhones);
     }
 
-    if (!config?.google_sheets_url && !config?.google_sheets_url_core_ai) {
+    // Process Revenue OS sheet
+    if (config?.google_sheets_url_revenue_os) {
+      results.revenue_os = await processSheet(config.google_sheets_url_revenue_os, "revenue_os", supabase, existingPhones);
+    }
+
+    if (!config?.google_sheets_url && !config?.google_sheets_url_core_ai && !config?.google_sheets_url_revenue_os) {
       return new Response(
         JSON.stringify({ ok: false, message: "Nenhuma URL de planilha configurada" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -116,9 +121,14 @@ async function processSheet(
     adset: findCol(headers, ["adset", "ad_set", "conjunto", "anuncio", "anúncio", "ad_name", "adset_name"]),
     grupo_anuncios: findCol(headers, ["grupo_anuncios", "grupo", "ad_group", "grupo de anuncio", "grupo de anúncio", "grupo_de_anuncio"]),
     faturamento: findCol(headers, ["faturamento", "receita", "revenue", "faturamento mensal", "qual_seu_faturamento_mensal?", "qual seu faturamento mensal?"]),
-    tomador_decisao: findCol(headers, ["tomador_decisao", "tomador de decisao", "decisor", "você_é_o_tomador_de_decisão?", "voce e o tomador de decisao"]),
+    tomador_decisao: findCol(headers, ["tomador_decisao", "tomador de decisao", "decisor", "você_é_o_tomador_de_decisão?", "voce e o tomador de decisao", "qual_é_o_seu_papel_na_tomada_de_decisões_da_sua_empresa?"]),
     gargalo: findCol(headers, ["maior_gargalo_comercial", "gargalo", "qual_seu_maior_gargalo_comercial?", "maior gargalo comercial"]),
     setor: findCol(headers, ["setor_empresa", "setor", "segmento", "qual_o_setor_da_sua_empresa?", "setor da empresa"]),
+    empresa: findCol(headers, ["empresa", "qual_o_nome_da_sua_empresa?", "nome_empresa", "company"]),
+    situacao_profissional: findCol(headers, ["qual_é_a_sua_situação_profissional?", "situacao_profissional"]),
+    funcionarios: findCol(headers, ["quantos_funcionários_tem_a_empresa_em_que_você_trabalha_ou_que_você_possui?", "funcionarios"]),
+    lead_status_sheet: findCol(headers, ["lead_status"]),
+    lead_id_sheet: findCol(headers, ["id"]),
   };
 
   if (colMap.nome === -1 || colMap.telefone === -1) {
@@ -144,14 +154,15 @@ async function processSheet(
       adset: colMap.adset !== -1 ? (row[colMap.adset] || "").trim() : "",
       grupo_anuncios: colMap.grupo_anuncios !== -1 ? (row[colMap.grupo_anuncios] || "").trim() : "",
       faturamento: colMap.faturamento !== -1 ? parseNumber(row[colMap.faturamento] || "") : null,
-      origem: "google_sheets",
+      empresa: colMap.empresa !== -1 ? (row[colMap.empresa] || "").trim() : "",
+      origem: funil === "revenue_os" ? "Tráfego Pago - Meta" : "google_sheets",
       funil,
       status_funil: "lead",
       envio_whatsapp_status: "pendente",
     };
 
-    // Core AI specific fields
-    if (funil === "core_ai") {
+    // Core AI & Revenue OS specific fields
+    if (funil === "core_ai" || funil === "revenue_os") {
       if (colMap.tomador_decisao !== -1) {
         const val = (row[colMap.tomador_decisao] || "").trim().toLowerCase();
         lead.tomador_decisao = val === "sim" || val === "yes" || val === "true" || val === "1";
