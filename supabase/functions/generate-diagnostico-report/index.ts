@@ -699,7 +699,15 @@ function buildHtmlReport(d: {
   sumarioNarrativo: string; doresConfirmadas: string[]; doresMap: Record<string, any>;
   imc: IMCResult; custo: CustoStatusQuo; resumo: any;
   impPerguntas: any; necPerguntas: any; fech: any; setor: string;
+  ds: { bg: string; primary: string; secondary: string; accent: string; alert: string; card: string; text: string; muted: string; logoUrl: string; brand: string; slogan: string };
 }): string {
+  const c = d.ds; // design settings shorthand
+  const borderColor = "#1A2A3A";
+  const textBody = "#CCDDEE";
+  const textDim = "#556677";
+  const logoSrc = c.logoUrl || LOGO_URL;
+  const brandShort = c.brand.split(" ")[0] || "MX3";
+
   const tentativas = d.impPerguntas.I2?.trim();
   const tentText = tentativas
     ? `A empresa já realizou iniciativas anteriores: ${tentativas}. Porém sem resultado sustentável — o que indica que a raiz do problema é estrutural, não de esforço.`
@@ -707,47 +715,47 @@ function buildHtmlReport(d: {
 
   const numDores = d.doresConfirmadas.length;
   const severidade = numDores >= 5 ? "CRÍTICA" : numDores >= 3 ? "ALTA" : "MÉDIA";
-  const sevHex = numDores >= 5 ? "#FF4455" : "#F59E0B";
+  const sevHex = numDores >= 5 ? c.alert : c.accent;
 
   const doresCardsHtml = d.doresConfirmadas.map(dor => {
     const detail = DORES_DETAIL[dor];
     if (!detail) return "";
     const intensidade = d.doresMap[dor]?.intensidade || 3;
-    const barColor = intensidade >= 4 ? "#FF4455" : "#F59E0B";
+    const barColor = intensidade >= 4 ? c.alert : c.accent;
     const bars = Array.from({ length: 5 }, (_, i) =>
-      `<div style="width:28px;height:5px;border-radius:3px;background:${i < intensidade ? barColor : "#1A2A3A"};display:inline-block;margin-right:3px;"></div>`
+      `<div style="width:28px;height:5px;border-radius:3px;background:${i < intensidade ? barColor : borderColor};display:inline-block;margin-right:3px;"></div>`
     ).join("");
     return `
-      <div style="background:#0D1825;border-left:4px solid ${barColor};border-radius:0 8px 8px 0;padding:20px 24px;margin-bottom:12px;">
+      <div style="background:${c.card};border-left:4px solid ${barColor};border-radius:0 8px 8px 0;padding:20px 24px;margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <span style="font-weight:700;font-size:14px;color:#FFFFFF;text-transform:uppercase;letter-spacing:1px;">${detail.titulo}</span>
+          <span style="font-weight:700;font-size:14px;color:${c.text};text-transform:uppercase;letter-spacing:1px;">${detail.titulo}</span>
           <span style="font-size:12px;font-weight:700;color:${barColor};">${intensidade}/5</span>
         </div>
         <div style="margin-bottom:10px;">${bars}</div>
-        <div style="margin-bottom:8px;"><span style="font-size:10px;color:#8899AA;font-weight:700;letter-spacing:1px;">DIAGNÓSTICO:</span><p style="font-size:13px;color:#CCDDEE;line-height:1.6;margin:4px 0 0;">${detail.diagnostico}</p></div>
-        <div style="margin-bottom:8px;"><span style="font-size:10px;color:#8899AA;font-weight:700;letter-spacing:1px;">IMPACTO:</span><p style="font-size:13px;color:#FF4455;line-height:1.5;margin:4px 0 0;font-style:italic;">${detail.impacto}</p></div>
-        <div><span style="font-size:10px;color:#8899AA;font-weight:700;letter-spacing:1px;">SOLUÇÃO REVENUE OS:</span><p style="font-size:13px;color:#00FF78;line-height:1.5;margin:4px 0 0;">${detail.solucao}</p></div>
+        <div style="margin-bottom:8px;"><span style="font-size:10px;color:${c.muted};font-weight:700;letter-spacing:1px;">DIAGNÓSTICO:</span><p style="font-size:13px;color:${textBody};line-height:1.6;margin:4px 0 0;">${detail.diagnostico}</p></div>
+        <div style="margin-bottom:8px;"><span style="font-size:10px;color:${c.muted};font-weight:700;letter-spacing:1px;">IMPACTO:</span><p style="font-size:13px;color:${c.alert};line-height:1.5;margin:4px 0 0;font-style:italic;">${detail.impacto}</p></div>
+        <div><span style="font-size:10px;color:${c.muted};font-weight:700;letter-spacing:1px;">SOLUÇÃO REVENUE OS:</span><p style="font-size:13px;color:${c.primary};line-height:1.5;margin:4px 0 0;">${detail.solucao}</p></div>
       </div>`;
   }).join("");
 
   const gaugePercent = d.imc.score;
-  const gaugeColor = d.imc.score <= 30 ? "#FF4455" : d.imc.score <= 50 ? "#F59E0B" : d.imc.score <= 70 ? "#EAB308" : d.imc.score <= 85 ? "#00D2C8" : "#00FF78";
+  const gaugeColor = d.imc.score <= 30 ? c.alert : d.imc.score <= 50 ? c.accent : d.imc.score <= 70 ? "#EAB308" : d.imc.score <= 85 ? c.secondary : c.primary;
 
-  const pageStyle = `width:210mm;min-height:297mm;margin:0 auto;position:relative;overflow:hidden;background:#080C16;`;
+  const pageStyle = `width:210mm;min-height:297mm;margin:0 auto;position:relative;overflow:hidden;background:${c.bg};`;
   const headerHtml = (num: number) => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 50px;border-bottom:1px solid #1A2A3A;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 50px;border-bottom:1px solid ${borderColor};">
       <div style="display:flex;align-items:center;gap:8px;">
-        <img src="${LOGO_URL}" alt="MX3" style="height:22px;filter:brightness(0) invert(1);" onerror="this.outerHTML='<span style=\\'font-size:14px;font-weight:800;color:#00FF78;\\'>MX3</span>'" />
-        <span style="font-size:9px;color:#8899AA;">Aceleradora Comercial</span>
+        <img src="${logoSrc}" alt="${brandShort}" style="height:22px;filter:brightness(0) invert(1);" onerror="this.outerHTML='<span style=\\'font-size:14px;font-weight:800;color:${c.primary};\\'>MX3</span>'" />
+        <span style="font-size:9px;color:${c.muted};">${c.brand}</span>
       </div>
-      <span style="font-size:8px;color:#8899AA;">${d.empresa}</span>
-      <span style="font-size:9px;color:#8899AA;">${num}/6</span>
+      <span style="font-size:8px;color:${c.muted};">${d.empresa}</span>
+      <span style="font-size:9px;color:${c.muted};">${num}/6</span>
     </div>`;
 
   const sectionTag = (text: string, color: string) => `
     <div style="margin-bottom:20px;">
       <span style="font-size:11px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:3px;">${text}</span>
-      <div style="height:1px;background:#1A2A3A;margin-top:8px;"></div>
+      <div style="height:1px;background:${borderColor};margin-top:8px;"></div>
     </div>`;
 
   const depoisItems = [
@@ -758,24 +766,23 @@ function buildHtmlReport(d: {
     "Decisões baseadas em dados, não em intuição",
   ];
 
-  // Vision text
   let visaoHtml = "";
   if (d.necPerguntas.N2) {
-    visaoHtml += `<div style="border-left:4px solid #00D2C8;padding:12px 20px;margin-bottom:16px;background:rgba(0,210,200,0.05);border-radius:0 8px 8px 0;">
-      <p style="font-size:18px;color:#00D2C8;font-weight:600;font-style:italic;margin:0;">"${d.necPerguntas.N2}"</p>
+    visaoHtml += `<div style="border-left:4px solid ${c.secondary};padding:12px 20px;margin-bottom:16px;background:rgba(0,210,200,0.05);border-radius:0 8px 8px 0;">
+      <p style="font-size:18px;color:${c.secondary};font-weight:600;font-style:italic;margin:0;">"${d.necPerguntas.N2}"</p>
     </div>`;
   }
   if (d.necPerguntas.N1) {
-    visaoHtml += `<p style="font-size:14px;color:#CCDDEE;line-height:1.7;margin-bottom:10px;">Com o comercial funcionando de forma autônoma, o tempo seria direcionado para: ${d.necPerguntas.N1}.</p>`;
+    visaoHtml += `<p style="font-size:14px;color:${textBody};line-height:1.7;margin-bottom:10px;">Com o comercial funcionando de forma autônoma, o tempo seria direcionado para: ${d.necPerguntas.N1}.</p>`;
   }
   if (d.necPerguntas.N3) {
-    visaoHtml += `<p style="font-size:14px;color:#CCDDEE;line-height:1.7;margin-bottom:10px;">A empresa tem horizonte de <strong style="color:#00D2C8;">${d.necPerguntas.N3}</strong> para transformação.</p>`;
+    visaoHtml += `<p style="font-size:14px;color:${textBody};line-height:1.7;margin-bottom:10px;">A empresa tem horizonte de <strong style="color:${c.secondary};">${d.necPerguntas.N3}</strong> para transformação.</p>`;
   }
   if (d.necPerguntas.N4) {
-    visaoHtml += `<p style="font-size:14px;color:#CCDDEE;line-height:1.7;">A liderança demonstrou comprometimento: o principal sinal de controle citado foi "<em>${d.necPerguntas.N4}</em>".</p>`;
+    visaoHtml += `<p style="font-size:14px;color:${textBody};line-height:1.7;">A liderança demonstrou comprometimento: o principal sinal de controle citado foi "<em>${d.necPerguntas.N4}</em>".</p>`;
   }
   if (!visaoHtml) {
-    visaoHtml = `<p style="font-size:14px;color:#CCDDEE;line-height:1.7;">Com base nas dores identificadas, uma operação saudável significaria previsibilidade de receita, time autônomo e decisões baseadas em dados — com o gestor focado em estratégia, não no operacional.</p>`;
+    visaoHtml = `<p style="font-size:14px;color:${textBody};line-height:1.7;">Com base nas dores identificadas, uma operação saudável significaria previsibilidade de receita, time autônomo e decisões baseadas em dados — com o gestor focado em estratégia, não no operacional.</p>`;
   }
 
   return `<!DOCTYPE html>
@@ -783,7 +790,7 @@ function buildHtmlReport(d: {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Inter',sans-serif;color:#CCDDEE;background:#080C16;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+body{font-family:'Inter',sans-serif;color:${textBody};background:${c.bg};-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
 @page{margin:0;size:A4;}
 .page{${pageStyle}}
 @media screen{.page{box-shadow:0 0 40px rgba(0,255,120,0.05);margin-bottom:20px;}}
@@ -791,196 +798,196 @@ body{font-family:'Inter',sans-serif;color:#CCDDEE;background:#080C16;-webkit-pri
 </style></head><body>
 
 <!-- PAGE 1: CAPA -->
-<div class="page" style="display:flex;flex-direction:column;padding:0;border-left:6px solid #00FF78;">
+<div class="page" style="display:flex;flex-direction:column;padding:0;border-left:6px solid ${c.primary};">
   <div style="display:flex;justify-content:space-between;padding:24px 50px;">
     <div style="display:flex;align-items:center;gap:8px;">
-      <img src="${LOGO_URL}" alt="MX3" style="height:24px;filter:brightness(0) invert(1);" onerror="this.outerHTML='<span style=\\'font-size:16px;font-weight:800;color:#00FF78;\\'>MX3</span>'" />
-      <span style="font-size:10px;color:#8899AA;">Aceleradora Comercial</span>
+      <img src="${logoSrc}" alt="${brandShort}" style="height:24px;filter:brightness(0) invert(1);" onerror="this.outerHTML='<span style=\\'font-size:16px;font-weight:800;color:${c.primary};\\'>MX3</span>'" />
+      <span style="font-size:10px;color:${c.muted};">${c.brand}</span>
     </div>
-    <span style="font-size:10px;color:#8899AA;">${d.dataFormatada}</span>
+    <span style="font-size:10px;color:${c.muted};">${d.dataFormatada}</span>
   </div>
   <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 60px;">
-    <span style="font-size:10px;font-weight:700;color:#00FF78;letter-spacing:4px;text-transform:uppercase;margin-bottom:40px;">DIAGNÓSTICO COMERCIAL CONFIDENCIAL</span>
-    <h1 style="font-family:'DM Sans',sans-serif;font-size:52px;font-weight:800;color:#FFFFFF;line-height:1.1;margin-bottom:8px;">Relatório de</h1>
-    <h1 style="font-family:'DM Sans',sans-serif;font-size:52px;font-weight:800;color:#00FF78;line-height:1.1;margin-bottom:20px;">Diagnóstico Comercial</h1>
-    <p style="font-size:14px;color:#8899AA;margin-bottom:50px;">Análise estratégica da operação comercial</p>
-    <div style="background:#0D1825;border:1px solid #00D2C8;border-radius:12px;padding:28px 36px;text-align:left;max-width:420px;width:100%;">
-      <p style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;color:#FFFFFF;margin-bottom:12px;">${d.empresa}</p>
-      <p style="font-size:13px;color:#8899AA;margin-bottom:4px;">Responsável: <strong style="color:#CCDDEE;">${d.nome}</strong></p>
-      <p style="font-size:13px;color:#8899AA;margin-bottom:4px;">Data do diagnóstico: <strong style="color:#CCDDEE;">${d.dataFormatada}</strong></p>
-      <p style="font-size:12px;color:#8899AA;margin-top:8px;font-style:italic;">Prepared by: MX3 Aceleradora Comercial</p>
+    <span style="font-size:10px;font-weight:700;color:${c.primary};letter-spacing:4px;text-transform:uppercase;margin-bottom:40px;">${c.slogan.toUpperCase()}</span>
+    <h1 style="font-family:'DM Sans',sans-serif;font-size:52px;font-weight:800;color:${c.text};line-height:1.1;margin-bottom:8px;">Relatório de</h1>
+    <h1 style="font-family:'DM Sans',sans-serif;font-size:52px;font-weight:800;color:${c.primary};line-height:1.1;margin-bottom:20px;">Diagnóstico Comercial</h1>
+    <p style="font-size:14px;color:${c.muted};margin-bottom:50px;">Análise estratégica da operação comercial</p>
+    <div style="background:${c.card};border:1px solid ${c.secondary};border-radius:12px;padding:28px 36px;text-align:left;max-width:420px;width:100%;">
+      <p style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;color:${c.text};margin-bottom:12px;">${d.empresa}</p>
+      <p style="font-size:13px;color:${c.muted};margin-bottom:4px;">Responsável: <strong style="color:${textBody};">${d.nome}</strong></p>
+      <p style="font-size:13px;color:${c.muted};margin-bottom:4px;">Data do diagnóstico: <strong style="color:${textBody};">${d.dataFormatada}</strong></p>
+      <p style="font-size:12px;color:${c.muted};margin-top:8px;font-style:italic;">Prepared by: ${c.brand}</p>
     </div>
   </div>
   <div style="padding:20px 50px;text-align:center;">
-    <p style="font-size:10px;color:#556677;">Este documento é confidencial e foi preparado exclusivamente para ${d.empresa}. Metodologia proprietária MX3®.</p>
+    <p style="font-size:10px;color:${textDim};">Este documento é confidencial e foi preparado exclusivamente para ${d.empresa}. Metodologia proprietária MX3®.</p>
   </div>
 </div>
 
 <!-- PAGE 2: SUMÁRIO EXECUTIVO + IMC -->
-<div class="page" style="border-left:6px solid #00FF78;padding:0;">
+<div class="page" style="border-left:6px solid ${c.primary};padding:0;">
   ${headerHtml(2)}
   <div style="padding:30px 50px;">
-    ${sectionTag("SUMÁRIO EXECUTIVO", "#00FF78")}
+    ${sectionTag("SUMÁRIO EXECUTIVO", c.primary)}
     <div style="display:flex;gap:16px;margin-bottom:24px;">
-      <div style="flex:1;background:#0D1825;border-radius:10px;padding:20px;text-align:center;border-top:3px solid #00FF78;">
-        <div style="font-family:'DM Sans',sans-serif;font-size:42px;font-weight:800;color:#00FF78;">${numDores}</div>
-        <div style="font-size:11px;color:#8899AA;margin-top:4px;">pontos críticos identificados</div>
+      <div style="flex:1;background:${c.card};border-radius:10px;padding:20px;text-align:center;border-top:3px solid ${c.primary};">
+        <div style="font-family:'DM Sans',sans-serif;font-size:42px;font-weight:800;color:${c.primary};">${numDores}</div>
+        <div style="font-size:11px;color:${c.muted};margin-top:4px;">pontos críticos identificados</div>
       </div>
-      <div style="flex:1;background:#0D1825;border-radius:10px;padding:20px;text-align:center;border-top:3px solid ${gaugeColor};">
+      <div style="flex:1;background:${c.card};border-radius:10px;padding:20px;text-align:center;border-top:3px solid ${gaugeColor};">
         <div style="font-family:'DM Sans',sans-serif;font-size:42px;font-weight:800;color:${gaugeColor};">${d.imc.score}</div>
-        <div style="font-size:11px;color:#8899AA;margin-top:4px;">Índice de Maturidade Comercial MX3®</div>
+        <div style="font-size:11px;color:${c.muted};margin-top:4px;">Índice de Maturidade Comercial MX3®</div>
         <div style="font-size:10px;font-weight:700;color:${gaugeColor};margin-top:2px;">${d.imc.faixa}</div>
       </div>
-      <div style="flex:1;background:#0D1825;border-radius:10px;padding:20px;text-align:center;border-top:3px solid #F59E0B;">
-        <div style="font-family:'DM Sans',sans-serif;font-size:42px;font-weight:800;color:#F59E0B;">${d.resumo.numVendedores || "—"}</div>
-        <div style="font-size:11px;color:#8899AA;margin-top:4px;">vendedores na operação</div>
+      <div style="flex:1;background:${c.card};border-radius:10px;padding:20px;text-align:center;border-top:3px solid ${c.accent};">
+        <div style="font-family:'DM Sans',sans-serif;font-size:42px;font-weight:800;color:${c.accent};">${d.resumo.numVendedores || "—"}</div>
+        <div style="font-size:11px;color:${c.muted};margin-top:4px;">vendedores na operação</div>
       </div>
     </div>
-    ${sectionTag("ÍNDICE DE MATURIDADE COMERCIAL MX3®", "#00D2C8")}
-    <div style="background:#0D1825;border-radius:10px;padding:24px;margin-bottom:24px;">
-      <div style="background:#1A2A3A;border-radius:6px;height:16px;overflow:hidden;margin-bottom:16px;">
-        <div style="width:${gaugePercent}%;height:100%;background:linear-gradient(90deg,#FF4455,#F59E0B,#00D2C8,#00FF78);border-radius:6px;"></div>
+    ${sectionTag("ÍNDICE DE MATURIDADE COMERCIAL MX3®", c.secondary)}
+    <div style="background:${c.card};border-radius:10px;padding:24px;margin-bottom:24px;">
+      <div style="background:${borderColor};border-radius:6px;height:16px;overflow:hidden;margin-bottom:16px;">
+        <div style="width:${gaugePercent}%;height:100%;background:linear-gradient(90deg,${c.alert},${c.accent},${c.secondary},${c.primary});border-radius:6px;"></div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
         <span style="font-family:'DM Sans',sans-serif;font-size:36px;font-weight:800;color:${gaugeColor};">${d.imc.score} / 100</span><br/>
         <span style="font-size:13px;font-weight:700;color:${gaugeColor};letter-spacing:2px;">${d.imc.faixa.toUpperCase()}</span>
       </div>
-      <p style="font-size:12px;color:#8899AA;line-height:1.6;text-align:center;">A maturidade comercial mede o grau de estruturação, previsibilidade e independência da operação de vendas. Um score abaixo de 60 indica dependência direta do gestor para resultados — e risco operacional elevado.</p>
+      <p style="font-size:12px;color:${c.muted};line-height:1.6;text-align:center;">A maturidade comercial mede o grau de estruturação, previsibilidade e independência da operação de vendas. Um score abaixo de 60 indica dependência direta do gestor para resultados — e risco operacional elevado.</p>
     </div>
-    ${sectionTag("O QUE O DIAGNÓSTICO REVELOU", "#FFFFFF")}
-    <div style="background:#0D1825;border-radius:10px;padding:24px;">
-      ${d.sumarioNarrativo.split("\n\n").map(p => `<p style="font-size:14px;color:#CCDDEE;line-height:1.8;margin-bottom:10px;">${p}</p>`).join("")}
+    ${sectionTag("O QUE O DIAGNÓSTICO REVELOU", c.text)}
+    <div style="background:${c.card};border-radius:10px;padding:24px;">
+      ${d.sumarioNarrativo.split("\n\n").map(p => `<p style="font-size:14px;color:${textBody};line-height:1.8;margin-bottom:10px;">${p}</p>`).join("")}
     </div>
   </div>
 </div>
 
 <!-- PAGE 3: CONTEXTO + ANÁLISE QUANTITATIVA -->
-<div class="page" style="border-left:6px solid #00FF78;padding:0;">
+<div class="page" style="border-left:6px solid ${c.primary};padding:0;">
   ${headerHtml(3)}
   <div style="padding:30px 50px;">
-    ${sectionTag("CONTEXTO DA OPERAÇÃO", "#00D2C8")}
+    ${sectionTag("CONTEXTO DA OPERAÇÃO", c.secondary)}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
       ${[
         { label: "SEGMENTO / PORTE", value: d.setor || "Não informado" },
         { label: "EQUIPE COMERCIAL", value: d.resumo.numVendedores ? `${d.resumo.numVendedores} profissional(is) de vendas` : "Não informado" },
         { label: "TICKET MÉDIO", value: d.resumo.ticketMedio ? `${d.resumo.ticketMedio}` : "Não informado" },
         { label: "CICLO DE VENDA", value: d.resumo.cicloMedio ? `${d.resumo.cicloMedio} dias` : "Não informado" },
-      ].map(c => `
-        <div style="background:#0D1825;border-radius:8px;padding:18px;">
-          <span style="font-size:9px;color:#8899AA;text-transform:uppercase;letter-spacing:2px;">${c.label}</span>
-          <p style="font-size:15px;font-weight:700;color:#FFFFFF;margin-top:6px;">${c.value}</p>
+      ].map(ci => `
+        <div style="background:${c.card};border-radius:8px;padding:18px;">
+          <span style="font-size:9px;color:${c.muted};text-transform:uppercase;letter-spacing:2px;">${ci.label}</span>
+          <p style="font-size:15px;font-weight:700;color:${c.text};margin-top:6px;">${ci.value}</p>
         </div>`).join("")}
     </div>
-    ${sectionTag("ESTIMATIVA DE RECEITA EM RISCO — CÁLCULO CONSERVADOR", "#F59E0B")}
-    <div style="background:#0D1825;border-radius:10px;padding:24px;border-top:3px solid #F59E0B;margin-bottom:24px;">
+    ${sectionTag("ESTIMATIVA DE RECEITA EM RISCO — CÁLCULO CONSERVADOR", c.accent)}
+    <div style="background:${c.card};border-radius:10px;padding:24px;border-top:3px solid ${c.accent};margin-bottom:24px;">
       <table style="width:100%;border-collapse:collapse;">
-        <tr style="border-bottom:1px solid #1A2A3A;"><td style="padding:10px 0;font-size:13px;color:#8899AA;">Receita potencial estimada (mensal)</td><td style="padding:10px 0;text-align:right;font-size:15px;font-weight:700;color:#F59E0B;">${formatBRL(d.custo.receitaPotencial)}</td></tr>
-        <tr style="border-bottom:1px solid #1A2A3A;"><td style="padding:10px 0;font-size:13px;color:#8899AA;">Perda estimada por baixa conversão</td><td style="padding:10px 0;text-align:right;font-size:15px;font-weight:700;color:#F59E0B;">${formatBRL(d.custo.perdaMensal)}</td></tr>
-        <tr><td style="padding:10px 0;font-size:13px;color:#8899AA;">Impacto anual projetado</td><td style="padding:10px 0;text-align:right;font-size:18px;font-weight:800;color:#FF4455;">${formatBRL(d.custo.perdaAnual)}</td></tr>
+        <tr style="border-bottom:1px solid ${borderColor};"><td style="padding:10px 0;font-size:13px;color:${c.muted};">Receita potencial estimada (mensal)</td><td style="padding:10px 0;text-align:right;font-size:15px;font-weight:700;color:${c.accent};">${formatBRL(d.custo.receitaPotencial)}</td></tr>
+        <tr style="border-bottom:1px solid ${borderColor};"><td style="padding:10px 0;font-size:13px;color:${c.muted};">Perda estimada por baixa conversão</td><td style="padding:10px 0;text-align:right;font-size:15px;font-weight:700;color:${c.accent};">${formatBRL(d.custo.perdaMensal)}</td></tr>
+        <tr><td style="padding:10px 0;font-size:13px;color:${c.muted};">Impacto anual projetado</td><td style="padding:10px 0;text-align:right;font-size:18px;font-weight:800;color:${c.alert};">${formatBRL(d.custo.perdaAnual)}</td></tr>
       </table>
-      <p style="font-size:10px;color:#556677;margin-top:12px;font-style:italic;">* Estimativa baseada nos dados informados. Cálculo considera taxa de conversão média de mercado. Não representa garantia de resultado.</p>
+      <p style="font-size:10px;color:${textDim};margin-top:12px;font-style:italic;">* Estimativa baseada nos dados informados. Cálculo considera taxa de conversão média de mercado. Não representa garantia de resultado.</p>
     </div>
-    ${sectionTag("O QUE JÁ FOI TENTADO", "#F59E0B")}
-    <div style="background:#0D1825;border:1px solid #1A2A3A;border-radius:10px;padding:24px;">
-      <p style="font-size:14px;color:#CCDDEE;line-height:1.7;">${tentText}</p>
+    ${sectionTag("O QUE JÁ FOI TENTADO", c.accent)}
+    <div style="background:${c.card};border:1px solid ${borderColor};border-radius:10px;padding:24px;">
+      <p style="font-size:14px;color:${textBody};line-height:1.7;">${tentText}</p>
     </div>
   </div>
 </div>
 
 <!-- PAGE 4: PONTOS CRÍTICOS -->
-<div class="page" style="border-left:6px solid #00FF78;padding:0;">
+<div class="page" style="border-left:6px solid ${c.primary};padding:0;">
   ${headerHtml(4)}
   <div style="padding:30px 50px;">
     ${sectionTag(`DIAGNÓSTICO DE PONTOS CRÍTICOS — PRIORIDADE ${severidade}`, sevHex)}
-    ${doresCardsHtml || '<p style="color:#8899AA;font-size:14px;">Nenhuma dor identificada no diagnóstico.</p>'}
+    ${doresCardsHtml || `<p style="color:${c.muted};font-size:14px;">Nenhuma dor identificada no diagnóstico.</p>`}
   </div>
 </div>
 
 <!-- PAGE 5: CUSTO DO STATUS QUO + VISÃO -->
-<div class="page" style="border-left:6px solid #00FF78;padding:0;">
+<div class="page" style="border-left:6px solid ${c.primary};padding:0;">
   ${headerHtml(5)}
   <div style="padding:30px 50px;">
-    ${sectionTag("O CUSTO DE CONTINUAR COMO ESTÁ", "#FF4455")}
-    <div style="background:#0D1825;border-radius:10px;padding:28px;border-top:3px solid #FF4455;margin-bottom:24px;text-align:center;">
-      <p style="font-size:10px;color:#8899AA;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">Estimativa de Receita em Risco — por Ano</p>
-      <p style="font-family:'DM Sans',sans-serif;font-size:44px;font-weight:800;color:#FF4455;margin-bottom:8px;">${formatBRL(d.custo.perdaAnual)}</p>
-      <p style="font-size:12px;color:#8899AA;font-style:italic;margin-bottom:16px;">Estimativa conservadora baseada nos dados informados</p>
+    ${sectionTag("O CUSTO DE CONTINUAR COMO ESTÁ", c.alert)}
+    <div style="background:${c.card};border-radius:10px;padding:28px;border-top:3px solid ${c.alert};margin-bottom:24px;text-align:center;">
+      <p style="font-size:10px;color:${c.muted};text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">Estimativa de Receita em Risco — por Ano</p>
+      <p style="font-family:'DM Sans',sans-serif;font-size:44px;font-weight:800;color:${c.alert};margin-bottom:8px;">${formatBRL(d.custo.perdaAnual)}</p>
+      <p style="font-size:12px;color:${c.muted};font-style:italic;margin-bottom:16px;">Estimativa conservadora baseada nos dados informados</p>
       <div style="text-align:left;">
-        <p style="font-size:13px;color:#CCDDEE;margin-bottom:6px;">→ Perda por baixa conversão: <strong>${formatBRL(d.custo.perdaMensal)}/mês</strong></p>
-        <p style="font-size:13px;color:#CCDDEE;margin-bottom:6px;">→ Tempo do gestor no operacional: <strong>~${d.custo.horasGestor}h/semana</strong> (custo estimado: ${formatBRL(d.custo.custoTempoGestor)}/mês)</p>
-        ${d.resumo.cicloMedio && parseNumeric(d.resumo.cicloMedio) > 30 ? `<p style="font-size:13px;color:#CCDDEE;margin-bottom:6px;">→ Ciclo de venda acima do ideal: <strong>+${parseNumeric(d.resumo.cicloMedio) - 30} dias por negócio</strong></p>` : ""}
+        <p style="font-size:13px;color:${textBody};margin-bottom:6px;">> Perda por baixa conversão: <strong>${formatBRL(d.custo.perdaMensal)}/mês</strong></p>
+        <p style="font-size:13px;color:${textBody};margin-bottom:6px;">> Tempo do gestor no operacional: <strong>~${d.custo.horasGestor}h/semana</strong> (custo estimado: ${formatBRL(d.custo.custoTempoGestor)}/mês)</p>
+        ${d.resumo.cicloMedio && parseNumeric(d.resumo.cicloMedio) > 30 ? `<p style="font-size:13px;color:${textBody};margin-bottom:6px;">> Ciclo de venda acima do ideal: <strong>+${parseNumeric(d.resumo.cicloMedio) - 30} dias por negócio</strong></p>` : ""}
       </div>
-      <p style="font-size:13px;color:#FF4455;font-style:italic;margin-top:16px;line-height:1.6;">Este não é o problema. Este é o sintoma. O problema real é a ausência de um sistema comercial. Cada mês sem estrutura é mais ${formatBRL(d.custo.perdaMensal)} deixado na mesa.</p>
+      <p style="font-size:13px;color:${c.alert};font-style:italic;margin-top:16px;line-height:1.6;">Este não é o problema. Este é o sintoma. O problema real é a ausência de um sistema comercial. Cada mês sem estrutura é mais ${formatBRL(d.custo.perdaMensal)} deixado na mesa.</p>
     </div>
 
-    ${sectionTag("ANTES REVENUE OS × DEPOIS REVENUE OS", "#FFFFFF")}
+    ${sectionTag("ANTES REVENUE OS × DEPOIS REVENUE OS", c.text)}
     <div style="display:flex;gap:12px;margin-bottom:24px;">
       <div style="flex:1;background:rgba(255,68,85,0.08);border:1px solid rgba(255,68,85,0.2);border-radius:10px;padding:20px;">
-        <p style="font-size:12px;font-weight:700;color:#FF4455;margin-bottom:12px;">✕ ANTES</p>
+        <p style="font-size:12px;font-weight:700;color:${c.alert};margin-bottom:12px;">x ANTES</p>
         ${d.doresConfirmadas.slice(0, 5).map(dor => {
           const detail = DORES_DETAIL[dor];
-          return `<p style="font-size:12px;color:rgba(255,150,150,0.9);margin-bottom:6px;">✕ ${detail?.titulo || dor}</p>`;
+          return `<p style="font-size:12px;color:rgba(255,150,150,0.9);margin-bottom:6px;">x ${detail?.titulo || dor}</p>`;
         }).join("")}
       </div>
       <div style="flex:1;background:rgba(0,255,120,0.05);border:1px solid rgba(0,255,120,0.15);border-radius:10px;padding:20px;">
-        <p style="font-size:12px;font-weight:700;color:#00FF78;margin-bottom:12px;">✓ DEPOIS</p>
-        ${depoisItems.map(item => `<p style="font-size:12px;color:rgba(150,230,180,0.9);margin-bottom:6px;">✓ ${item}</p>`).join("")}
+        <p style="font-size:12px;font-weight:700;color:${c.primary};margin-bottom:12px;">+ DEPOIS</p>
+        ${depoisItems.map(item => `<p style="font-size:12px;color:rgba(150,230,180,0.9);margin-bottom:6px;">+ ${item}</p>`).join("")}
       </div>
     </div>
 
-    ${sectionTag(`O QUE ${d.empresa.toUpperCase()} QUER ALCANÇAR`, "#00D2C8")}
-    <div style="background:#0D1825;border-radius:10px;padding:24px;">
+    ${sectionTag(`O QUE ${d.empresa.toUpperCase()} QUER ALCANÇAR`, c.secondary)}
+    <div style="background:${c.card};border-radius:10px;padding:24px;">
       ${visaoHtml}
     </div>
   </div>
 </div>
 
 <!-- PAGE 6: PLANO DE AÇÃO + CTA -->
-<div class="page" style="border-left:6px solid #00FF78;padding:0;">
+<div class="page" style="border-left:6px solid ${c.primary};padding:0;">
   ${headerHtml(6)}
   <div style="padding:30px 50px;">
-    ${sectionTag("PLANO DE AÇÃO — REVENUE OS", "#00FF78")}
-    <p style="font-size:11px;color:#8899AA;margin-bottom:16px;">O que será implementado em 30 dias:</p>
+    ${sectionTag("PLANO DE AÇÃO — REVENUE OS", c.primary)}
+    <p style="font-size:11px;color:${c.muted};margin-bottom:16px;">O que será implementado em 30 dias:</p>
     <div style="display:flex;gap:12px;margin-bottom:24px;">
       ${[
-        { title: "FASE 1", days: "Dias 1-10", name: "DIAGNÓSTICO & FUNDAÇÃO", color: "#00D2C8", items: ["Auditoria completa da operação comercial", "Configuração e customização do CRM", "Definição de ICP, personas e qualificação", "Mapeamento do pipeline atual"] },
-        { title: "FASE 2", days: "Dias 11-20", name: "PROCESSO & PLAYBOOK", color: "#00FF78", items: ["Scripts de vendas por etapa do funil", "Playbook de objeções customizado", "KPIs e metas individuais por vendedor", "Treinamento do time comercial"] },
-        { title: "FASE 3", days: "Dias 21-30", name: "GOVERNANÇA & AUTONOMIA", color: "#F59E0B", items: ["Reuniões de pipeline semanais", "Dashboard de gestão ativo", "Time operando de forma independente", "Entrega + plano de continuidade"] },
+        { title: "FASE 1", days: "Dias 1-10", name: "DIAGNÓSTICO & FUNDAÇÃO", color: c.secondary, items: ["Auditoria completa da operação comercial", "Configuração e customização do CRM", "Definição de ICP, personas e qualificação", "Mapeamento do pipeline atual"] },
+        { title: "FASE 2", days: "Dias 11-20", name: "PROCESSO & PLAYBOOK", color: c.primary, items: ["Scripts de vendas por etapa do funil", "Playbook de objeções customizado", "KPIs e metas individuais por vendedor", "Treinamento do time comercial"] },
+        { title: "FASE 3", days: "Dias 21-30", name: "GOVERNANÇA & AUTONOMIA", color: c.accent, items: ["Reuniões de pipeline semanais", "Dashboard de gestão ativo", "Time operando de forma independente", "Entrega + plano de continuidade"] },
       ].map(ph => `
-        <div style="flex:1;background:#0D1825;border-radius:10px;padding:18px;border-top:3px solid ${ph.color};">
-          <p style="font-size:9px;color:#8899AA;margin-bottom:4px;">${ph.title} | ${ph.days}</p>
+        <div style="flex:1;background:${c.card};border-radius:10px;padding:18px;border-top:3px solid ${ph.color};">
+          <p style="font-size:9px;color:${c.muted};margin-bottom:4px;">${ph.title} | ${ph.days}</p>
           <p style="font-size:11px;font-weight:700;color:${ph.color};margin-bottom:10px;">${ph.name}</p>
-          ${ph.items.map(item => `<p style="font-size:11px;color:#CCDDEE;margin-bottom:5px;">→ ${item}</p>`).join("")}
+          ${ph.items.map(item => `<p style="font-size:11px;color:${textBody};margin-bottom:5px;">> ${item}</p>`).join("")}
         </div>`).join("")}
     </div>
 
-    ${sectionTag("POR QUE AGIR AGORA", "#FF4455")}
-    <div style="background:#0D1825;border:1px solid rgba(255,68,85,0.2);border-radius:10px;padding:24px;margin-bottom:24px;">
-      <p style="font-size:14px;color:#F59E0B;font-weight:600;line-height:1.7;">Cada mês sem estrutura comercial custa a ${d.empresa} aproximadamente <strong style="color:#FF4455;">${formatBRL(d.custo.perdaMensal)}</strong> em oportunidades não convertidas. Em 30 dias, o Revenue OS transforma esta operação. A pergunta não é SE vale a pena. É QUANTO CUSTA ESPERAR.</p>
+    ${sectionTag("POR QUE AGIR AGORA", c.alert)}
+    <div style="background:${c.card};border:1px solid rgba(255,68,85,0.2);border-radius:10px;padding:24px;margin-bottom:24px;">
+      <p style="font-size:14px;color:${c.accent};font-weight:600;line-height:1.7;">Cada mês sem estrutura comercial custa a ${d.empresa} aproximadamente <strong style="color:${c.alert};">${formatBRL(d.custo.perdaMensal)}</strong> em oportunidades não convertidas. Em 30 dias, o Revenue OS transforma esta operação. A pergunta não é SE vale a pena. É QUANTO CUSTA ESPERAR.</p>
     </div>
 
-    ${sectionTag("PRÓXIMO PASSO", "#00FF78")}
-    <div style="background:#0D1825;border:1px solid rgba(0,255,120,0.2);border-radius:10px;padding:24px;margin-bottom:24px;">
+    ${sectionTag("PRÓXIMO PASSO", c.primary)}
+    <div style="background:${c.card};border:1px solid rgba(0,255,120,0.2);border-radius:10px;padding:24px;margin-bottom:24px;">
       <div style="margin-bottom:16px;">
-        <p style="font-size:13px;color:#00FF78;font-weight:700;margin-bottom:6px;">1. Reunião de proposta — hoje</p>
-        <p style="font-size:13px;color:#00D2C8;font-weight:700;margin-bottom:6px;">2. Contrato assinado e acesso ao onboarding</p>
-        <p style="font-size:13px;color:#00FF78;font-weight:700;margin-bottom:6px;">3. Diagnóstico técnico na semana 1</p>
-        <p style="font-size:13px;color:#F59E0B;font-weight:700;">4. Implementação Revenue OS — 30 dias</p>
+        <p style="font-size:13px;color:${c.primary};font-weight:700;margin-bottom:6px;">1. Reunião de proposta — hoje</p>
+        <p style="font-size:13px;color:${c.secondary};font-weight:700;margin-bottom:6px;">2. Contrato assinado e acesso ao onboarding</p>
+        <p style="font-size:13px;color:${c.primary};font-weight:700;margin-bottom:6px;">3. Diagnóstico técnico na semana 1</p>
+        <p style="font-size:13px;color:${c.accent};font-weight:700;">4. Implementação Revenue OS — 30 dias</p>
       </div>
-      <div style="border-top:1px solid #1A2A3A;padding-top:16px;">
-        <p style="font-size:14px;font-weight:700;color:#FFFFFF;">Fabio Furtado — CEO & Fundador MX3</p>
-        <p style="font-size:12px;color:#8899AA;">aceleradoramx3.com  |  @mx3aceleradora</p>
+      <div style="border-top:1px solid ${borderColor};padding-top:16px;">
+        <p style="font-size:14px;font-weight:700;color:${c.text};">Fabio Furtado — CEO & Fundador MX3</p>
+        <p style="font-size:12px;color:${c.muted};">aceleradoramx3.com  |  @mx3aceleradora</p>
       </div>
       <div style="display:flex;gap:8px;margin-top:14px;">
-        <span style="background:#0D1825;border:1px solid #1A2A3A;border-radius:20px;padding:5px 14px;font-size:10px;color:#00FF78;">8 anos de mercado</span>
-        <span style="background:#0D1825;border:1px solid #1A2A3A;border-radius:20px;padding:5px 14px;font-size:10px;color:#00FF78;">+6.000 empresários mentorados</span>
-        <span style="background:#0D1825;border:1px solid #1A2A3A;border-radius:20px;padding:5px 14px;font-size:10px;color:#00FF78;">R$600M+ em vendas geradas</span>
+        <span style="background:${c.card};border:1px solid ${borderColor};border-radius:20px;padding:5px 14px;font-size:10px;color:${c.primary};">8 anos de mercado</span>
+        <span style="background:${c.card};border:1px solid ${borderColor};border-radius:20px;padding:5px 14px;font-size:10px;color:${c.primary};">+6.000 empresários mentorados</span>
+        <span style="background:${c.card};border:1px solid ${borderColor};border-radius:20px;padding:5px 14px;font-size:10px;color:${c.primary};">R$600M+ em vendas geradas</span>
       </div>
     </div>
   </div>
-  <div style="background:#0D1825;padding:16px 50px;position:absolute;bottom:0;left:6px;right:0;display:flex;justify-content:space-between;align-items:center;">
-    <img src="${LOGO_URL}" alt="MX3" style="height:20px;filter:brightness(0) invert(1);" onerror="this.outerHTML='<span style=\\'font-size:14px;font-weight:800;color:#00FF78;\\'>MX3</span>'" />
-    <span style="font-size:9px;color:#556677;">MX3 Aceleradora Comercial® — Diagnóstico Confidencial</span>
+  <div style="background:${c.card};padding:16px 50px;position:absolute;bottom:0;left:6px;right:0;display:flex;justify-content:space-between;align-items:center;">
+    <img src="${logoSrc}" alt="${brandShort}" style="height:20px;filter:brightness(0) invert(1);" onerror="this.outerHTML='<span style=\\'font-size:14px;font-weight:800;color:${c.primary};\\'>MX3</span>'" />
+    <span style="font-size:9px;color:${textDim};">${c.brand}® — ${c.slogan}</span>
   </div>
 </div>
 
@@ -1020,6 +1027,22 @@ serve(async (req) => {
 
     const { data: lead, error: leadErr } = await supabase.from("leads").select("*").eq("id", diag.lead_id).single();
     if (leadErr || !lead) throw new Error("Lead não encontrado");
+
+    // Fetch design settings
+    const { data: configDesign } = await supabase.from("configuracoes").select("diag_cor_fundo, diag_cor_primaria, diag_cor_secundaria, diag_cor_destaque, diag_cor_alerta, diag_cor_card, diag_cor_texto, diag_cor_texto_muted, diag_logo_url, diag_nome_marca, diag_slogan").limit(1).single();
+    const ds = {
+      bg: configDesign?.diag_cor_fundo || "#080C16",
+      primary: configDesign?.diag_cor_primaria || "#00FF78",
+      secondary: configDesign?.diag_cor_secundaria || "#00D2C8",
+      accent: configDesign?.diag_cor_destaque || "#F59E0B",
+      alert: configDesign?.diag_cor_alerta || "#FF4455",
+      card: configDesign?.diag_cor_card || "#0D1825",
+      text: configDesign?.diag_cor_texto || "#FFFFFF",
+      muted: configDesign?.diag_cor_texto_muted || "#8899AA",
+      logoUrl: configDesign?.diag_logo_url || LOGO_URL,
+      brand: configDesign?.diag_nome_marca || "MX3 Aceleradora Comercial",
+      slogan: configDesign?.diag_slogan || "Diagnóstico Comercial Confidencial",
+    };
 
     const sit = (diag.spin_situacao as any) || {};
     const prob = (diag.spin_problema as any) || {};
@@ -1061,6 +1084,7 @@ serve(async (req) => {
       sumarioNarrativo, doresConfirmadas, doresMap,
       imc, custo, resumo, impPerguntas, necPerguntas, fech,
       setor: lead.setor_empresa || "",
+      ds,
     };
 
     // Build HTML report
