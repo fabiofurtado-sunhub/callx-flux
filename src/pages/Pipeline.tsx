@@ -1,5 +1,5 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
-import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
+import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState, useEffect } from 'react';
 import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -163,7 +163,7 @@ export default function Pipeline() {
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {(activeFunil === 'playbook_mx3' ? PLAYBOOK_STAGES : activeFunil === 'revenue_os' ? REVENUE_OS_STAGES : FUNNEL_STAGES).map(stage => {
+        {(activeFunil === 'playbook_mx3' ? PLAYBOOK_STAGES : activeFunil === 'revenue_os' ? REVENUE_OS_STAGES : activeFunil === 'core_ai' ? CORE_AI_STAGES : FUNNEL_STAGES).map(stage => {
           const searchLower = search.toLowerCase();
           const stageLeads = filteredLeads.filter(l =>
             l.status_funil === stage.key &&
