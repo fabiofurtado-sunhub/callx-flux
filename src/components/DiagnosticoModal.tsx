@@ -232,19 +232,41 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
 
   const handleGenerateReport = async () => {
     if (!diagnosticoId) { toast.error('Salve o diagnóstico primeiro'); return; }
+    // Validate required fields
+    if (!implicacao.I4?.trim()) { toast.error('Preencha "I4 — Cenário em 6 meses" (campo obrigatório) para gerar o relatório.'); setActiveTab('spin'); return; }
+    if (!necessidade.N2?.trim()) { toast.error('Preencha "N2 — Comercial ideal em 1 frase" (campo obrigatório) para gerar o relatório.'); setActiveTab('spin'); return; }
+    
     setGeneratingReport(true);
     try {
       await handleSave(false);
-      const sendEmail = !!lead.email;
       const { data, error } = await sbClient.functions.invoke('generate-diagnostico-report', {
-        body: { diagnostico_id: diagnosticoId, send_email: sendEmail },
+        body: { diagnostico_id: diagnosticoId, send_email: false },
       });
       if (error) throw error;
       if (data?.html) {
         const win = window.open('', '_blank');
-        if (win) { win.document.write(data.html); win.document.close(); }
+        if (win) {
+          win.document.write(data.html);
+          win.document.close();
+        }
       }
-      toast.success(sendEmail ? 'Relatório gerado e enviado por e-mail!' : 'Relatório gerado! (Lead sem e-mail cadastrado)');
+      toast.success('Relatório gerado! Aberto em nova aba para impressão como PDF.');
+      
+      // Ask to send email if lead has one
+      if (lead.email) {
+        toast('Deseja enviar por e-mail?', {
+          action: {
+            label: 'Enviar',
+            onClick: async () => {
+              const { error: emailErr } = await sbClient.functions.invoke('generate-diagnostico-report', {
+                body: { diagnostico_id: diagnosticoId, send_email: true },
+              });
+              if (emailErr) { toast.error('Erro ao enviar e-mail'); return; }
+              toast.success('E-mail enviado com sucesso!');
+            },
+          },
+        });
+      }
     } catch (err) {
       console.error(err);
       toast.error('Erro ao gerar relatório');
@@ -511,41 +533,62 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
               {/* IMPLICAÇÃO */}
               <div className="space-y-4 rounded-lg border-l-4 border-red-500 pl-4">
                 <h3 className="text-base font-bold text-red-600 uppercase tracking-wider">Implicação</h3>
-                {[
-                  { id: 'I1', text: 'Esse problema existe há quanto tempo? O que já tentou fazer para resolver?' },
-                  { id: 'I2', text: 'Se a previsibilidade melhorasse, como isso mudaria o modo como você toma decisões?' },
-                  { id: 'I3', text: 'Quais oportunidades você pode estar perdendo por não ter esse controle comercial?' },
-                  { id: 'I4', text: 'O que acontece se daqui a 6 meses a operação continuar como está?' },
-                  { id: 'I5', text: 'Como isso afeta o seu posicionamento frente à concorrência?' },
-                ].map(q => (
-                  <SpinQuestion key={q.id} {...q} value={implicacao[q.id] || ''} onChange={v => setImplicacao(prev => ({ ...prev, [q.id]: v }))} />
-                ))}
-                <div className="bg-muted/50 rounded-lg p-4 space-y-3 grid grid-cols-2 gap-3">
-                  <div><Label className="text-xs text-muted-foreground">Custo estimado pelo cliente (R$/mês)</Label><Input type="number" value={implicacaoExtras.custoEstimado || ''} onChange={e => setImplicacaoExtras(p => ({ ...p, custoEstimado: e.target.value }))} className="mt-1 bg-background border-border" /></div>
-                  <div><Label className="text-xs text-muted-foreground">Tempo do problema sem solução</Label><Input value={implicacaoExtras.tempoProblema || ''} onChange={e => setImplicacaoExtras(p => ({ ...p, tempoProblema: e.target.value }))} className="mt-1 bg-background border-border" /></div>
-                  <div className="col-span-2"><Label className="text-xs text-muted-foreground">Principais consequências citadas</Label><Textarea value={implicacaoExtras.consequencias || ''} onChange={e => setImplicacaoExtras(p => ({ ...p, consequencias: e.target.value }))} rows={2} className="mt-1 bg-background border-border resize-none" /></div>
-                  <div className="col-span-2"><Label className="text-xs text-muted-foreground">Reações emocionais / momentos de tensão</Label><Textarea value={implicacaoExtras.reacoesEmocionais || ''} onChange={e => setImplicacaoExtras(p => ({ ...p, reacoesEmocionais: e.target.value }))} rows={2} className="mt-1 bg-background border-border resize-none" /></div>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm font-semibold text-foreground">I1 — Há quanto tempo esse problema existe?</Label>
+                    <Select value={implicacao.I1 || ''} onValueChange={v => setImplicacao(prev => ({ ...prev, I1: v }))}>
+                      <SelectTrigger className="mt-1 bg-background border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Menos de 6 meses">Menos de 6 meses</SelectItem>
+                        <SelectItem value="6 a 12 meses">6 a 12 meses</SelectItem>
+                        <SelectItem value="1 a 2 anos">1 a 2 anos</SelectItem>
+                        <SelectItem value="Mais de 2 anos">Mais de 2 anos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <SpinQuestion id="I2" text="O que já tentou para resolver? (ferramentas, consultoria, treinamento)" value={implicacao.I2 || ''} onChange={v => setImplicacao(prev => ({ ...prev, I2: v }))} />
+                  <SpinQuestion id="I3" text="Se o pipeline ficasse visível hoje, qual decisão você tomaria que está travada agora?" value={implicacao.I3 || ''} onChange={v => setImplicacao(prev => ({ ...prev, I3: v }))} />
+                  <div>
+                    <Label className="text-sm font-semibold text-foreground">I4 — Se daqui a 6 meses a operação continuar como está, o que acontece com o seu negócio? <span className="text-destructive">*</span></Label>
+                    <Textarea value={implicacao.I4 || ''} onChange={e => setImplicacao(prev => ({ ...prev, I4: e.target.value }))} rows={3} className="mt-1 bg-background border-border resize-none" placeholder="Resposta do cliente... (obrigatório)" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-foreground">I5 — Quanto tempo por semana você gasta resolvendo problemas que deveriam ser do processo, não seus?</Label>
+                    <Select value={implicacao.I5 || ''} onValueChange={v => setImplicacao(prev => ({ ...prev, I5: v }))}>
+                      <SelectTrigger className="mt-1 bg-background border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Menos de 2h">Menos de 2h</SelectItem>
+                        <SelectItem value="2 a 5h">2 a 5h</SelectItem>
+                        <SelectItem value="5 a 10h">5 a 10h</SelectItem>
+                        <SelectItem value="Mais de 10h">Mais de 10h</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
               {/* NECESSIDADE */}
               <div className="space-y-4 rounded-lg border-l-4 border-green-500 pl-4">
                 <h3 className="text-base font-bold text-green-600 uppercase tracking-wider">Necessidade</h3>
-                {[
-                  { id: 'N1', text: 'Se você tivesse visibilidade total do seu pipeline hoje, o que faria diferente?' },
-                  { id: 'N2', text: 'Como seria o comercial ideal para você — sem depender de uma pessoa-chave?' },
-                  { id: 'N3', text: 'Se sua taxa de conversão aumentasse 10%, o que representaria em receita nos próximos 3 meses?' },
-                  { id: 'N4', text: 'O que seria necessário para você dizer: agora tenho controle do meu comercial?' },
-                ].map(q => (
-                  <SpinQuestion key={q.id} {...q} value={necessidade[q.id] || ''} onChange={v => setNecessidade(prev => ({ ...prev, [q.id]: v }))} />
-                ))}
-                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                  <div><Label className="text-xs text-muted-foreground">"Para mim, o ideal seria..." (palavras exatas do cliente)</Label><Textarea value={necessidadeExtras.idealCliente || ''} onChange={e => setNecessidadeExtras(p => ({ ...p, idealCliente: e.target.value }))} rows={2} className="mt-1 bg-background border-border resize-none" /></div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div><Label className="text-xs text-muted-foreground">Prioridade 1 para o cliente</Label><Input value={necessidadeExtras.prioridade1 || ''} onChange={e => setNecessidadeExtras(p => ({ ...p, prioridade1: e.target.value }))} className="mt-1 bg-background border-border" /></div>
-                    <div><Label className="text-xs text-muted-foreground">Prioridade 2 para o cliente</Label><Input value={necessidadeExtras.prioridade2 || ''} onChange={e => setNecessidadeExtras(p => ({ ...p, prioridade2: e.target.value }))} className="mt-1 bg-background border-border" /></div>
+                <div className="space-y-3">
+                  <SpinQuestion id="N1" text="Se o comercial funcionasse sem você, o que você faria com esse tempo?" value={necessidade.N1 || ''} onChange={v => setNecessidade(prev => ({ ...prev, N1: v }))} />
+                  <div>
+                    <Label className="text-sm font-semibold text-foreground">N2 — Descreva em 1 frase como seria seu comercial ideal: <span className="text-destructive">*</span></Label>
+                    <Input value={necessidade.N2 || ''} onChange={e => setNecessidade(prev => ({ ...prev, N2: e.target.value }))} className="mt-1 bg-background border-border" placeholder="Resposta do cliente... (obrigatório)" />
                   </div>
-                  <div><Label className="text-xs text-muted-foreground">Resultado esperado pelo cliente</Label><Input value={necessidadeExtras.resultadoEsperado || ''} onChange={e => setNecessidadeExtras(p => ({ ...p, resultadoEsperado: e.target.value }))} className="mt-1 bg-background border-border" /></div>
+                  <div>
+                    <Label className="text-sm font-semibold text-foreground">N3 — Em quanto tempo você quer ter esse controle implantado?</Label>
+                    <Select value={necessidade.N3 || ''} onValueChange={v => setNecessidade(prev => ({ ...prev, N3: v }))}>
+                      <SelectTrigger className="mt-1 bg-background border-border"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="30 dias">30 dias</SelectItem>
+                        <SelectItem value="60 dias">60 dias</SelectItem>
+                        <SelectItem value="90 dias">90 dias</SelectItem>
+                        <SelectItem value="Sem prazo definido">Sem prazo definido</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <SpinQuestion id="N4" text="Qual seria o principal sinal de que você tem controle do seu comercial?" value={necessidade.N4 || ''} onChange={v => setNecessidade(prev => ({ ...prev, N4: v }))} />
                 </div>
               </div>
             </TabsContent>
