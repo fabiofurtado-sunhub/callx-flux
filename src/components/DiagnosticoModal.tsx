@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Save, CheckCircle2, FileText, CalendarIcon, X, ClipboardList } from 'lucide-react';
+import { Save, CheckCircle2, FileText, CalendarIcon, X, ClipboardList, Sparkles, Loader2, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,6 +51,8 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
   const [activeTab, setActiveTab] = useState('dados');
   const [saving, setSaving] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  const [extractingDores, setExtractingDores] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
   const [diagnosticoId, setDiagnosticoId] = useState<string | null>(null);
   const [status, setStatus] = useState('rascunho');
 
@@ -161,6 +163,58 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
       toast.error('Erro ao extrair resumo');
     } finally {
       setExtracting(false);
+    }
+  };
+
+  const handleAutoFillDores = async () => {
+    const hasContent = Object.values(problema).some(v => v && v.trim().length > 0);
+    if (!hasContent) { toast.error('Preencha pelo menos uma resposta de Problema primeiro'); return; }
+    setExtractingDores(true);
+    try {
+      const { data, error } = await sbClient.functions.invoke('extract-spin-resumo', {
+        body: { respostas: problema, type: 'dores' },
+      });
+      if (error) throw error;
+      if (data) {
+        setDoresMap(prev => {
+          const updated = { ...prev };
+          Object.entries(data).forEach(([dor, val]: [string, any]) => {
+            if (updated[dor] && val) {
+              updated[dor] = { checked: val.checked ?? false, intensidade: val.intensidade ?? 3 };
+            }
+          });
+          return updated;
+        });
+        toast.success('Mapa de dores preenchido com IA!');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao extrair dores');
+    } finally {
+      setExtractingDores(false);
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    if (!diagnosticoId) { toast.error('Salve o diagnóstico primeiro'); return; }
+    setGeneratingReport(true);
+    try {
+      await handleSave(false);
+      const sendEmail = !!lead.email;
+      const { data, error } = await sbClient.functions.invoke('generate-diagnostico-report', {
+        body: { diagnostico_id: diagnosticoId, send_email: sendEmail },
+      });
+      if (error) throw error;
+      if (data?.html) {
+        const win = window.open('', '_blank');
+        if (win) { win.document.write(data.html); win.document.close(); }
+      }
+      toast.success(sendEmail ? 'Relatório gerado e enviado por e-mail!' : 'Relatório gerado! (Lead sem e-mail cadastrado)');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao gerar relatório');
+    } finally {
+      setGeneratingReport(false);
     }
   };
 
@@ -349,7 +403,12 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
                   <SpinQuestion key={q.id} {...q} value={problema[q.id] || ''} onChange={v => setProblema(prev => ({ ...prev, [q.id]: v }))} />
                 ))}
                 <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase">Mapa de Dores</h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase">Mapa de Dores</h4>
+                    <Button type="button" size="sm" variant="outline" onClick={handleAutoFillDores} disabled={extractingDores} className="text-xs gap-1.5">
+                      {extractingDores ? <><Loader2 className="w-3 h-3 animate-spin" /> Analisando...</> : <><Sparkles className="w-3 h-3" /> Preencher com IA</>}
+                    </Button>
+                  </div>
                   <div className="space-y-2">
                     {DORES.map(dor => (
                       <div key={dor} className="flex items-center gap-3">
@@ -429,21 +488,6 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
                 </Select>
               </div>
               <div><Label className="text-xs text-muted-foreground">Observação sobre a validação</Label><Textarea value={fechamento.observacaoValidacao || ''} onChange={e => setFechamento(p => ({ ...p, observacaoValidacao: e.target.value }))} rows={3} className="mt-1 bg-background border-border resize-none" /></div>
-              <div><Label className="text-xs text-muted-foreground">Próximo passo acordado</Label><Input value={fechamento.proximoPasso || ''} onChange={e => setFechamento(p => ({ ...p, proximoPasso: e.target.value }))} className="mt-1 bg-background border-border" /></div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Data do próximo contato</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full mt-1 justify-start text-left", !dataProximoContato && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dataProximoContato ? format(dataProximoContato, 'dd/MM/yyyy') : 'Selecionar data'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={dataProximoContato} onSelect={setDataProximoContato} className="p-3 pointer-events-auto" />
-                  </PopoverContent>
-                </Popover>
-              </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Nível de urgência percebido (1=Baixa, 5=Urgente)</Label>
                 <div className="flex items-center gap-3 mt-1">
@@ -590,9 +634,10 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
             </Button>
             <div className="flex items-center gap-2">
               {status === 'finalizado' && (
-                <Button variant="secondary" className="gap-2" onClick={() => toast.info('Funcionalidade de relatório em breve!')}>
-                  <FileText className="w-4 h-4" />
-                  Gerar Relatório
+                <Button variant="secondary" className="gap-2" onClick={handleGenerateReport} disabled={generatingReport}>
+                  {generatingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                  {generatingReport ? 'Gerando...' : 'Gerar Relatório'}
+                  {lead.email && <Send className="w-3 h-3 ml-1" />}
                 </Button>
               )}
               {activeTab === 'negociacao' && status !== 'finalizado' && (
