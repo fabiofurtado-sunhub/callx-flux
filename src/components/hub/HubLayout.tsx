@@ -1,10 +1,11 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useHubAuth } from '@/contexts/HubAuthContext';
-import { LogOut, LayoutDashboard, BookOpen, Shield } from 'lucide-react';
+import { LogOut, LayoutDashboard, BookOpen, Shield, User } from 'lucide-react';
 
 const NAV_ITEMS = [
   { path: '/plataforma/dashboard', label: 'Painel', icon: LayoutDashboard },
   { path: '/plataforma/cursos', label: 'Cursos', icon: BookOpen },
+  { path: '/plataforma/perfil', label: 'Perfil', icon: User },
 ];
 
 const ADMIN_NAV = { path: '/plataforma/admin', label: 'Admin', icon: Shield };

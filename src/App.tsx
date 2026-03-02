@@ -21,8 +21,14 @@ import HubLogin from "@/pages/hub/HubLogin";
 import HubDashboard from "@/pages/hub/HubDashboard";
 import HubCourses from "@/pages/hub/HubCourses";
 import HubCourseDetail from "@/pages/hub/HubCourseDetail";
-import HubAdmin from "@/pages/hub/HubAdmin";
+import HubProfile from "@/pages/hub/HubProfile";
 import HubLayout from "@/components/hub/HubLayout";
+import HubAdminLayout from "@/components/hub/HubAdminLayout";
+import HubAdminMetrics from "@/pages/hub/HubAdminMetrics";
+import HubAdminMembers from "@/pages/hub/HubAdminMembers";
+import HubAdminContent from "@/pages/hub/HubAdminContent";
+import HubAdminRoles from "@/pages/hub/HubAdminRoles";
+import HubAdminAlerts from "@/pages/hub/HubAdminAlerts";
 import NotFound from "./pages/NotFound";
 import Agenda from "./pages/Agenda";
 import Forecast from "./pages/Forecast";
@@ -78,7 +84,7 @@ function HubAuthRoute() {
 }
 
 function HubProtectedRoutes() {
-  const { session, loading, isHubUser } = useHubAuth();
+  const { session, loading, isHubUser, isHubAdmin } = useHubAuth();
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#111111' }}>
@@ -89,11 +95,22 @@ function HubProtectedRoutes() {
   if (!session || !isHubUser) return <Navigate to="/plataforma" replace />;
   return (
     <Routes>
+      {/* Admin area — separate layout */}
+      {isHubAdmin && (
+        <Route path="/admin" element={<HubAdminLayout />}>
+          <Route index element={<HubAdminMetrics />} />
+          <Route path="membros" element={<HubAdminMembers />} />
+          <Route path="conteudo" element={<HubAdminContent />} />
+          <Route path="roles" element={<HubAdminRoles />} />
+          <Route path="alertas" element={<HubAdminAlerts />} />
+        </Route>
+      )}
+      {/* Student area */}
       <Route element={<HubLayout />}>
         <Route path="/dashboard" element={<HubDashboard />} />
         <Route path="/cursos" element={<HubCourses />} />
         <Route path="/cursos/:courseId" element={<HubCourseDetail />} />
-        <Route path="/admin" element={<HubAdmin />} />
+        <Route path="/perfil" element={<HubProfile />} />
         <Route path="*" element={<Navigate to="/plataforma/dashboard" replace />} />
       </Route>
     </Routes>
