@@ -883,6 +883,7 @@ export type Database = {
           nome: string
           observacoes: string | null
           origem: string | null
+          porte_empresa: string | null
           probabilidade_fechamento: number
           score_lead: number
           setor_empresa: string | null
@@ -921,6 +922,7 @@ export type Database = {
           nome: string
           observacoes?: string | null
           origem?: string | null
+          porte_empresa?: string | null
           probabilidade_fechamento?: number
           score_lead?: number
           setor_empresa?: string | null
@@ -959,6 +961,7 @@ export type Database = {
           nome?: string
           observacoes?: string | null
           origem?: string | null
+          porte_empresa?: string | null
           probabilidade_fechamento?: number
           score_lead?: number
           setor_empresa?: string | null
