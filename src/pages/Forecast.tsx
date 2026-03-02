@@ -78,7 +78,16 @@ const BAR_COLORS = [
 
 export default function Forecast() {
   const { leads } = useAppContext();
-  const [activeFunil, setActiveFunil] = useState<string>('todos');
+  const [selectedFunis, setSelectedFunis] = useState<string[]>([]);
+
+  const toggleFunil = (f: string) => {
+    setSelectedFunis(prev => {
+      if (prev.includes(f)) {
+        return prev.filter(x => x !== f);
+      }
+      return [...prev, f];
+    });
+  };
 
   const [activePeriod, setActivePeriod] = useState<string>('all');
   const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>();
@@ -111,14 +120,14 @@ export default function Forecast() {
 
   const activeLeads = useMemo(() => {
     let filtered = leads.filter(l => l.status_funil !== 'perdido' && l.status_funil !== 'venda');
-    if (activeFunil !== 'todos') filtered = filtered.filter(l => l.funil === activeFunil);
+    if (selectedFunis.length > 0) filtered = filtered.filter(l => selectedFunis.includes(l.funil));
     return filterByDate(filtered);
-  }, [leads, activeFunil, dateRange]);
+  }, [leads, selectedFunis, dateRange]);
 
   const allFilteredLeads = useMemo(() => {
-    let filtered = activeFunil === 'todos' ? leads : leads.filter(l => l.funil === activeFunil);
+    let filtered = selectedFunis.length === 0 ? leads : leads.filter(l => selectedFunis.includes(l.funil));
     return filterByDate(filtered);
-  }, [leads, activeFunil, dateRange]);
+  }, [leads, selectedFunis, dateRange]);
 
   // KPI: Previsão de fechamento (weighted pipeline)
   const forecastValue = useMemo(() => {
@@ -242,17 +251,27 @@ export default function Forecast() {
           <p className="text-sm text-muted-foreground mt-1">Previsibilidade e pipeline de receita</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          {['todos', 'callx', 'core_ai', 'playbook_mx3', 'revenue_os'].map(f => (
+          <button
+            onClick={() => setSelectedFunis([])}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              selectedFunis.length === 0
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-accent'
+            }`}
+          >
+            Todos
+          </button>
+          {['callx', 'core_ai', 'playbook_mx3', 'revenue_os'].map(f => (
             <button
               key={f}
-              onClick={() => setActiveFunil(f)}
+              onClick={() => toggleFunil(f)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                activeFunil === f
+                selectedFunis.includes(f)
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-muted-foreground hover:bg-accent'
               }`}
             >
-              {f === 'todos' ? 'Todos' : FUNNEL_LABELS[f] || f}
+              {FUNNEL_LABELS[f] || f}
             </button>
           ))}
         </div>
@@ -404,7 +423,7 @@ export default function Forecast() {
         {/* Leads por funil (pie) */}
         <Card className="p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
           <h3 className="text-sm font-semibold text-foreground mb-4">Leads por Funil</h3>
-          {activeFunil !== 'todos' ? (
+          {selectedFunis.length === 1 ? (
             <div className="h-72 flex items-center justify-center text-sm text-muted-foreground">
               Selecione "Todos" para ver a distribuição por funil
             </div>
