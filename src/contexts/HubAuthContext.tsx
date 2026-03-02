@@ -7,6 +7,7 @@ interface HubAuthContextType {
   user: User | null;
   loading: boolean;
   isHubUser: boolean;
+  isHubAdmin: boolean;
   hubProfile: HubProfile | null;
   signOut: () => Promise<void>;
 }
@@ -29,6 +30,7 @@ export function HubAuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isHubUser, setIsHubUser] = useState(false);
+  const [isHubAdmin, setIsHubAdmin] = useState(false);
   const [hubProfile, setHubProfile] = useState<HubProfile | null>(null);
 
   const checkHubRole = async (userId: string) => {
@@ -39,7 +41,9 @@ export function HubAuthProvider({ children }: { children: ReactNode }) {
       .in('role', ['aluno_hub', 'admin_hub', 'suporte_hub']);
     
     const hasHubRole = (data && data.length > 0) || false;
+    const hasAdminRole = (data || []).some((r) => r.role === 'admin_hub' || r.role === 'admin');
     setIsHubUser(hasHubRole);
+    setIsHubAdmin(hasAdminRole);
 
     if (hasHubRole) {
       const { data: profile } = await supabase
@@ -70,6 +74,7 @@ export function HubAuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => checkHubRole(session.user.id), 0);
       } else {
         setIsHubUser(false);
+        setIsHubAdmin(false);
         setHubProfile(null);
       }
       setLoading(false);
@@ -91,7 +96,7 @@ export function HubAuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <HubAuthContext.Provider value={{ session, user: session?.user ?? null, loading, isHubUser, hubProfile, signOut }}>
+    <HubAuthContext.Provider value={{ session, user: session?.user ?? null, loading, isHubUser, isHubAdmin, hubProfile, signOut }}>
       {children}
     </HubAuthContext.Provider>
   );
