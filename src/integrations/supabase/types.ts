@@ -14,6 +14,101 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_activity_log: {
+        Row: {
+          account_id: string
+          created_at: string
+          descricao: string | null
+          id: string
+          metadata: Json | null
+          origem: string | null
+          tipo_evento: string
+          user_id: string | null
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          metadata?: Json | null
+          origem?: string | null
+          tipo_evento?: string
+          user_id?: string | null
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          metadata?: Json | null
+          origem?: string | null
+          tipo_evento?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_activity_log_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounts: {
+        Row: {
+          cnpj: string | null
+          created_at: string
+          faturamento_estimado: number | null
+          hub_engagement_medio: number | null
+          hub_score_empresa: number | null
+          hub_status: string | null
+          hub_usuarios_ativos: number | null
+          id: string
+          nicho: string | null
+          nome_fantasia: string
+          numero_funcionarios: number | null
+          owner_id: string | null
+          razao_social: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cnpj?: string | null
+          created_at?: string
+          faturamento_estimado?: number | null
+          hub_engagement_medio?: number | null
+          hub_score_empresa?: number | null
+          hub_status?: string | null
+          hub_usuarios_ativos?: number | null
+          id?: string
+          nicho?: string | null
+          nome_fantasia?: string
+          numero_funcionarios?: number | null
+          owner_id?: string | null
+          razao_social?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cnpj?: string | null
+          created_at?: string
+          faturamento_estimado?: number | null
+          hub_engagement_medio?: number | null
+          hub_score_empresa?: number | null
+          hub_status?: string | null
+          hub_usuarios_ativos?: number | null
+          id?: string
+          nicho?: string | null
+          nome_fantasia?: string
+          numero_funcionarios?: number | null
+          owner_id?: string | null
+          razao_social?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ad_spend: {
         Row: {
           ad_name: string
@@ -339,6 +434,62 @@ export type Database = {
         }
         Relationships: []
       }
+      contacts: {
+        Row: {
+          account_id: string
+          cargo: string | null
+          created_at: string
+          decisor: boolean | null
+          email: string | null
+          hub_user_id: string | null
+          id: string
+          influencia: string | null
+          lead_score: number | null
+          nome: string
+          status: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          cargo?: string | null
+          created_at?: string
+          decisor?: boolean | null
+          email?: string | null
+          hub_user_id?: string | null
+          id?: string
+          influencia?: string | null
+          lead_score?: number | null
+          nome?: string
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          cargo?: string | null
+          created_at?: string
+          decisor?: boolean | null
+          email?: string | null
+          hub_user_id?: string | null
+          id?: string
+          influencia?: string | null
+          lead_score?: number | null
+          nome?: string
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       diagnosticos: {
         Row: {
           closer_id: string | null
@@ -394,6 +545,57 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: true
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          account_id: string
+          created_at: string
+          id: string
+          nome_arquivo: string | null
+          opportunity_id: string | null
+          status: string | null
+          tipo: string
+          uploaded_by: string | null
+          url_documento: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          id?: string
+          nome_arquivo?: string | null
+          opportunity_id?: string | null
+          status?: string | null
+          tipo?: string
+          uploaded_by?: string | null
+          url_documento?: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          id?: string
+          nome_arquivo?: string | null
+          opportunity_id?: string | null
+          status?: string | null
+          tipo?: string
+          uploaded_by?: string | null
+          url_documento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
             referencedColumns: ["id"]
           },
         ]
@@ -859,8 +1061,44 @@ export type Database = {
           },
         ]
       }
+      lead_scoring_history: {
+        Row: {
+          contact_id: string
+          created_at: string
+          id: string
+          motivo: string | null
+          score_anterior: number | null
+          score_novo: number | null
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          score_anterior?: number | null
+          score_novo?: number | null
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          score_anterior?: number | null
+          score_novo?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_scoring_history_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
+          account_id: string | null
           adset: string | null
           cadencia_inicio: string | null
           cadencia_saida_motivo: string | null
@@ -900,6 +1138,7 @@ export type Database = {
           vendedor_nome: string | null
         }
         Insert: {
+          account_id?: string | null
           adset?: string | null
           cadencia_inicio?: string | null
           cadencia_saida_motivo?: string | null
@@ -939,6 +1178,7 @@ export type Database = {
           vendedor_nome?: string | null
         }
         Update: {
+          account_id?: string | null
           adset?: string | null
           cadencia_inicio?: string | null
           cadencia_saida_motivo?: string | null
@@ -977,7 +1217,15 @@ export type Database = {
           vendedor_id?: string | null
           vendedor_nome?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       message_templates: {
         Row: {
@@ -1085,6 +1333,101 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      opportunities: {
+        Row: {
+          account_id: string
+          created_at: string
+          etapa_pipeline: string
+          id: string
+          motivo_perda: string | null
+          nome_oportunidade: string
+          origem: string | null
+          previsao_fechamento: string | null
+          probabilidade: number | null
+          produto_interesse: string | null
+          temperatura: string | null
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          etapa_pipeline?: string
+          id?: string
+          motivo_perda?: string | null
+          nome_oportunidade?: string
+          origem?: string | null
+          previsao_fechamento?: string | null
+          probabilidade?: number | null
+          produto_interesse?: string | null
+          temperatura?: string | null
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          etapa_pipeline?: string
+          id?: string
+          motivo_perda?: string | null
+          nome_oportunidade?: string
+          origem?: string | null
+          previsao_fechamento?: string | null
+          probabilidade?: number | null
+          produto_interesse?: string | null
+          temperatura?: string | null
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_contacts: {
+        Row: {
+          contact_id: string
+          created_at: string
+          id: string
+          opportunity_id: string
+          papel: string | null
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          id?: string
+          opportunity_id: string
+          papel?: string | null
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          id?: string
+          opportunity_id?: string
+          papel?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_contacts_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
