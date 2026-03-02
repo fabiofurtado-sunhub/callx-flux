@@ -8,7 +8,8 @@ import { HubAuthProvider, useHubAuth } from "@/contexts/HubAuthContext";
 import { AppProvider } from "@/contexts/AppContext";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
-import Leads from "@/pages/Leads";
+import Clientes from "@/pages/Clientes";
+import AccountDetail from "@/pages/AccountDetail";
 import Pipeline from "@/pages/Pipeline";
 import Intelligence from "@/pages/Intelligence";
 import Investimentos from "@/pages/Investimentos";
@@ -45,7 +46,8 @@ function ProtectedRoutes() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/leads" element={<Leads />} />
+          <Route path="/leads" element={<Clientes />} />
+          <Route path="/leads/:accountId" element={<AccountDetail />} />
           <Route path="/pipeline" element={<Pipeline />} />
           <Route path="/inteligencia" element={<Intelligence />} />
           <Route path="/investimentos" element={<Investimentos />} />
