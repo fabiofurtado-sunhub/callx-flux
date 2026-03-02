@@ -36,6 +36,7 @@ export interface Lead {
   origem: string | null;
   tags: string[];
   empresa: string;
+  porte_empresa: string | null;
 }
 
 interface Settings {
@@ -92,6 +93,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         origem: (d as any).origem ?? null,
         tags: (d as any).tags ?? [],
         empresa: (d as any).empresa ?? '',
+        porte_empresa: (d as any).porte_empresa ?? null,
         valor_entrada: (d as any).valor_entrada ? Number((d as any).valor_entrada) : null,
         valor_mrr: (d as any).valor_mrr ? Number((d as any).valor_mrr) : null,
       })));

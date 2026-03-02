@@ -125,6 +125,7 @@ async function processSheet(
     gargalo: findCol(headers, ["maior_gargalo_comercial", "gargalo", "qual_seu_maior_gargalo_comercial?", "maior gargalo comercial"]),
     setor: findCol(headers, ["setor_empresa", "setor", "segmento", "qual_o_setor_da_sua_empresa?", "setor da empresa"]),
     empresa: findCol(headers, ["empresa", "qual_o_nome_da_sua_empresa?", "nome_empresa", "company"]),
+    porte_empresa: findCol(headers, ["qual_o_porte_da_sua_empresa?", "porte_empresa", "porte"]),
     situacao_profissional: findCol(headers, ["qual_é_a_sua_situação_profissional?", "situacao_profissional"]),
     funcionarios: findCol(headers, ["quantos_funcionários_tem_a_empresa_em_que_você_trabalha_ou_que_você_possui?", "funcionarios"]),
     lead_status_sheet: findCol(headers, ["lead_status"]),
@@ -172,6 +173,9 @@ async function processSheet(
       }
       if (colMap.setor !== -1) {
         lead.setor_empresa = (row[colMap.setor] || "").trim() || null;
+      }
+      if (colMap.porte_empresa !== -1) {
+        lead.porte_empresa = (row[colMap.porte_empresa] || "").trim() || null;
       }
     }
 
