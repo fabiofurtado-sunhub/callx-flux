@@ -20,6 +20,7 @@ import HubLogin from "@/pages/hub/HubLogin";
 import HubDashboard from "@/pages/hub/HubDashboard";
 import HubCourses from "@/pages/hub/HubCourses";
 import HubCourseDetail from "@/pages/hub/HubCourseDetail";
+import HubAdmin from "@/pages/hub/HubAdmin";
 import HubLayout from "@/components/hub/HubLayout";
 import NotFound from "./pages/NotFound";
 import Agenda from "./pages/Agenda";
@@ -88,6 +89,7 @@ function HubProtectedRoutes() {
         <Route path="/dashboard" element={<HubDashboard />} />
         <Route path="/cursos" element={<HubCourses />} />
         <Route path="/cursos/:courseId" element={<HubCourseDetail />} />
+        <Route path="/admin" element={<HubAdmin />} />
         <Route path="*" element={<Navigate to="/plataforma/dashboard" replace />} />
       </Route>
     </Routes>

@@ -1,15 +1,18 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useHubAuth } from '@/contexts/HubAuthContext';
-import { LogOut, LayoutDashboard, BookOpen } from 'lucide-react';
+import { LogOut, LayoutDashboard, BookOpen, Shield } from 'lucide-react';
 
 const NAV_ITEMS = [
   { path: '/plataforma/dashboard', label: 'Painel', icon: LayoutDashboard },
   { path: '/plataforma/cursos', label: 'Cursos', icon: BookOpen },
 ];
 
+const ADMIN_NAV = { path: '/plataforma/admin', label: 'Admin', icon: Shield };
+
 export default function HubLayout() {
-  const { user, hubProfile, signOut } = useHubAuth();
+  const { user, hubProfile, isHubAdmin, signOut } = useHubAuth();
   const location = useLocation();
+  const navItems = isHubAdmin ? [...NAV_ITEMS, ADMIN_NAV] : NAV_ITEMS;
 
   return (
     <div className="min-h-screen" style={{ background: '#111111', color: '#FFFFFF' }}>
@@ -29,7 +32,7 @@ export default function HubLayout() {
           </Link>
 
           <nav className="hidden sm:flex items-center gap-1">
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const active = location.pathname.startsWith(item.path);
               return (
                 <Link
