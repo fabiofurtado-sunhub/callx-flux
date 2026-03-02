@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import TeamRolesManager from '@/components/TeamRolesManager';
 import { useAppContext } from '@/contexts/AppContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -316,6 +317,9 @@ export default function Configuracoes() {
         <Save className="w-4 h-4" />
         Salvar Configurações
       </Button>
+
+      {/* Gestão de Times e Roles */}
+      <TeamRolesManager />
     </div>
   );
 }
