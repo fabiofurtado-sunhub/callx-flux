@@ -63,27 +63,62 @@ serve(async (req) => {
       // Use the message provided by the cadencia system
       message = message_override;
     } else {
-      // Default CallX message
-      const { data: configData } = await supabaseClient
-        .from("configuracoes")
-        .select("horario_sugerido_texto")
+      // Fetch lead's funnel to determine which template to use
+      const { data: leadData } = await supabaseClient
+        .from("leads")
+        .select("funil")
+        .eq("id", lead_id)
+        .single();
+
+      const leadFunil = leadData?.funil || "callx";
+
+      // Try to fetch active template for this funnel's lead stage
+      const { data: templateData } = await supabaseClient
+        .from("message_templates")
+        .select("conteudo")
+        .eq("funil", leadFunil)
+        .eq("etapa", "lead")
+        .eq("ativo", true)
+        .order("ordem", { ascending: true })
         .limit(1)
         .single();
 
-      const scheduleText = configData?.horario_sugerido_texto || buildScheduleText();
-      const leadName = nome || "";
+      if (templateData?.conteudo) {
+        // Fetch config variables for template replacement
+        const { data: configData } = await supabaseClient
+          .from("configuracoes")
+          .select("horario_sugerido_texto, link_agendamento")
+          .limit(1)
+          .single();
 
-      message =
-        `Olá ${leadName}, aqui é o Fábio Furtado, CEO da MX3.\n\n` +
-        `Você se inscreveu na campanha da nossa IA comercial, o CallX (em nossa campanha do Meta) e pelo perfil da sua empresa, fiz questão de vir pessoalmente tratar do seu atendimento.\n\n` +
-        `Antes de avançarmos, quero entender:\n\n` +
-        `Hoje, o seu maior gargalo está em:\n\n` +
-        `1. Volume de lead qualificado\n` +
-        `2. Conversão do time\n` +
-        `3. Follow-up e perda de oportunidades\n` +
-        `4. Falta de previsibilidade comercial\n\n` +
-        `Se fizer sentido, eu mesmo bloqueio 30 minutos na minha agenda ainda essa semana para analisarmos sua operação e ver se o CallX faz sentido dentro da sua estratégia.\n\n` +
-        `Para você fica melhor ${scheduleText}?`;
+        message = templateData.conteudo;
+        message = message.replace(/\{\{nome\}\}/gi, nome || "");
+        message = message.replace(/\{\{telefone\}\}/gi, telefone || "");
+        message = message.replace(/\{\{horario_sugerido\}\}/gi, configData?.horario_sugerido_texto || buildScheduleText());
+        message = message.replace(/\{\{LINK_AGENDAMENTO\}\}/gi, configData?.link_agendamento || "");
+      } else {
+        // Ultimate fallback: hardcoded CallX message
+        const { data: configData } = await supabaseClient
+          .from("configuracoes")
+          .select("horario_sugerido_texto")
+          .limit(1)
+          .single();
+
+        const scheduleText = configData?.horario_sugerido_texto || buildScheduleText();
+        const leadName = nome || "";
+
+        message =
+          `Olá ${leadName}, aqui é o Fábio Furtado, CEO da MX3.\n\n` +
+          `Você se inscreveu na campanha da nossa IA comercial, o CallX (em nossa campanha do Meta) e pelo perfil da sua empresa, fiz questão de vir pessoalmente tratar do seu atendimento.\n\n` +
+          `Antes de avançarmos, quero entender:\n\n` +
+          `Hoje, o seu maior gargalo está em:\n\n` +
+          `1. Volume de lead qualificado\n` +
+          `2. Conversão do time\n` +
+          `3. Follow-up e perda de oportunidades\n` +
+          `4. Falta de previsibilidade comercial\n\n` +
+          `Se fizer sentido, eu mesmo bloqueio 30 minutos na minha agenda ainda essa semana para analisarmos sua operação e ver se o CallX faz sentido dentro da sua estratégia.\n\n` +
+          `Para você fica melhor ${scheduleText}?`;
+      }
     }
 
     const zapiUrl = `https://api.z-api.io/instances/${ZAPI_INSTANCE_ID}/token/${ZAPI_TOKEN}/send-text`;
