@@ -1,10 +1,12 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
 import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState, useEffect } from 'react';
-import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList } from 'lucide-react';
+import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList, ArrowRightLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import LeadEditModal from '@/components/LeadEditModal';
@@ -27,6 +29,14 @@ export default function Pipeline() {
   const [selectedFaturamento, setSelectedFaturamento] = useState<string>('todos');
   const [diagnosticoLead, setDiagnosticoLead] = useState<Lead | null>(null);
   const [diagnosticoStatuses, setDiagnosticoStatuses] = useState<Record<string, string>>({});
+  const [migratingLeadId, setMigratingLeadId] = useState<string | null>(null);
+
+  const allFunnels = [
+    { value: 'callx', label: 'Funil CallX' },
+    { value: 'core_ai', label: 'Funil Core AI' },
+    { value: 'playbook_mx3', label: 'Playbook MX3' },
+    { value: 'revenue_os', label: 'Revenue OS' },
+  ];
 
   const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS' };
   const funilLabel = funilLabels[activeFunil] || activeFunil;
@@ -101,6 +111,22 @@ export default function Pipeline() {
       setPendingLossLeadId(null);
       setLossDialogOpen(false);
     }
+  };
+
+  const handleMigrateFunnel = async (leadId: string, targetFunil: string) => {
+    await supabase.from('leads').update({ funil: targetFunil, data_ultimo_movimento: new Date().toISOString() }).eq('id', leadId);
+    const lead = leads.find(l => l.id === leadId);
+    if (lead) {
+      await supabase.from('lead_logs').insert({
+        lead_id: leadId,
+        acao: `Migração de pipeline: ${funilLabels[lead.funil || 'callx']} → ${funilLabels[targetFunil]}`,
+        de: lead.funil || 'callx',
+        para: targetFunil,
+      });
+    }
+    setMigratingLeadId(null);
+    setActiveFunil(targetFunil as typeof activeFunil);
+    await refreshLeads();
   };
 
   const handleDragEnd = () => {
@@ -333,6 +359,35 @@ export default function Pipeline() {
                         )}
                       </div>
                     )}
+
+                    {/* Botão Migração de Pipeline */}
+                    <div className="border-t border-border/50 pt-2">
+                      <Popover open={migratingLeadId === lead.id} onOpenChange={(open) => { if (!open) setMigratingLeadId(null); }}>
+                        <PopoverTrigger asChild>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setMigratingLeadId(lead.id); }}
+                            className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted transition-colors"
+                          >
+                            <ArrowRightLeft className="w-3.5 h-3.5" />
+                            Migrar Pipeline
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48 p-1" align="start" onClick={(e) => e.stopPropagation()}>
+                          <p className="text-xs font-medium text-muted-foreground px-2 py-1.5">Mover para:</p>
+                          {allFunnels.filter(f => f.value !== activeFunil).map(f => (
+                            <Button
+                              key={f.value}
+                              variant="ghost"
+                              size="sm"
+                              className="w-full justify-start text-xs h-8"
+                              onClick={() => handleMigrateFunnel(lead.id, f.value)}
+                            >
+                              {f.label}
+                            </Button>
+                          ))}
+                        </PopoverContent>
+                      </Popover>
+                    </div>
 
                     {/* Observações */}
                     {lead.observacoes && (
