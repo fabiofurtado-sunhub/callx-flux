@@ -339,11 +339,39 @@ export default function DiagnosticoModal({ lead, open, onOpenChange, onSaved }: 
         setDiagnosticoId(data.id);
       }
 
+      // Log diagnostico event to account_activity_log
+      if (lead.id) {
+        const { data: dbLead } = await supabase.from('leads').select('account_id').eq('id', lead.id).single();
+        if (dbLead?.account_id) {
+          const topDores = Object.entries(doresMap)
+            .filter(([_, v]) => v.checked)
+            .sort((a, b) => b[1].intensidade - a[1].intensidade)
+            .slice(0, 3)
+            .map(([d]) => d);
+
+          await supabase.from('account_activity_log').insert({
+            account_id: dbLead.account_id,
+            tipo_evento: 'diagnostico',
+            descricao: finalizar
+              ? `Diagnóstico finalizado para ${lead.nome}`
+              : `Diagnóstico (rascunho) salvo para ${lead.nome}`,
+            origem: 'CRM',
+            metadata: {
+              lead_id: lead.id,
+              status: finalizar ? 'finalizado' : 'rascunho',
+              closer: closerNome,
+              top_dores: topDores,
+              data_reuniao: dataReuniao?.toISOString() || null,
+            },
+          });
+        }
+      }
+
       if (finalizar) {
         setStatus('finalizado');
         setActiveTab('negociacao');
       }
-      toast.success(finalizar ? 'Diagnóstico finalizado!' : 'Rascunho salvo!');
+      toast.success(finalizar ? 'Diagnóstico finalizado e salvo!' : 'Rascunho salvo com sucesso!');
       onSaved?.();
     } catch (err) {
       console.error(err);
