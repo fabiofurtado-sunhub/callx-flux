@@ -25,6 +25,7 @@ import HubAdmin from "@/pages/hub/HubAdmin";
 import HubLayout from "@/components/hub/HubLayout";
 import NotFound from "./pages/NotFound";
 import Agenda from "./pages/Agenda";
+import Forecast from "./pages/Forecast";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ function ProtectedRoutes() {
           <Route path="/leads" element={<Clientes />} />
           <Route path="/leads/:accountId" element={<AccountDetail />} />
           <Route path="/pipeline" element={<Pipeline />} />
+          <Route path="/forecast" element={<Forecast />} />
           <Route path="/inteligencia" element={<Intelligence />} />
           <Route path="/investimentos" element={<Investimentos />} />
           <Route path="/configuracoes" element={<Configuracoes />} />
