@@ -96,6 +96,7 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
         maior_gargalo_comercial: form.maior_gargalo_comercial,
         setor_empresa: form.setor_empresa,
         origem: form.origem,
+        porte_empresa: (form as any).porte_empresa,
         tags: form.tags || [],
         score_lead: form.score_lead,
         data_ultimo_movimento: new Date().toISOString(),
@@ -291,6 +292,10 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
                 <Label className="text-xs text-muted-foreground">Setor da Empresa</Label>
                 <Input value={form.setor_empresa || ''} onChange={e => set('setor_empresa', e.target.value || null)} className="mt-1 bg-background border-border" />
               </div>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Porte da Empresa</Label>
+              <Input value={(form as any).porte_empresa || ''} onChange={e => set('porte_empresa', e.target.value || null)} className="mt-1 bg-background border-border" />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Faturamento Mensal (R$)</Label>
