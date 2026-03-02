@@ -1,6 +1,6 @@
 import { useAppContext, LeadStatus } from '@/contexts/AppContext';
 import KpiCard from '@/components/KpiCard';
-import { TrendingUp, FileText, Users, Layers, Target, DollarSign, BarChart3 } from 'lucide-react';
+import { TrendingUp, FileText, Users, Layers, Target, DollarSign, BarChart3, CalendarIcon } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LabelList,
@@ -10,6 +10,12 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { format, startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuarter, subQuarters, startOfYear, isWithinInterval } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const STAGE_LABELS: Record<string, string> = {
   lead: 'Lead',
@@ -74,16 +80,45 @@ export default function Forecast() {
   const { leads } = useAppContext();
   const [activeFunil, setActiveFunil] = useState<string>('todos');
 
+  const [activePeriod, setActivePeriod] = useState<string>('all');
+  const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>();
+  const [customDateTo, setCustomDateTo] = useState<Date | undefined>();
+
+  // Date range based on period selection
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    switch (activePeriod) {
+      case 'month': return { start: startOfMonth(now), end: endOfMonth(now) };
+      case 'last_month': { const m = subMonths(now, 1); return { start: startOfMonth(m), end: endOfMonth(m) }; }
+      case 'quarter': return { start: startOfQuarter(now), end: endOfQuarter(now) };
+      case 'last_quarter': { const q = subQuarters(now, 1); return { start: startOfQuarter(q), end: endOfQuarter(q) }; }
+      case 'year': return { start: startOfYear(now), end: now };
+      case 'custom':
+        if (customDateFrom && customDateTo) return { start: customDateFrom, end: customDateTo };
+        if (customDateFrom) return { start: customDateFrom, end: now };
+        return null;
+      default: return null; // 'all'
+    }
+  }, [activePeriod, customDateFrom, customDateTo]);
+
+  const filterByDate = (list: typeof leads) => {
+    if (!dateRange) return list;
+    return list.filter(l => {
+      const d = new Date(l.data_entrada);
+      return isWithinInterval(d, { start: dateRange.start, end: dateRange.end });
+    });
+  };
+
   const activeLeads = useMemo(() => {
-    const filtered = leads.filter(l => l.status_funil !== 'perdido' && l.status_funil !== 'venda');
-    if (activeFunil === 'todos') return filtered;
-    return filtered.filter(l => l.funil === activeFunil);
-  }, [leads, activeFunil]);
+    let filtered = leads.filter(l => l.status_funil !== 'perdido' && l.status_funil !== 'venda');
+    if (activeFunil !== 'todos') filtered = filtered.filter(l => l.funil === activeFunil);
+    return filterByDate(filtered);
+  }, [leads, activeFunil, dateRange]);
 
   const allFilteredLeads = useMemo(() => {
-    if (activeFunil === 'todos') return leads;
-    return leads.filter(l => l.funil === activeFunil);
-  }, [leads, activeFunil]);
+    let filtered = activeFunil === 'todos' ? leads : leads.filter(l => l.funil === activeFunil);
+    return filterByDate(filtered);
+  }, [leads, activeFunil, dateRange]);
 
   // KPI: Previsão de fechamento (weighted pipeline)
   const forecastValue = useMemo(() => {
@@ -203,6 +238,64 @@ export default function Forecast() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Period filter */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground mr-1">Período:</span>
+        {([
+          ['all', 'Tudo'],
+          ['month', 'Mês atual'],
+          ['last_month', 'Mês anterior'],
+          ['quarter', 'Trimestre atual'],
+          ['last_quarter', 'Trimestre anterior'],
+          ['year', 'Ano'],
+          ['custom', 'Personalizado'],
+        ] as [string, string][]).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setActivePeriod(key)}
+            className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+              activePeriod === key
+                ? 'bg-accent text-accent-foreground ring-1 ring-primary/30'
+                : 'bg-muted/60 text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+        {activePeriod === 'custom' && (
+          <div className="flex items-center gap-2 ml-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("h-7 text-xs gap-1.5", !customDateFrom && "text-muted-foreground")}>
+                  <CalendarIcon className="w-3 h-3" />
+                  {customDateFrom ? format(customDateFrom, 'dd/MM/yy') : 'De'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={customDateFrom} onSelect={setCustomDateFrom} initialFocus className={cn("p-3 pointer-events-auto")} locale={ptBR} />
+              </PopoverContent>
+            </Popover>
+            <span className="text-xs text-muted-foreground">→</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("h-7 text-xs gap-1.5", !customDateTo && "text-muted-foreground")}>
+                  <CalendarIcon className="w-3 h-3" />
+                  {customDateTo ? format(customDateTo, 'dd/MM/yy') : 'Até'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={customDateTo} onSelect={setCustomDateTo} initialFocus className={cn("p-3 pointer-events-auto")} locale={ptBR} />
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
+        {dateRange && (
+          <span className="text-[10px] text-muted-foreground ml-1">
+            {format(dateRange.start, 'dd/MM/yy')} – {format(dateRange.end, 'dd/MM/yy')}
+          </span>
+        )}
       </div>
 
       {/* KPI Cards */}
