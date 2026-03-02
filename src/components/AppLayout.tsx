@@ -12,25 +12,64 @@ import {
   LogOut,
   MessageCircle,
   Phone,
+  Shield,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions, type AppRole } from '@/hooks/usePermissions';
+import { Badge } from '@/components/ui/badge';
 
-const navItems = [
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Admin',
+  gestor: 'Gestor',
+  closer: 'Closer',
+  sdr: 'SDR',
+  suporte: 'Suporte',
+  financeiro: 'Financeiro',
+  vendedor: 'Vendedor',
+};
+
+const ROLE_COLORS: Record<string, string> = {
+  admin: 'bg-destructive text-destructive-foreground',
+  gestor: 'bg-primary text-primary-foreground',
+  closer: 'bg-blue-600 text-white',
+  sdr: 'bg-green-600 text-white',
+  suporte: 'bg-yellow-600 text-white',
+  financeiro: 'bg-orange-600 text-white',
+  vendedor: 'bg-muted text-muted-foreground',
+};
+
+interface NavItem {
+  to: string;
+  icon: any;
+  label: string;
+  requiredRoles?: AppRole[];
+  requirePermission?: { section: string; action: string };
+}
+
+const allNavItems: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/leads', icon: Users, label: 'Clientes' },
   { to: '/pipeline', icon: Kanban, label: 'Pipeline' },
-  { to: '/inteligencia', icon: Brain, label: 'Inteligência' },
-  { to: '/investimentos', icon: DollarSign, label: 'Investimentos' },
-  { to: '/chamadas', icon: Phone, label: 'Chamadas IA' },
-  { to: '/setup-mensagens', icon: MessageCircle, label: 'Mensagens' },
-  { to: '/configuracoes', icon: Settings, label: 'Configurações' },
+  { to: '/inteligencia', icon: Brain, label: 'Inteligência', requiredRoles: ['admin', 'gestor'] },
+  { to: '/investimentos', icon: DollarSign, label: 'Investimentos', requiredRoles: ['admin', 'gestor', 'financeiro'] },
+  { to: '/chamadas', icon: Phone, label: 'Chamadas IA', requiredRoles: ['admin', 'gestor', 'closer'] },
+  { to: '/setup-mensagens', icon: MessageCircle, label: 'Mensagens', requiredRoles: ['admin', 'gestor'] },
+  { to: '/configuracoes', icon: Settings, label: 'Configurações', requiredRoles: ['admin'] },
 ];
 
 export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { role, loading: permLoading } = usePermissions();
   const initials = user?.email?.substring(0, 2).toUpperCase() || 'MX';
+
+  // Filter nav items based on role
+  const navItems = allNavItems.filter(item => {
+    if (!item.requiredRoles) return true;
+    if (!role) return false;
+    return item.requiredRoles.includes(role);
+  });
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -90,6 +129,11 @@ export default function AppLayout() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{user?.email}</p>
+              {role && (
+                <Badge variant="outline" className={`text-[9px] px-1.5 py-0 mt-0.5 ${ROLE_COLORS[role] || ''}`}>
+                  {ROLE_LABELS[role] || role}
+                </Badge>
+              )}
             </div>
             <button onClick={signOut} className="text-muted-foreground hover:text-foreground transition-colors">
               <LogOut className="w-4 h-4" />
