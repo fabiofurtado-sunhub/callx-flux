@@ -1,7 +1,7 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
 import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState, useEffect } from 'react';
-import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList, ArrowRightLeft } from 'lucide-react';
+import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList, ArrowRightLeft, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -205,6 +205,35 @@ export default function Pipeline() {
     setDragOverStage(null);
   };
 
+  const handleExportSpecialCSV = () => {
+    const exportLeads = leads.filter(l =>
+      (l.funil === 'playbook_mx3') ||
+      (l.funil === 'callx' && (l.status_funil === 'fup_1' || l.status_funil === 'ia_call_2'))
+    );
+    const stageLabels: Record<string, string> = {
+      lead: 'Lead', mensagem_enviada: 'Msg Enviada', fup_1: 'FUP 1', ia_call: 'IA Call', ia_call_2: 'IA Call 2',
+      ultima_mensagem: 'Última Msg', reuniao: 'Reunião', no_show: 'No-Show', reuniao_realizada: 'Reunião Realizada',
+      proposta: 'Proposta', venda: 'Venda', perdido: 'Perdido',
+    };
+    const funilMap: Record<string, string> = { callx: 'CallX', core_ai: 'Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS' };
+    const headers = ['Nome', 'Email', 'Telefone', 'Empresa', 'Funil', 'Etapa', 'Vendedor', 'Campanha', 'Score', 'Faturamento', 'Data Entrada'];
+    const escape = (v: any) => { if (v == null) return ''; const s = String(v); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s; };
+    const rows = exportLeads.map(l => [
+      l.nome, l.email, l.telefone, l.empresa, funilMap[l.funil] || l.funil,
+      stageLabels[l.status_funil] || l.status_funil, l.vendedor_nome, l.campanha, l.score_lead,
+      l.faturamento, l.data_entrada ? new Date(l.data_entrada).toLocaleDateString('pt-BR') : '',
+    ].map(escape).join(','));
+    const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `leads_playbook_fup1_iacall2_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${exportLeads.length} leads exportados!`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
@@ -214,6 +243,10 @@ export default function Pipeline() {
             <p className="text-sm text-muted-foreground mt-1">Arraste os leads entre as etapas</p>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
+            <Button variant="outline" size="sm" onClick={handleExportSpecialCSV} className="gap-2 flex-shrink-0">
+              <Download className="w-4 h-4" />
+              Exportar CSV
+            </Button>
             {/* Vendedor filter - only for strategic roles */}
             {isStrategic && (
               <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
