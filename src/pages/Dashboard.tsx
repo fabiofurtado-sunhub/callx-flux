@@ -12,6 +12,8 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { usePermissions } from '@/hooks/usePermissions';
 
@@ -20,6 +22,7 @@ export default function Dashboard() {
   const { can, isStrategic, isSdr, isSuporte } = usePermissions();
   const [alertas, setAlertas] = useState<any[]>([]);
   const [activeFunil, setActiveFunil] = useState<string>('todos');
+  const [selectedFaixa, setSelectedFaixa] = useState<string | null>(null);
 
   const showFinancials = can('reports', 'view_company') || isStrategic;
   const showTeamMetrics = can('reports', 'view_team') || isStrategic;
@@ -96,13 +99,31 @@ export default function Dashboard() {
     { label: '500k–1M', min: 500000, max: 999999 },
     { label: 'Acima 1M', min: 1000000, max: Infinity },
   ];
-  const leadsPorFaturamento = faixas.map(f => {
-    const count = filteredByFunil.filter(l => {
+
+  const getLeadsForFaixa = (label: string) => {
+    const f = faixas.find(fx => fx.label === label);
+    if (!f) return [];
+    return filteredByFunil.filter(l => {
       if (f.min === -1) return !l.faturamento;
       return l.faturamento != null && l.faturamento >= f.min && l.faturamento <= f.max;
-    }).length;
+    });
+  };
+
+  const leadsPorFaturamento = faixas.map(f => {
+    const count = getLeadsForFaixa(f.label).length;
     return { name: f.label, value: count };
   }).filter(d => d.value > 0);
+
+  const selectedFaixaLeads = selectedFaixa ? getLeadsForFaixa(selectedFaixa) : [];
+
+  const statusLabels: Record<string, string> = {
+    lead: 'Lead', mensagem_enviada: 'Msg Enviada', fup_1: 'FUP 1', ia_call: 'IA Call',
+    ia_call_2: 'IA Call 2', ultima_mensagem: 'Última Msg', reuniao: 'Reunião',
+    no_show: 'No-Show', reuniao_realizada: 'Reunião Realizada', proposta: 'Proposta',
+    venda: 'Venda', perdido: 'Perdido',
+  };
+
+  const funilLabelMap: Record<string, string> = { callx: 'CallX', core_ai: 'Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS' };
 
   // Funil data
   const funnelData = [
@@ -298,20 +319,62 @@ export default function Dashboard() {
       {/* Charts Row 3 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
-          <h3 className="text-sm font-display font-semibold text-card-foreground mb-4">Leads por Faixa de Faturamento</h3>
+         <h3 className="text-sm font-display font-semibold text-card-foreground mb-4">Leads por Faixa de Faturamento</h3>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={leadsPorFaturamento}>
+            <BarChart data={leadsPorFaturamento} onClick={(e) => { if (e?.activeLabel) setSelectedFaixa(e.activeLabel); }} style={{ cursor: 'pointer' }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(216,30%,18%)" />
               <XAxis dataKey="name" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
               <YAxis tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
               <Tooltip contentStyle={{ background: 'hsl(216,50%,10%)', border: '1px solid hsl(216,30%,18%)', borderRadius: 8, color: 'hsl(210,40%,95%)' }} />
-              <Bar dataKey="value" fill="hsl(38,92%,50%)" radius={[6, 6, 0, 0]}>
+              <Bar dataKey="value" fill="hsl(38,92%,50%)" radius={[6, 6, 0, 0]} className="cursor-pointer">
                 <LabelList dataKey="value" position="top" fill="hsl(210,40%,95%)" fontSize={11} fontWeight={600} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Dialog de leads por faixa de faturamento */}
+      <Dialog open={!!selectedFaixa} onOpenChange={(open) => { if (!open) setSelectedFaixa(null); }}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display">Leads — Faturamento: {selectedFaixa}</DialogTitle>
+          </DialogHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Empresa</TableHead>
+                <TableHead>Estágio</TableHead>
+                <TableHead>Funil</TableHead>
+                <TableHead className="text-right">Faturamento</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {selectedFaixaLeads.map(l => (
+                <TableRow key={l.id}>
+                  <TableCell className="font-medium">{l.nome}</TableCell>
+                  <TableCell>{l.empresa || '—'}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-[10px]">
+                      {statusLabels[l.status_funil] || l.status_funil}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className="text-[10px] bg-primary/20 text-primary border-primary/30">
+                      {funilLabelMap[l.funil] || l.funil}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right text-xs">
+                    {l.faturamento ? `R$ ${l.faturamento.toLocaleString('pt-BR')}` : '—'}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <p className="text-xs text-muted-foreground mt-2">{selectedFaixaLeads.length} lead(s) nesta faixa</p>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
