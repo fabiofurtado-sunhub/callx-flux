@@ -7,6 +7,9 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import LeadEditModal from '@/components/LeadEditModal';
@@ -30,6 +33,9 @@ export default function Pipeline() {
   const [diagnosticoLead, setDiagnosticoLead] = useState<Lead | null>(null);
   const [diagnosticoStatuses, setDiagnosticoStatuses] = useState<Record<string, string>>({});
   const [migratingLeadId, setMigratingLeadId] = useState<string | null>(null);
+  const [cnpjDialogOpen, setCnpjDialogOpen] = useState(false);
+  const [pendingPropostaLeadId, setPendingPropostaLeadId] = useState<string | null>(null);
+  const [cnpjValue, setCnpjValue] = useState('');
 
   const allFunnels = [
     { value: 'callx', label: 'Funil CallX' },
@@ -93,14 +99,52 @@ export default function Pipeline() {
 
   const handleDrop = (stage: LeadStatus) => {
     if (draggedLead) {
+      const lead = leads.find(l => l.id === draggedLead);
       if (stage === 'perdido') {
         setPendingLossLeadId(draggedLead);
         setLossDialogOpen(true);
+      } else if (stage === 'proposta' && lead?.status_funil === 'reuniao_realizada') {
+        // Check if account has CNPJ via DB
+        (async () => {
+          const { data: dbLead } = await supabase.from('leads').select('account_id').eq('id', draggedLead).single();
+          if (dbLead?.account_id) {
+            const { data: acc } = await supabase.from('accounts').select('cnpj').eq('id', dbLead.account_id).single();
+            if (acc?.cnpj && acc.cnpj.trim()) {
+              moveLeadToStage(draggedLead, stage);
+            } else {
+              setPendingPropostaLeadId(draggedLead);
+              setCnpjValue('');
+              setCnpjDialogOpen(true);
+            }
+          } else {
+            setPendingPropostaLeadId(draggedLead);
+            setCnpjValue('');
+            setCnpjDialogOpen(true);
+          }
+        })();
       } else {
         moveLeadToStage(draggedLead, stage);
       }
       setDraggedLead(null);
       setDragOverStage(null);
+    }
+  };
+
+  const handleCnpjConfirm = async () => {
+    if (!cnpjValue.trim()) {
+      toast.error('CNPJ é obrigatório para avançar para Proposta');
+      return;
+    }
+    if (pendingPropostaLeadId) {
+      const { data: dbLead } = await supabase.from('leads').select('account_id').eq('id', pendingPropostaLeadId).single();
+      if (dbLead?.account_id) {
+        await supabase.from('accounts').update({ cnpj: cnpjValue.trim() }).eq('id', dbLead.account_id);
+      }
+      await moveLeadToStage(pendingPropostaLeadId, 'proposta');
+      setPendingPropostaLeadId(null);
+      setCnpjDialogOpen(false);
+      toast.success('CNPJ salvo e lead movido para Proposta');
+      refreshLeads();
     }
   };
 
@@ -459,6 +503,31 @@ export default function Pipeline() {
           }}
         />
       )}
+
+      {/* CNPJ Dialog */}
+      <Dialog open={cnpjDialogOpen} onOpenChange={(open) => { setCnpjDialogOpen(open); if (!open) setPendingPropostaLeadId(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>CNPJ obrigatório</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Para mover para <strong>Proposta</strong>, informe o CNPJ da empresa.
+          </p>
+          <div className="space-y-2">
+            <Label className="text-xs">CNPJ</Label>
+            <Input
+              placeholder="00.000.000/0000-00"
+              value={cnpjValue}
+              onChange={(e) => setCnpjValue(e.target.value)}
+              className="bg-background border-border"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setCnpjDialogOpen(false); setPendingPropostaLeadId(null); }}>Cancelar</Button>
+            <Button onClick={handleCnpjConfirm}>Confirmar e Mover</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <VoiceAgentButton />
     </div>
