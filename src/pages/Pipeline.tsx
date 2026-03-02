@@ -41,13 +41,13 @@ export default function Pipeline() {
   const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS' };
   const funilLabel = funilLabels[activeFunil] || activeFunil;
 
-  // Load diagnostico statuses for Revenue OS leads
+  // Load diagnostico statuses for Revenue OS and Core AI leads
   useEffect(() => {
-    if (activeFunil !== 'revenue_os') return;
-    const revenueLeadIds = leads.filter(l => (l.funil || 'callx') === 'revenue_os').map(l => l.id);
-    if (revenueLeadIds.length === 0) return;
+    if (activeFunil !== 'revenue_os' && activeFunil !== 'core_ai') return;
+    const funnelLeadIds = leads.filter(l => (l.funil || 'callx') === activeFunil).map(l => l.id);
+    if (funnelLeadIds.length === 0) return;
     (async () => {
-      const { data } = await supabase.from('diagnosticos').select('lead_id, status').in('lead_id', revenueLeadIds);
+      const { data } = await supabase.from('diagnosticos').select('lead_id, status').in('lead_id', funnelLeadIds);
       if (data) {
         const map: Record<string, string> = {};
         data.forEach((d: any) => { map[d.lead_id] = d.status; });
@@ -396,8 +396,8 @@ export default function Pipeline() {
                       </p>
                     )}
 
-                    {/* Botão Diagnóstico - apenas Revenue OS */}
-                    {activeFunil === 'revenue_os' && (
+                    {/* Botão Diagnóstico - Revenue OS e Core AI */}
+                    {(activeFunil === 'revenue_os' || activeFunil === 'core_ai') && (
                       <div className="border-t border-border/50 pt-2">
                         <button
                           onClick={(e) => { e.stopPropagation(); setDiagnosticoLead(lead); }}
@@ -448,8 +448,8 @@ export default function Pipeline() {
           onSaved={() => {
             refreshLeads();
             // Refresh diagnostico statuses
-            const revenueLeadIds = leads.filter(l => (l.funil || 'callx') === 'revenue_os').map(l => l.id);
-            supabase.from('diagnosticos').select('lead_id, status').in('lead_id', revenueLeadIds).then(({ data }) => {
+            const funnelLeadIds = leads.filter(l => ['revenue_os', 'core_ai'].includes(l.funil || 'callx')).map(l => l.id);
+            supabase.from('diagnosticos').select('lead_id, status').in('lead_id', funnelLeadIds).then(({ data }) => {
               if (data) {
                 const map: Record<string, string> = {};
                 data.forEach((d: any) => { map[d.lead_id] = d.status; });
