@@ -238,15 +238,17 @@ export default function Pipeline() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">{funilLabel}</h1>
-            <p className="text-sm text-muted-foreground mt-1">Arraste os leads entre as etapas</p>
-          </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-2xl font-display font-bold text-foreground">{funilLabel}</h1>
+              <p className="text-sm text-muted-foreground mt-1">Arraste os leads entre as etapas</p>
+            </div>
             <Button variant="outline" size="sm" onClick={handleExportSpecialCSV} className="gap-2 flex-shrink-0">
               <Download className="w-4 h-4" />
               Exportar CSV
             </Button>
+          </div>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             {/* Vendedor filter - only for strategic roles */}
             {isStrategic && (
               <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
