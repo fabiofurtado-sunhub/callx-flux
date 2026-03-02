@@ -1525,6 +1525,10 @@ export type Database = {
         | "aluno_hub"
         | "suporte_hub"
         | "admin_hub"
+        | "closer"
+        | "sdr"
+        | "suporte"
+        | "financeiro"
       lead_status:
         | "lead"
         | "mensagem_enviada"
@@ -1678,6 +1682,10 @@ export const Constants = {
         "aluno_hub",
         "suporte_hub",
         "admin_hub",
+        "closer",
+        "sdr",
+        "suporte",
+        "financeiro",
       ],
       lead_status: [
         "lead",
