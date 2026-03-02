@@ -18,9 +18,14 @@ import DiagnosticoModal from '@/components/DiagnosticoModal';
 import VoiceAgentButton from '@/components/VoiceAgentButton';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { usePermissions } from '@/hooks/usePermissions';
+
+// SDR max stage index for blocking moves
+const SDR_MAX_STAGES: LeadStatus[] = ['lead', 'mensagem_enviada', 'fup_1', 'ia_call', 'ia_call_2', 'ultima_mensagem', 'reuniao'];
 
 export default function Pipeline() {
   const { leads, moveLeadToStage, refreshLeads } = useAppContext();
+  const { role, permissions, can, isStrategic, isSdr, isSuporte } = usePermissions();
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<LeadStatus | null>(null);
   const [search, setSearch] = useState('');
@@ -36,6 +41,12 @@ export default function Pipeline() {
   const [cnpjDialogOpen, setCnpjDialogOpen] = useState(false);
   const [pendingPropostaLeadId, setPendingPropostaLeadId] = useState<string | null>(null);
   const [cnpjValue, setCnpjValue] = useState('');
+
+  const canMovePipeline = can('opportunities', 'move_pipeline');
+  const canChangeValue = can('opportunities', 'change_value');
+  const canViewAllFields = permissions.pipeline?.view_fields?.includes('all');
+  const showValores = canViewAllFields || permissions.pipeline?.view_fields?.includes('valor_proposta');
+  const showProbabilidade = canViewAllFields || permissions.pipeline?.view_fields?.includes('probabilidade');
 
   const allFunnels = [
     { value: 'callx', label: 'Funil CallX' },
@@ -99,6 +110,22 @@ export default function Pipeline() {
 
   const handleDrop = (stage: LeadStatus) => {
     if (draggedLead) {
+      // Suporte cannot move pipeline
+      if (!canMovePipeline) {
+        toast.error('Você não tem permissão para mover leads no pipeline');
+        setDraggedLead(null);
+        setDragOverStage(null);
+        return;
+      }
+
+      // SDR max stage restriction
+      if (isSdr && !SDR_MAX_STAGES.includes(stage)) {
+        toast.error('SDRs só podem mover leads até a etapa Reunião');
+        setDraggedLead(null);
+        setDragOverStage(null);
+        return;
+      }
+
       const lead = leads.find(l => l.id === draggedLead);
       if (stage === 'perdido') {
         setPendingLossLeadId(draggedLead);
@@ -187,18 +214,21 @@ export default function Pipeline() {
             <p className="text-sm text-muted-foreground mt-1">Arraste os leads entre as etapas</p>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
-              <SelectTrigger className="w-full sm:w-48 bg-background border-border">
-                <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
-                <SelectValue placeholder="Vendedor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os vendedores</SelectItem>
-                {vendedores.map(v => (
-                  <SelectItem key={v} value={v}>{v}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Vendedor filter - only for strategic roles */}
+            {isStrategic && (
+              <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
+                <SelectTrigger className="w-full sm:w-48 bg-background border-border">
+                  <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <SelectValue placeholder="Vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os vendedores</SelectItem>
+                  {vendedores.map(v => (
+                    <SelectItem key={v} value={v}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Select value={selectedFaturamento} onValueChange={setSelectedFaturamento}>
               <SelectTrigger className="w-full sm:w-48 bg-background border-border">
                 <DollarSign className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -277,8 +307,8 @@ export default function Pipeline() {
                 {stageLeads.map(lead => (
                   <div
                     key={lead.id}
-                    draggable
-                    onDragStart={() => handleDragStart(lead.id)}
+                    draggable={canMovePipeline}
+                    onDragStart={() => canMovePipeline && handleDragStart(lead.id)}
                     onDragEnd={handleDragEnd}
                     className={`rounded-lg border border-border bg-card p-3.5 cursor-pointer hover:border-primary/40 transition-all space-y-2.5 ${
                       draggedLead === lead.id ? 'opacity-40' : ''
@@ -388,8 +418,8 @@ export default function Pipeline() {
                       </div>
                     </div>
 
-                    {/* Valores */}
-                    {(lead.valor_proposta || lead.valor_venda) && (
+                    {/* Valores - hidden for SDR/Suporte */}
+                    {showValores && (lead.valor_proposta || lead.valor_venda) && (
                       <div className="flex items-center gap-3 border-t border-border/50 pt-2">
                         {lead.valor_proposta && (
                           <span className="text-xs font-semibold text-primary">
@@ -404,34 +434,36 @@ export default function Pipeline() {
                       </div>
                     )}
 
-                    {/* Botão Migração de Pipeline */}
-                    <div className="border-t border-border/50 pt-2">
-                      <Popover open={migratingLeadId === lead.id} onOpenChange={(open) => { if (!open) setMigratingLeadId(null); }}>
-                        <PopoverTrigger asChild>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setMigratingLeadId(lead.id); }}
-                            className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted transition-colors"
-                          >
-                            <ArrowRightLeft className="w-3.5 h-3.5" />
-                            Migrar Pipeline
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-48 p-1" align="start" onClick={(e) => e.stopPropagation()}>
-                          <p className="text-xs font-medium text-muted-foreground px-2 py-1.5">Mover para:</p>
-                          {allFunnels.filter(f => f.value !== activeFunil).map(f => (
-                            <Button
-                              key={f.value}
-                              variant="ghost"
-                              size="sm"
-                              className="w-full justify-start text-xs h-8"
-                              onClick={() => handleMigrateFunnel(lead.id, f.value)}
+                    {/* Botão Migração de Pipeline - only strategic roles */}
+                    {isStrategic && (
+                      <div className="border-t border-border/50 pt-2">
+                        <Popover open={migratingLeadId === lead.id} onOpenChange={(open) => { if (!open) setMigratingLeadId(null); }}>
+                          <PopoverTrigger asChild>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setMigratingLeadId(lead.id); }}
+                              className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted transition-colors"
                             >
-                              {f.label}
-                            </Button>
-                          ))}
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                              <ArrowRightLeft className="w-3.5 h-3.5" />
+                              Migrar Pipeline
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-48 p-1" align="start" onClick={(e) => e.stopPropagation()}>
+                            <p className="text-xs font-medium text-muted-foreground px-2 py-1.5">Mover para:</p>
+                            {allFunnels.filter(f => f.value !== activeFunil).map(f => (
+                              <Button
+                                key={f.value}
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start text-xs h-8"
+                                onClick={() => handleMigrateFunnel(lead.id, f.value)}
+                              >
+                                {f.label}
+                              </Button>
+                            ))}
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    )}
 
                     {/* Observações */}
                     {lead.observacoes && (

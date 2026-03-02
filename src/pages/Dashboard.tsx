@@ -13,11 +13,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export default function Dashboard() {
   const { leads, settings } = useAppContext();
+  const { can, isStrategic, isSdr, isSuporte } = usePermissions();
   const [alertas, setAlertas] = useState<any[]>([]);
   const [activeFunil, setActiveFunil] = useState<string>('todos');
+
+  const showFinancials = can('reports', 'view_company') || isStrategic;
+  const showTeamMetrics = can('reports', 'view_team') || isStrategic;
 
   const fetchAlertas = useCallback(async () => {
     const { data } = await supabase
@@ -140,19 +145,21 @@ export default function Dashboard() {
         <KpiCard title="Total Leads" value={totalLeads} icon={Users} variant="primary" />
         <KpiCard title="Msg Enviadas" value={mensagensEnviadas} icon={MessageSquare} />
         <KpiCard title="Reuniões" value={reunioes} icon={CalendarCheck} variant="warning" />
-        <KpiCard title="Propostas" value={propostas} icon={FileText} />
-        <KpiCard title="Vlr Propostas" value={`R$ ${(valorPropostas / 1000).toFixed(0)}k`} icon={Target} variant="warning" />
-        <KpiCard title="Vendas" value={vendasCount} icon={Trophy} variant="success" />
-        <KpiCard title="Receita Total" value={`R$ ${(receitaTotal / 1000).toFixed(0)}k`} icon={DollarSign} variant="primary" />
+        {showFinancials && <KpiCard title="Propostas" value={propostas} icon={FileText} />}
+        {showFinancials && <KpiCard title="Vlr Propostas" value={`R$ ${(valorPropostas / 1000).toFixed(0)}k`} icon={Target} variant="warning" />}
+        {showFinancials && <KpiCard title="Vendas" value={vendasCount} icon={Trophy} variant="success" />}
+        {showFinancials && <KpiCard title="Receita Total" value={`R$ ${(receitaTotal / 1000).toFixed(0)}k`} icon={DollarSign} variant="primary" />}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <KpiCard title="Ticket Médio" value={`R$ ${ticketMedio.toFixed(0)}`} icon={Target} />
-        <KpiCard title="Conv. Lead→Reunião" value={`${taxaLeadReuniao}%`} icon={ArrowRightLeft} variant="warning" />
-        <KpiCard title="Conv. Lead→Venda" value={`${taxaConversao}%`} icon={TrendingUp} variant="success" />
-        <KpiCard title="Conv. Reunião→Venda" value={`${taxaReuniaoVenda}%`} icon={ArrowRightLeft} />
-        <KpiCard title="Lead Time Médio" value={`${leadTimeMedio.toFixed(0)} dias`} icon={Clock} variant="warning" />
-      </div>
+      {showFinancials && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <KpiCard title="Ticket Médio" value={`R$ ${ticketMedio.toFixed(0)}`} icon={Target} />
+          <KpiCard title="Conv. Lead→Reunião" value={`${taxaLeadReuniao}%`} icon={ArrowRightLeft} variant="warning" />
+          <KpiCard title="Conv. Lead→Venda" value={`${taxaConversao}%`} icon={TrendingUp} variant="success" />
+          <KpiCard title="Conv. Reunião→Venda" value={`${taxaReuniaoVenda}%`} icon={ArrowRightLeft} />
+          <KpiCard title="Lead Time Médio" value={`${leadTimeMedio.toFixed(0)} dias`} icon={Clock} variant="warning" />
+        </div>
+      )}
 
       {/* Alertas Comerciais + Leads Quentes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -256,8 +263,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Charts Row 2 - Financial (hidden for SDR/Suporte) */}
+      {showFinancials && <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
           <h3 className="text-sm font-display font-semibold text-card-foreground mb-4">Receita por Vendedor</h3>
           <ResponsiveContainer width="100%" height={260}>
@@ -286,7 +293,7 @@ export default function Dashboard() {
             </PieChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </div>}
 
       {/* Charts Row 3 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
