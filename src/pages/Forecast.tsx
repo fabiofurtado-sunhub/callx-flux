@@ -209,6 +209,24 @@ export default function Forecast() {
     };
   }, [allFilteredLeads]);
 
+  // Performance por vendedor
+  const vendedorData = useMemo(() => {
+    const map: Record<string, { leads: number; propostas: number; vendas: number; vgv: number; forecast: number; reunioes: number }> = {};
+    allFilteredLeads.forEach(l => {
+      const nome = l.vendedor_nome || 'Sem vendedor';
+      if (!map[nome]) map[nome] = { leads: 0, propostas: 0, vendas: 0, vgv: 0, forecast: 0, reunioes: 0 };
+      map[nome].leads += 1;
+      map[nome].vgv += l.valor_proposta || 0;
+      map[nome].forecast += (l.valor_proposta || 0) * (STAGE_WEIGHTS[l.status_funil] || 0) / 100;
+      if (l.status_funil === 'proposta') map[nome].propostas += 1;
+      if (l.status_funil === 'venda') map[nome].vendas += 1;
+      if (['reuniao', 'reuniao_realizada'].includes(l.status_funil)) map[nome].reunioes += 1;
+    });
+    return Object.entries(map)
+      .map(([nome, d]) => ({ nome, ...d, conversao: d.leads > 0 ? ((d.vendas / d.leads) * 100) : 0 }))
+      .sort((a, b) => b.forecast - a.forecast);
+  }, [allFilteredLeads]);
+
   const fmt = (v: number) =>
     v >= 1000000
       ? `R$ ${(v / 1000000).toFixed(1)}M`
@@ -495,6 +513,96 @@ export default function Forecast() {
                   {forecastValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })}
                 </td>
               </tr>
+            </tbody>
+          </table>
+        </div>
+      </Card>
+      {/* Performance por Vendedor */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <h3 className="text-sm font-semibold text-foreground mb-4">Forecast por Vendedor</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={vendedorData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
+                <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
+                <YAxis type="category" dataKey="nome" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} width={100} />
+                <Tooltip
+                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+                  formatter={(value: number, name: string) => [
+                    `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`,
+                    name === 'forecast' ? 'Forecast' : 'VGV Total'
+                  ]}
+                />
+                <Bar dataKey="vgv" fill="hsl(var(--muted-foreground) / 0.25)" radius={[0, 4, 4, 0]} name="vgv" />
+                <Bar dataKey="forecast" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} name="forecast" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <h3 className="text-sm font-semibold text-foreground mb-4">Atividade por Vendedor</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={vendedorData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
+                <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                <YAxis type="category" dataKey="nome" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} width={100} />
+                <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                <Bar dataKey="leads" fill="hsl(var(--muted-foreground) / 0.3)" radius={[0, 4, 4, 0]} name="Leads" />
+                <Bar dataKey="reunioes" fill="hsl(var(--chart-2, 200 70% 50%))" radius={[0, 4, 4, 0]} name="Reuniões" />
+                <Bar dataKey="propostas" fill="hsl(var(--warning))" radius={[0, 4, 4, 0]} name="Propostas" />
+                <Bar dataKey="vendas" fill="hsl(var(--success))" radius={[0, 4, 4, 0]} name="Vendas" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
+
+      {/* Tabela detalhada por vendedor */}
+      <Card className="p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+        <h3 className="text-sm font-semibold text-foreground mb-4">Ranking de Vendedores</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left py-2 px-3 text-muted-foreground font-medium">Vendedor</th>
+                <th className="text-center py-2 px-3 text-muted-foreground font-medium">Leads</th>
+                <th className="text-center py-2 px-3 text-muted-foreground font-medium">Reuniões</th>
+                <th className="text-center py-2 px-3 text-muted-foreground font-medium">Propostas</th>
+                <th className="text-center py-2 px-3 text-muted-foreground font-medium">Vendas</th>
+                <th className="text-center py-2 px-3 text-muted-foreground font-medium">Conversão</th>
+                <th className="text-right py-2 px-3 text-muted-foreground font-medium">VGV</th>
+                <th className="text-right py-2 px-3 text-muted-foreground font-medium">Forecast</th>
+              </tr>
+            </thead>
+            <tbody>
+              {vendedorData.map((v, i) => (
+                <tr key={v.nome} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                  <td className="py-2.5 px-3 font-medium text-foreground flex items-center gap-2">
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${i < 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      {i + 1}
+                    </span>
+                    {v.nome}
+                  </td>
+                  <td className="py-2.5 px-3 text-center">{v.leads}</td>
+                  <td className="py-2.5 px-3 text-center">{v.reunioes}</td>
+                  <td className="py-2.5 px-3 text-center">{v.propostas}</td>
+                  <td className="py-2.5 px-3 text-center font-medium text-foreground">{v.vendas}</td>
+                  <td className="py-2.5 px-3 text-center">
+                    <Badge variant={v.conversao >= 20 ? 'default' : 'secondary'} className="text-xs">
+                      {v.conversao.toFixed(1)}%
+                    </Badge>
+                  </td>
+                  <td className="py-2.5 px-3 text-right text-muted-foreground">
+                    {v.vgv.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })}
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-semibold text-primary">
+                    {v.forecast.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
