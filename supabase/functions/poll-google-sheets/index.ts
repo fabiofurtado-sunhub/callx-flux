@@ -120,7 +120,7 @@ async function processSheet(
   // Map column indices (flexible header matching)
   const colMap = {
     nome: findCol(headers, ["nome", "name", "cliente", "first_name"]),
-    telefone: findCol(headers, ["telefone", "phone", "tel", "whatsapp", "celular", "whatsapp_(dd+número)", "whatsapp_(dd+numero)"]),
+    telefone: findCol(headers, ["telefone", "phone", "tel", "whatsapp", "celular", "whatsapp_(dd+número)", "whatsapp_(dd+numero)", "número_do_whatsapp", "numero_do_whatsapp"]),
     email: findCol(headers, ["email", "e-mail"]),
     campanha: findCol(headers, ["campanha", "campaign", "utm_campaign", "campaign_name"]),
     adset: findCol(headers, ["adset", "ad_set", "conjunto", "anuncio", "anúncio", "ad_name", "adset_name"]),
