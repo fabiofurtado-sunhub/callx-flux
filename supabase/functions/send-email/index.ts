@@ -57,7 +57,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { lead_id, to_email, subject, html_body, cadencia_etapa_id } = await req.json();
+    const { lead_id, to_email, subject, html_body, cadencia_etapa_id, from_address_override, from_name_override } = await req.json();
 
     if (!to_email || !lead_id) {
       return new Response(
