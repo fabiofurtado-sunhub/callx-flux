@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { usePermissions } from '@/hooks/usePermissions';
 
 // SDR max stage index for blocking moves
-const SDR_MAX_STAGES: LeadStatus[] = ['lead', 'mensagem_enviada', 'fup_1', 'ia_call', 'ia_call_2', 'ultima_mensagem', 'reuniao'];
+const SDR_MAX_STAGES: LeadStatus[] = ['lead', 'mensagem_enviada', 'fup_1', 'ultima_mensagem', 'reuniao'];
 
 export default function Pipeline() {
   const { leads, moveLeadToStage, refreshLeads } = useAppContext();
