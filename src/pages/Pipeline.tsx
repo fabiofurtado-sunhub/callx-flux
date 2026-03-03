@@ -1,5 +1,5 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
-import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, REVENUE_IA_STAGES, DIAGNOSTICO_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
+import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, REVENUE_IA_STAGES, DIAGNOSTICO_STAGES, REAQUECIMENTO_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState, useEffect } from 'react';
 import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList, ArrowRightLeft, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { usePermissions } from '@/hooks/usePermissions';
 
 // SDR max stage index for blocking moves
-const SDR_MAX_STAGES: LeadStatus[] = ['lead', 'mensagem_enviada', 'fup_1', 'ia_call', 'ia_call_2', 'ultima_mensagem', 'reuniao'];
+const SDR_MAX_STAGES: LeadStatus[] = ['lead', 'mensagem_enviada', 'fup_1', 'ultima_mensagem', 'reuniao'];
 
 export default function Pipeline() {
   const { leads, moveLeadToStage, refreshLeads } = useAppContext();
@@ -32,7 +32,7 @@ export default function Pipeline() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
-  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os' | 'revenue_ia' | 'diagnostico'>('callx');
+  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os' | 'revenue_ia' | 'diagnostico' | 'reaquecimento'>('callx');
   const [selectedVendedor, setSelectedVendedor] = useState<string>('todos');
   const [selectedFaturamento, setSelectedFaturamento] = useState<string>('todos');
   const [diagnosticoLead, setDiagnosticoLead] = useState<Lead | null>(null);
@@ -55,9 +55,10 @@ export default function Pipeline() {
     { value: 'revenue_os', label: 'Revenue OS' },
     { value: 'revenue_ia', label: 'Revenue IA' },
     { value: 'diagnostico', label: 'Funil Diagnóstico' },
+    { value: 'reaquecimento', label: 'Reaquecimento' },
   ];
 
-  const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Funil Diagnóstico' };
+  const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Funil Diagnóstico', reaquecimento: 'Reaquecimento' };
   const funilLabel = funilLabels[activeFunil] || activeFunil;
 
   // Load diagnostico statuses for Revenue OS and Core AI leads
@@ -297,12 +298,13 @@ export default function Pipeline() {
             <TabsTrigger value="revenue_os">Revenue OS</TabsTrigger>
             <TabsTrigger value="revenue_ia">Revenue IA</TabsTrigger>
             <TabsTrigger value="diagnostico">Diagnóstico</TabsTrigger>
+            <TabsTrigger value="reaquecimento">Reaquecimento</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {(activeFunil === 'playbook_mx3' ? PLAYBOOK_STAGES : activeFunil === 'revenue_os' ? REVENUE_OS_STAGES : activeFunil === 'core_ai' ? CORE_AI_STAGES : activeFunil === 'revenue_ia' ? REVENUE_IA_STAGES : activeFunil === 'diagnostico' ? DIAGNOSTICO_STAGES : FUNNEL_STAGES).map(stage => {
+        {(activeFunil === 'playbook_mx3' ? PLAYBOOK_STAGES : activeFunil === 'revenue_os' ? REVENUE_OS_STAGES : activeFunil === 'core_ai' ? CORE_AI_STAGES : activeFunil === 'revenue_ia' ? REVENUE_IA_STAGES : activeFunil === 'diagnostico' ? DIAGNOSTICO_STAGES : activeFunil === 'reaquecimento' ? REAQUECIMENTO_STAGES : FUNNEL_STAGES).map(stage => {
           const searchLower = search.toLowerCase();
           const stageLeads = filteredLeads.filter(l =>
             l.status_funil === stage.key &&
