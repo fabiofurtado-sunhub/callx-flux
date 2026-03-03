@@ -30,14 +30,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 5. Get existing phone+funnel pairs to deduplicate (per-funnel, not global)
+    // 5. Get existing phones GLOBALLY to deduplicate (prevent re-imports when leads move between funnels)
     const { data: existingLeads } = await supabase
       .from("leads")
       .select("telefone, funil");
 
+    // Global phone set (across all funnels) to prevent reimporting leads that moved
+    const existingPhonesGlobal = new Set<string>();
     const existingPhonesByFunnel = new Map<string, Set<string>>();
     for (const l of (existingLeads || []) as { telefone: string; funil: string }[]) {
       const phone = normalizePhone(l.telefone);
+      existingPhonesGlobal.add(phone);
       if (!existingPhonesByFunnel.has(l.funil)) {
         existingPhonesByFunnel.set(l.funil, new Set());
       }
