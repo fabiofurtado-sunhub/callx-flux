@@ -62,7 +62,7 @@ export default function Pipeline() {
 
   // Load diagnostico statuses for Revenue OS and Core AI leads
   useEffect(() => {
-    if (activeFunil !== 'revenue_os' && activeFunil !== 'core_ai') return;
+    if (!['revenue_os', 'core_ai', 'revenue_ia', 'diagnostico'].includes(activeFunil)) return;
     const funnelLeadIds = leads.filter(l => (l.funil || 'callx') === activeFunil).map(l => l.id);
     if (funnelLeadIds.length === 0) return;
     (async () => {
