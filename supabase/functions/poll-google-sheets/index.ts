@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
 
     // Process CallX sheet
     if (config?.google_sheets_url) {
-      results.callx = await processSheet(config.google_sheets_url, "callx", supabase, existingPhonesByFunnel);
+      results.callx = await processSheet(config.google_sheets_url, "callx", supabase, existingPhonesGlobal);
     }
 
     // Process Core AI sheet
