@@ -77,6 +77,30 @@ export const REVENUE_OS_STAGES: { key: LeadStatus; label: string; color: string 
   { key: 'perdido', label: 'Perdido', color: 'hsl(var(--destructive))' },
 ];
 
+export const REVENUE_IA_STAGES: { key: LeadStatus; label: string; color: string }[] = [
+  { key: 'lead', label: 'Lead', color: 'hsl(var(--info))' },
+  { key: 'mensagem_enviada', label: 'Mensagem Enviada', color: 'hsl(var(--info))' },
+  { key: 'fup_1', label: 'FUP 1', color: 'hsl(var(--info))' },
+  { key: 'reuniao', label: 'Reunião Agendada', color: 'hsl(var(--warning))' },
+  { key: 'no_show', label: 'No-Show', color: 'hsl(var(--destructive))' },
+  { key: 'reuniao_realizada', label: 'Reunião Realizada', color: 'hsl(var(--warning))' },
+  { key: 'proposta', label: 'Proposta Emitida', color: 'hsl(var(--primary))' },
+  { key: 'venda', label: 'Venda', color: 'hsl(var(--success))' },
+  { key: 'perdido', label: 'Perdido', color: 'hsl(var(--destructive))' },
+];
+
+export const DIAGNOSTICO_STAGES: { key: LeadStatus; label: string; color: string }[] = [
+  { key: 'lead', label: 'Lead', color: 'hsl(var(--info))' },
+  { key: 'mensagem_enviada', label: 'Mensagem Enviada', color: 'hsl(var(--info))' },
+  { key: 'fup_1', label: 'FUP 1', color: 'hsl(var(--info))' },
+  { key: 'reuniao', label: 'Reunião Agendada', color: 'hsl(var(--warning))' },
+  { key: 'no_show', label: 'No-Show', color: 'hsl(var(--destructive))' },
+  { key: 'reuniao_realizada', label: 'Reunião Realizada', color: 'hsl(var(--warning))' },
+  { key: 'proposta', label: 'Proposta Emitida', color: 'hsl(var(--primary))' },
+  { key: 'venda', label: 'Venda', color: 'hsl(var(--success))' },
+  { key: 'perdido', label: 'Perdido', color: 'hsl(var(--destructive))' },
+];
+
 export function getScoreLabel(score: number): LeadScore {
   if (score <= 20) return 'frio';
   if (score <= 50) return 'morno';
