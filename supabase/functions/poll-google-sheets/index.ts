@@ -144,16 +144,10 @@ async function processSheet(
     return { ok: false, message: "Colunas 'nome' e 'telefone' são obrigatórias na planilha" };
   }
 
-  // Get or create the set for this funnel
-  if (!existingPhonesByFunnel.has(funil)) {
-    existingPhonesByFunnel.set(funil, new Set());
-  }
-  const existingPhonesForFunnel = existingPhonesByFunnel.get(funil)!;
-
   const newLeads: Record<string, unknown>[] = [];
   for (const row of dataRows) {
     const phone = normalizePhone(row[colMap.telefone] || "");
-    if (!phone || existingPhonesForFunnel.has(phone)) continue;
+    if (!phone || existingPhonesGlobal.has(phone)) continue;
 
     const nome = (row[colMap.nome] || "").trim();
     if (!nome) continue;
