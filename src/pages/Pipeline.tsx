@@ -55,9 +55,10 @@ export default function Pipeline() {
     { value: 'revenue_os', label: 'Revenue OS' },
     { value: 'revenue_ia', label: 'Revenue IA' },
     { value: 'diagnostico', label: 'Funil Diagnóstico' },
+    { value: 'reaquecimento', label: 'Reaquecimento' },
   ];
 
-  const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Funil Diagnóstico' };
+  const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Funil Diagnóstico', reaquecimento: 'Reaquecimento' };
   const funilLabel = funilLabels[activeFunil] || activeFunil;
 
   // Load diagnostico statuses for Revenue OS and Core AI leads
