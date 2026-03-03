@@ -84,6 +84,7 @@ serve(async (req) => {
       adset: l.adset || "",
       grupo_anuncios: l.grupo_anuncios || l.grupo_anuncio || "",
       origem: l.origem || l.utm_source || "playbook_webhook",
+      tags: ["Playbook"],
       observacoes: l.observacoes || (l.empresa ? `Empresa: ${l.empresa}` : ""),
       maior_gargalo_comercial: l.maior_gargalo_comercial || null,
       tomador_decisao: l.tomador_decisao != null ? Boolean(l.tomador_decisao) : null,

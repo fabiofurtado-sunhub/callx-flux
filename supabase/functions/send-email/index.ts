@@ -57,7 +57,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { lead_id, to_email, subject, html_body, cadencia_etapa_id } = await req.json();
+    const { lead_id, to_email, subject, html_body, cadencia_etapa_id, from_address_override, from_name_override } = await req.json();
 
     if (!to_email || !lead_id) {
       return new Response(
@@ -73,8 +73,8 @@ serve(async (req) => {
       .limit(1)
       .single();
 
-    const fromAddress = config?.email_from_address || "contato@mx3.com.br";
-    const fromName = config?.email_from_name || "MX3";
+    const fromAddress = from_address_override || config?.email_from_address || "contato@mx3.com.br";
+    const fromName = from_name_override || config?.email_from_name || "MX3";
     const trackingEnabled = config?.email_tracking_enabled !== false;
 
     // Create email log entry first to get the ID for tracking
