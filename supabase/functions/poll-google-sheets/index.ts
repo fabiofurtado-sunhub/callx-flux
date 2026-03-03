@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
 
     // Process Core AI sheet
     if (config?.google_sheets_url_core_ai) {
-      results.core_ai = await processSheet(config.google_sheets_url_core_ai, "core_ai", supabase, existingPhonesByFunnel);
+      results.core_ai = await processSheet(config.google_sheets_url_core_ai, "core_ai", supabase, existingPhonesGlobal);
     }
 
     // Process Revenue OS sheet
