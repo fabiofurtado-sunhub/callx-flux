@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
     // Process Revenue OS sheet
     if (config?.google_sheets_url_revenue_os) {
-      results.revenue_os = await processSheet(config.google_sheets_url_revenue_os, "revenue_os", supabase, existingPhonesByFunnel);
+      results.revenue_os = await processSheet(config.google_sheets_url_revenue_os, "revenue_os", supabase, existingPhonesGlobal);
     }
 
     if (!config?.google_sheets_url && !config?.google_sheets_url_core_ai && !config?.google_sheets_url_revenue_os) {
