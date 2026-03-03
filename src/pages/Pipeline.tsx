@@ -298,6 +298,7 @@ export default function Pipeline() {
             <TabsTrigger value="revenue_os">Revenue OS</TabsTrigger>
             <TabsTrigger value="revenue_ia">Revenue IA</TabsTrigger>
             <TabsTrigger value="diagnostico">Diagnóstico</TabsTrigger>
+            <TabsTrigger value="reaquecimento">Reaquecimento</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
