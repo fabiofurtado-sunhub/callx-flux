@@ -304,7 +304,7 @@ export default function Pipeline() {
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {(activeFunil === 'playbook_mx3' ? PLAYBOOK_STAGES : activeFunil === 'revenue_os' ? REVENUE_OS_STAGES : activeFunil === 'core_ai' ? CORE_AI_STAGES : activeFunil === 'revenue_ia' ? REVENUE_IA_STAGES : activeFunil === 'diagnostico' ? DIAGNOSTICO_STAGES : FUNNEL_STAGES).map(stage => {
+        {(activeFunil === 'playbook_mx3' ? PLAYBOOK_STAGES : activeFunil === 'revenue_os' ? REVENUE_OS_STAGES : activeFunil === 'core_ai' ? CORE_AI_STAGES : activeFunil === 'revenue_ia' ? REVENUE_IA_STAGES : activeFunil === 'diagnostico' ? DIAGNOSTICO_STAGES : activeFunil === 'reaquecimento' ? REAQUECIMENTO_STAGES : FUNNEL_STAGES).map(stage => {
           const searchLower = search.toLowerCase();
           const stageLeads = filteredLeads.filter(l =>
             l.status_funil === stage.key &&
