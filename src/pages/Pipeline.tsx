@@ -1,5 +1,5 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
-import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
+import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, REVENUE_IA_STAGES, DIAGNOSTICO_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState, useEffect } from 'react';
 import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList, ArrowRightLeft, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,7 @@ export default function Pipeline() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
-  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os'>('callx');
+  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os' | 'revenue_ia' | 'diagnostico'>('callx');
   const [selectedVendedor, setSelectedVendedor] = useState<string>('todos');
   const [selectedFaturamento, setSelectedFaturamento] = useState<string>('todos');
   const [diagnosticoLead, setDiagnosticoLead] = useState<Lead | null>(null);
@@ -53,14 +53,16 @@ export default function Pipeline() {
     { value: 'core_ai', label: 'Funil Core AI' },
     { value: 'playbook_mx3', label: 'Playbook MX3' },
     { value: 'revenue_os', label: 'Revenue OS' },
+    { value: 'revenue_ia', label: 'Revenue IA' },
+    { value: 'diagnostico', label: 'Funil Diagnóstico' },
   ];
 
-  const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS' };
+  const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Funil Diagnóstico' };
   const funilLabel = funilLabels[activeFunil] || activeFunil;
 
   // Load diagnostico statuses for Revenue OS and Core AI leads
   useEffect(() => {
-    if (activeFunil !== 'revenue_os' && activeFunil !== 'core_ai') return;
+    if (!['revenue_os', 'core_ai', 'revenue_ia', 'diagnostico'].includes(activeFunil)) return;
     const funnelLeadIds = leads.filter(l => (l.funil || 'callx') === activeFunil).map(l => l.id);
     if (funnelLeadIds.length === 0) return;
     (async () => {
@@ -215,7 +217,7 @@ export default function Pipeline() {
       ultima_mensagem: 'Última Msg', reuniao: 'Reunião', no_show: 'No-Show', reuniao_realizada: 'Reunião Realizada',
       proposta: 'Proposta', venda: 'Venda', perdido: 'Perdido',
     };
-    const funilMap: Record<string, string> = { callx: 'CallX', core_ai: 'Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS' };
+    const funilMap: Record<string, string> = { callx: 'CallX', core_ai: 'Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Diagnóstico' };
     const headers = ['Nome', 'Email', 'Telefone', 'Empresa', 'Funil', 'Etapa', 'Vendedor', 'Campanha', 'Score', 'Faturamento', 'Data Entrada'];
     const escape = (v: any) => { if (v == null) return ''; const s = String(v); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s; };
     const rows = exportLeads.map(l => [
@@ -287,18 +289,20 @@ export default function Pipeline() {
             </div>
           </div>
         </div>
-        <Tabs value={activeFunil} onValueChange={v => setActiveFunil(v as 'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os')}>
+        <Tabs value={activeFunil} onValueChange={v => setActiveFunil(v as typeof activeFunil)}>
           <TabsList>
             <TabsTrigger value="callx">Funil CallX</TabsTrigger>
             <TabsTrigger value="core_ai">Funil Core AI</TabsTrigger>
             <TabsTrigger value="playbook_mx3">Playbook MX3</TabsTrigger>
             <TabsTrigger value="revenue_os">Revenue OS</TabsTrigger>
+            <TabsTrigger value="revenue_ia">Revenue IA</TabsTrigger>
+            <TabsTrigger value="diagnostico">Diagnóstico</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {(activeFunil === 'playbook_mx3' ? PLAYBOOK_STAGES : activeFunil === 'revenue_os' ? REVENUE_OS_STAGES : activeFunil === 'core_ai' ? CORE_AI_STAGES : FUNNEL_STAGES).map(stage => {
+        {(activeFunil === 'playbook_mx3' ? PLAYBOOK_STAGES : activeFunil === 'revenue_os' ? REVENUE_OS_STAGES : activeFunil === 'core_ai' ? CORE_AI_STAGES : activeFunil === 'revenue_ia' ? REVENUE_IA_STAGES : activeFunil === 'diagnostico' ? DIAGNOSTICO_STAGES : FUNNEL_STAGES).map(stage => {
           const searchLower = search.toLowerCase();
           const stageLeads = filteredLeads.filter(l =>
             l.status_funil === stage.key &&
