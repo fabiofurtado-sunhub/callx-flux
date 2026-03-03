@@ -195,6 +195,17 @@ serve(async (req) => {
           }
         }
 
+        // Add "Playbook" tag on D+0 for playbook_mx3 leads
+        if (etapa.dia === 0 && lead.funil === "playbook_mx3") {
+          const currentTags: string[] = (lead as any).tags || [];
+          if (!currentTags.includes("Playbook")) {
+            await supabase
+              .from("leads")
+              .update({ tags: [...currentTags, "Playbook"] })
+              .eq("id", lead.id);
+          }
+        }
+
         processed++;
       } catch (execError) {
         await supabase
