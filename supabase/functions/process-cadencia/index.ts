@@ -112,19 +112,26 @@ serve(async (req) => {
           // Replace variables in content
           const html = await replaceVariables(etapa.conteudo, lead, supabase);
 
+          // Use Fabio's address for playbook_mx3 funnel
+          const emailPayload: any = {
+            lead_id: lead.id,
+            to_email: lead.email,
+            subject: etapa.titulo,
+            html_body: html,
+            cadencia_etapa_id: etapa.id,
+          };
+          if (lead.funil === "playbook_mx3") {
+            emailPayload.from_address_override = "fabio@aceleradoramx3.com";
+            emailPayload.from_name_override = "Fabio Furtado | MX3";
+          }
+
           const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${supabaseKey}`,
             },
-            body: JSON.stringify({
-              lead_id: lead.id,
-              to_email: lead.email,
-              subject: etapa.titulo,
-              html_body: html,
-              cadencia_etapa_id: etapa.id,
-            }),
+            body: JSON.stringify(emailPayload),
           });
           result = await emailRes.json();
         } else if (etapa.canal === "whatsapp" && lead.telefone) {
