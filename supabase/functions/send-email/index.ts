@@ -73,8 +73,8 @@ serve(async (req) => {
       .limit(1)
       .single();
 
-    const fromAddress = config?.email_from_address || "contato@mx3.com.br";
-    const fromName = config?.email_from_name || "MX3";
+    const fromAddress = from_address_override || config?.email_from_address || "contato@mx3.com.br";
+    const fromName = from_name_override || config?.email_from_name || "MX3";
     const trackingEnabled = config?.email_tracking_enabled !== false;
 
     // Create email log entry first to get the ID for tracking
