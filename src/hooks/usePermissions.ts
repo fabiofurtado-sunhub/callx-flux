@@ -74,11 +74,13 @@ export function usePermissions() {
     const fetchPermissions = async () => {
       try {
         // Fetch user role
-        const { data: roleData } = await supabase
+        const { data: roleRows } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id)
-          .maybeSingle();
+          .not('role', 'in', '("aluno_hub","suporte_hub","admin_hub")');
+
+        const roleData = roleRows?.[0] ?? null;
 
         if (!roleData) {
           setLoading(false);
