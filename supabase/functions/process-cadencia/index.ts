@@ -79,7 +79,7 @@ serve(async (req) => {
       // Check if lead is still in active cadence
       const { data: lead } = await supabase
         .from("leads")
-        .select("id, nome, email, telefone, cadencia_status, status_funil, funil")
+        .select("id, nome, email, telefone, cadencia_status, status_funil, funil, tags")
         .eq("id", exec.lead_id)
         .single();
 
