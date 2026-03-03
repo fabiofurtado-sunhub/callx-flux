@@ -32,7 +32,7 @@ export default function Pipeline() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
-  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os' | 'revenue_ia' | 'diagnostico'>('callx');
+  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os' | 'revenue_ia' | 'diagnostico' | 'reaquecimento'>('callx');
   const [selectedVendedor, setSelectedVendedor] = useState<string>('todos');
   const [selectedFaturamento, setSelectedFaturamento] = useState<string>('todos');
   const [diagnosticoLead, setDiagnosticoLead] = useState<Lead | null>(null);
