@@ -152,7 +152,7 @@ async function processSheet(
     const nome = (row[colMap.nome] || "").trim();
     if (!nome) continue;
 
-    existingPhonesForFunnel.add(phone);
+    existingPhonesGlobal.add(phone);
 
     const lead: Record<string, unknown> = {
       nome,
