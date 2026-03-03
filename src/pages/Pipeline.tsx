@@ -289,12 +289,14 @@ export default function Pipeline() {
             </div>
           </div>
         </div>
-        <Tabs value={activeFunil} onValueChange={v => setActiveFunil(v as 'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os')}>
+        <Tabs value={activeFunil} onValueChange={v => setActiveFunil(v as typeof activeFunil)}>
           <TabsList>
             <TabsTrigger value="callx">Funil CallX</TabsTrigger>
             <TabsTrigger value="core_ai">Funil Core AI</TabsTrigger>
             <TabsTrigger value="playbook_mx3">Playbook MX3</TabsTrigger>
             <TabsTrigger value="revenue_os">Revenue OS</TabsTrigger>
+            <TabsTrigger value="revenue_ia">Revenue IA</TabsTrigger>
+            <TabsTrigger value="diagnostico">Diagnóstico</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
