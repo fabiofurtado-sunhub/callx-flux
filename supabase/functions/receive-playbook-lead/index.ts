@@ -58,6 +58,7 @@ serve(async (req) => {
     const { data: existingLeads } = await supabase
       .from("leads")
       .select("telefone")
+      .eq("funil", "playbook_mx3")
       .in("telefone", phones);
 
     const existingPhones = new Set(
