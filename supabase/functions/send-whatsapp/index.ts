@@ -38,13 +38,30 @@ serve(async (req) => {
       throw new Error("ZAPI credentials not configured");
     }
 
-    const { lead_id, telefone, nome, message_override } = await req.json();
+    const { lead_id, telefone, nome, message_override, skip_dedup_check } = await req.json();
 
     if (!telefone || !lead_id) {
       return new Response(
         JSON.stringify({ error: "telefone and lead_id are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // DEDUP GUARD: Refuse to send if lead already received initial WhatsApp (unless cadencia override)
+    if (!skip_dedup_check && !message_override) {
+      const { data: existingLead } = await supabaseClient
+        .from("leads")
+        .select("envio_whatsapp_status")
+        .eq("id", lead_id)
+        .single();
+
+      if (existingLead && existingLead.envio_whatsapp_status !== "pendente") {
+        console.log(`⏭️ Skipping ${nome} - already has status: ${existingLead.envio_whatsapp_status}`);
+        return new Response(
+          JSON.stringify({ success: false, skipped: true, reason: "already_sent" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Format phone: remove non-digits, ensure country code
