@@ -44,3 +44,9 @@ verify_jwt = false
 
 [functions.twilio-call-webhook]
 verify_jwt = false
+
+[functions.receive-playbook-lead]
+verify_jwt = false
+
+[functions.import-playbook-leads]
+verify_jwt = false
