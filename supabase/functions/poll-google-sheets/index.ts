@@ -142,14 +142,15 @@ async function processSheet(
   }
 
   const newLeads: Record<string, unknown>[] = [];
+  const funnelPhones = existingPhonesByFunnel.get(funil) || new Set<string>();
   for (const row of dataRows) {
     const phone = normalizePhone(row[colMap.telefone] || "");
-    if (!phone || existingPhonesGlobal.has(phone)) continue;
+    if (!phone || funnelPhones.has(phone)) continue;
 
     const nome = (row[colMap.nome] || "").trim();
     if (!nome) continue;
 
-    existingPhonesGlobal.add(phone);
+    funnelPhones.add(phone);
 
     const lead: Record<string, unknown> = {
       nome,
