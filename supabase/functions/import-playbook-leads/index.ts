@@ -40,7 +40,7 @@ serve(async (req) => {
       });
     }
 
-    // Deduplicate by phone (keep first occurrence = most recent)
+    // Deduplicate within the same batch only (by phone)
     const seenPhones = new Set<string>();
     const uniqueLeads: any[] = [];
     for (const lead of rawLeads) {
@@ -50,21 +50,8 @@ serve(async (req) => {
       uniqueLeads.push({ ...lead, telefone_limpo: phone });
     }
 
-    // Check existing leads by phone
-    const phones = uniqueLeads.map((l) => l.telefone_limpo);
-    const { data: existingLeads } = await supabase
-      .from("leads")
-      .select("telefone")
-      .in("telefone", phones);
-
-    const existingPhones = new Set(
-      (existingLeads || []).map((l: any) => cleanPhone(l.telefone))
-    );
-
-    // Filter to only new leads
-    const newLeads = uniqueLeads.filter(
-      (l) => !existingPhones.has(l.telefone_limpo)
-    );
+    // No database dedup for playbook — accepts leads even if they exist in other funnels
+    const newLeads = uniqueLeads;
 
     // Insert new leads
     const now = new Date().toISOString();
