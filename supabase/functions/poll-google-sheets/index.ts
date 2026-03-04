@@ -48,17 +48,17 @@ Deno.serve(async (req) => {
 
     // Process CallX sheet
     if (config?.google_sheets_url) {
-      results.callx = await processSheet(config.google_sheets_url, "callx", supabase, existingPhonesGlobal);
+      results.callx = await processSheet(config.google_sheets_url, "callx", supabase, existingPhonesByFunnel);
     }
 
     // Process Core AI sheet
     if (config?.google_sheets_url_core_ai) {
-      results.core_ai = await processSheet(config.google_sheets_url_core_ai, "core_ai", supabase, existingPhonesGlobal);
+      results.core_ai = await processSheet(config.google_sheets_url_core_ai, "core_ai", supabase, existingPhonesByFunnel);
     }
 
     // Process Revenue OS sheet
     if (config?.google_sheets_url_revenue_os) {
-      results.revenue_os = await processSheet(config.google_sheets_url_revenue_os, "revenue_os", supabase, existingPhonesGlobal);
+      results.revenue_os = await processSheet(config.google_sheets_url_revenue_os, "revenue_os", supabase, existingPhonesByFunnel);
     }
 
     if (!config?.google_sheets_url && !config?.google_sheets_url_core_ai && !config?.google_sheets_url_revenue_os) {
