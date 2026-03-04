@@ -88,7 +88,7 @@ serve(async (req) => {
       const { data, error } = await supabase
         .from("leads")
         .insert(batch)
-        .select("id");
+        .select("id, nome, email, telefone");
       if (error) {
         console.error("Insert error batch", i, error);
         continue;
@@ -99,12 +99,17 @@ serve(async (req) => {
     // Create cadencia_execucoes for each lead
     const { data: etapas } = await supabase
       .from("cadencia_etapas")
-      .select("id, dia, canal, ordem")
+      .select("id, dia, canal, ordem, titulo, conteudo")
       .eq("funil", "playbook_mx3")
       .eq("ativo", true)
       .order("ordem", { ascending: true });
 
     let totalExecs = 0;
+    let emailsSentJIT = 0;
+
+    // Identify D+0 email etapas for just-in-time sending
+    const d0EmailEtapas = (etapas || []).filter((e: any) => e.dia === 0 && e.canal === "email");
+
     if (etapas?.length && insertedLeads.length) {
       let whatsappLeadIndex = 0;
       const execucoes: any[] = [];
@@ -117,11 +122,16 @@ serve(async (req) => {
           if (etapa.canal === "whatsapp") {
             baseTime.setMinutes(baseTime.getMinutes() + whatsappLeadIndex * 3);
           }
+
+          // D+0 emails will be sent just-in-time, mark as "executado" immediately
+          const isD0Email = etapa.dia === 0 && etapa.canal === "email";
+
           execucoes.push({
             lead_id: lead.id,
             cadencia_etapa_id: etapa.id,
             agendado_para: baseTime.toISOString(),
-            status: "pendente",
+            status: isD0Email ? "executado" : "pendente",
+            executado_em: isD0Email ? now : null,
           });
         }
         whatsappLeadIndex++;
@@ -136,6 +146,58 @@ serve(async (req) => {
           totalExecs += batch.length;
         }
       }
+
+      // JUST-IN-TIME: Send D+0 emails immediately
+      if (d0EmailEtapas.length > 0) {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+
+        for (const lead of insertedLeads) {
+          if (!lead.email) continue;
+
+          for (const etapa of d0EmailEtapas) {
+            try {
+              // Replace variables in content
+              let html = etapa.conteudo
+                .replace(/\{\{nome\}\}/gi, lead.nome || "")
+                .replace(/\{\{Nome\}\}/g, lead.nome || "")
+                .replace(/\{\{email\}\}/gi, lead.email || "")
+                .replace(/\{\{telefone\}\}/gi, lead.telefone || "");
+
+              if (html.includes("{{LINK_AGENDAMENTO}}")) {
+                const { data: config } = await supabase
+                  .from("configuracoes")
+                  .select("link_agendamento")
+                  .limit(1)
+                  .single();
+                html = html.replace(/\{\{LINK_AGENDAMENTO\}\}/g, config?.link_agendamento || "#");
+              }
+
+              const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!}`,
+                },
+                body: JSON.stringify({
+                  lead_id: lead.id,
+                  to_email: lead.email,
+                  subject: etapa.titulo,
+                  html_body: html,
+                  cadencia_etapa_id: etapa.id,
+                  from_address_override: "fabio@aceleradoramx3.com",
+                  from_name_override: "Fabio Furtado | MX3",
+                }),
+              });
+
+              const emailResult = await emailRes.json();
+              console.log(`JIT email sent to ${lead.nome} (${lead.email}):`, emailResult);
+              emailsSentJIT++;
+            } catch (emailError) {
+              console.error(`JIT email error for ${lead.nome}:`, emailError);
+            }
+          }
+        }
+      }
     }
 
     return new Response(
@@ -145,6 +207,7 @@ serve(async (req) => {
         skipped_duplicates: uniqueLeads.length - newLeads.length,
         skipped_invalid: rawLeads.length - uniqueLeads.length,
         executions_created: totalExecs,
+        emails_sent_jit: emailsSentJIT,
       }),
       {
         status: 200,
