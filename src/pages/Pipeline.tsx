@@ -1,7 +1,7 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
 import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, REVENUE_IA_STAGES, DIAGNOSTICO_STAGES, REAQUECIMENTO_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
 import { useState, useEffect } from 'react';
-import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList, ArrowRightLeft, Download } from 'lucide-react';
+import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList, ArrowRightLeft, Download, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -41,7 +41,8 @@ export default function Pipeline() {
   const [cnpjDialogOpen, setCnpjDialogOpen] = useState(false);
   const [pendingPropostaLeadId, setPendingPropostaLeadId] = useState<string | null>(null);
   const [cnpjValue, setCnpjValue] = useState('');
-
+  const [newLeadDialogOpen, setNewLeadDialogOpen] = useState(false);
+  const [newLead, setNewLead] = useState({ nome: '', telefone: '', email: '', empresa: '', funil: 'callx' });
   const canMovePipeline = can('opportunities', 'move_pipeline');
   const canChangeValue = can('opportunities', 'change_value');
   const canViewAllFields = permissions.pipeline?.view_fields?.includes('all');
@@ -237,6 +238,29 @@ export default function Pipeline() {
     toast.success(`${exportLeads.length} leads exportados!`);
   };
 
+  const handleCreateLead = async () => {
+    if (!newLead.nome.trim() || !newLead.telefone.trim()) {
+      toast.error('Nome e telefone são obrigatórios');
+      return;
+    }
+    const { error } = await supabase.from('leads').insert({
+      nome: newLead.nome.trim(),
+      telefone: newLead.telefone.trim(),
+      email: newLead.email.trim() || null,
+      empresa: newLead.empresa.trim() || null,
+      funil: newLead.funil,
+      status_funil: 'lead',
+    });
+    if (error) {
+      toast.error('Erro ao criar lead: ' + error.message);
+      return;
+    }
+    toast.success('Lead criado com sucesso!');
+    setNewLeadDialogOpen(false);
+    setNewLead({ nome: '', telefone: '', email: '', empresa: '', funil: 'callx' });
+    await refreshLeads();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
@@ -249,6 +273,10 @@ export default function Pipeline() {
             <Button variant="outline" size="sm" onClick={handleExportSpecialCSV} className="gap-2 flex-shrink-0">
               <Download className="w-4 h-4" />
               Exportar CSV
+            </Button>
+            <Button size="sm" onClick={() => { setNewLead(prev => ({ ...prev, funil: activeFunil })); setNewLeadDialogOpen(true); }} className="gap-2 flex-shrink-0">
+              <Plus className="w-4 h-4" />
+              Novo Lead
             </Button>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -598,6 +626,48 @@ export default function Pipeline() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => { setCnpjDialogOpen(false); setPendingPropostaLeadId(null); }}>Cancelar</Button>
             <Button onClick={handleCnpjConfirm}>Confirmar e Mover</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Novo Lead */}
+      <Dialog open={newLeadDialogOpen} onOpenChange={setNewLeadDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Lead</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Funil</Label>
+              <Select value={newLead.funil} onValueChange={v => setNewLead(prev => ({ ...prev, funil: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {allFunnels.map(f => (
+                    <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Nome *</Label>
+              <Input value={newLead.nome} onChange={e => setNewLead(prev => ({ ...prev, nome: e.target.value }))} placeholder="Nome do lead" />
+            </div>
+            <div className="space-y-2">
+              <Label>Telefone *</Label>
+              <Input value={newLead.telefone} onChange={e => setNewLead(prev => ({ ...prev, telefone: e.target.value }))} placeholder="5511999999999" />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input value={newLead.email} onChange={e => setNewLead(prev => ({ ...prev, email: e.target.value }))} placeholder="email@exemplo.com" />
+            </div>
+            <div className="space-y-2">
+              <Label>Empresa</Label>
+              <Input value={newLead.empresa} onChange={e => setNewLead(prev => ({ ...prev, empresa: e.target.value }))} placeholder="Nome da empresa" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewLeadDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreateLead}>Criar Lead</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
