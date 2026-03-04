@@ -274,6 +274,10 @@ export default function Pipeline() {
               <Download className="w-4 h-4" />
               Exportar CSV
             </Button>
+            <Button size="sm" onClick={() => { setNewLead(prev => ({ ...prev, funil: activeFunil })); setNewLeadDialogOpen(true); }} className="gap-2 flex-shrink-0">
+              <Plus className="w-4 h-4" />
+              Novo Lead
+            </Button>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
             {/* Vendedor filter - only for strategic roles */}
