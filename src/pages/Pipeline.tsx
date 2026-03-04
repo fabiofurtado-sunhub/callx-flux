@@ -238,7 +238,29 @@ export default function Pipeline() {
     toast.success(`${exportLeads.length} leads exportados!`);
   };
 
-  return (
+  const handleCreateLead = async () => {
+    if (!newLead.nome.trim() || !newLead.telefone.trim()) {
+      toast.error('Nome e telefone são obrigatórios');
+      return;
+    }
+    const { error } = await supabase.from('leads').insert({
+      nome: newLead.nome.trim(),
+      telefone: newLead.telefone.trim(),
+      email: newLead.email.trim() || null,
+      empresa: newLead.empresa.trim() || null,
+      funil: newLead.funil,
+      status_funil: 'lead',
+    });
+    if (error) {
+      toast.error('Erro ao criar lead: ' + error.message);
+      return;
+    }
+    toast.success('Lead criado com sucesso!');
+    setNewLeadDialogOpen(false);
+    setNewLead({ nome: '', telefone: '', email: '', empresa: '', funil: 'callx' });
+    await refreshLeads();
+  };
+
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
