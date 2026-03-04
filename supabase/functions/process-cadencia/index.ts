@@ -17,21 +17,31 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check business hours (08:00-18:00 BRT)
-    const nowBRT = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-    const hour = nowBRT.getHours();
-    const dayOfWeek = nowBRT.getDay(); // 0=Sun, 6=Sat
-
-    if (hour < 8 || hour >= 18 || dayOfWeek === 0 || dayOfWeek === 6) {
-      return new Response(
-        JSON.stringify({ processed: 0, message: "Outside business hours (08-18h BRT, Mon-Fri). Skipping." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Accept optional funil filter from body
+    let funilFilter: string | null = null;
+    try {
+      const body = await req.json();
+      funilFilter = body?.funil || null;
+    } catch {
+      // No body or invalid JSON — process all funnels
     }
 
-    // Find all pending executions that are due
+    // Business hours check for WhatsApp only (06:30–23:00 BRT, Mon-Sat)
+    const nowBRT = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const hour = nowBRT.getHours();
+    const minutes = nowBRT.getMinutes();
+    const dayOfWeek = nowBRT.getDay();
+    const currentMinutes = hour * 60 + minutes;
+    const whatsappWindowStart = 6 * 60 + 30; // 06:30
+    const whatsappWindowEnd = 23 * 60; // 23:00
+    const isWhatsappWindow =
+      dayOfWeek !== 0 && // Not Sunday
+      currentMinutes >= whatsappWindowStart &&
+      currentMinutes < whatsappWindowEnd;
+
+    // Build query for pending executions
     const now = new Date().toISOString();
-    const { data: pendingExecs, error: fetchError } = await supabase
+    let query = supabase
       .from("cadencia_execucoes")
       .select("*, cadencia_etapas(*)")
       .eq("status", "pendente")
@@ -39,10 +49,28 @@ serve(async (req) => {
       .order("agendado_para", { ascending: true })
       .limit(50);
 
+    const { data: pendingExecs, error: fetchError } = await query;
+
     if (fetchError) throw fetchError;
     if (!pendingExecs?.length) {
       return new Response(
-        JSON.stringify({ processed: 0, message: "No pending executions" }),
+        JSON.stringify({ processed: 0, message: "No pending executions", funil: funilFilter || "all" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Filter by funil if specified
+    let filteredExecs = pendingExecs;
+    if (funilFilter) {
+      // We need to check the etapa's funil
+      filteredExecs = pendingExecs.filter(
+        (e: any) => e.cadencia_etapas?.funil === funilFilter
+      );
+    }
+
+    if (!filteredExecs.length) {
+      return new Response(
+        JSON.stringify({ processed: 0, message: `No pending executions for funil: ${funilFilter}`, funil: funilFilter }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -50,22 +78,30 @@ serve(async (req) => {
     let processed = 0;
     let skipped = 0;
     let whatsappThrottled = 0;
+    let emailsSent = 0;
 
-    // Check last WhatsApp send time from this cadence to enforce 3-min spacing
-    const { data: lastWhatsapp } = await supabase
-      .from("cadencia_execucoes")
-      .select("executado_em")
-      .eq("status", "executado")
-      .in("cadencia_etapa_id", pendingExecs.filter(e => e.cadencia_etapas?.canal === "whatsapp").map(e => e.cadencia_etapa_id))
-      .not("executado_em", "is", null)
-      .order("executado_em", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // Check last WhatsApp send time to enforce 3-min spacing
+    const whatsappEtapaIds = filteredExecs
+      .filter((e: any) => e.cadencia_etapas?.canal === "whatsapp")
+      .map((e: any) => e.cadencia_etapa_id);
 
-    const lastWhatsappTime = lastWhatsapp?.executado_em ? new Date(lastWhatsapp.executado_em).getTime() : 0;
+    let lastWhatsappTime = 0;
+    if (whatsappEtapaIds.length > 0) {
+      const { data: lastWhatsapp } = await supabase
+        .from("cadencia_execucoes")
+        .select("executado_em")
+        .eq("status", "executado")
+        .in("cadencia_etapa_id", whatsappEtapaIds)
+        .not("executado_em", "is", null)
+        .order("executado_em", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      lastWhatsappTime = lastWhatsapp?.executado_em ? new Date(lastWhatsapp.executado_em).getTime() : 0;
+    }
+
     let whatsappSentInThisRun = false;
 
-    for (const exec of pendingExecs) {
+    for (const exec of filteredExecs) {
       const etapa = exec.cadencia_etapas;
       if (!etapa || !etapa.ativo) {
         await supabase
@@ -109,10 +145,9 @@ serve(async (req) => {
       let result: any = {};
       try {
         if (etapa.canal === "email" && lead.email) {
-          // Replace variables in content
+          // EMAIL: No time restriction — send anytime
           const html = await replaceVariables(etapa.conteudo, lead, supabase);
 
-          // Use Fabio's address for playbook_mx3 funnel
           const emailPayload: any = {
             lead_id: lead.id,
             to_email: lead.email,
@@ -134,11 +169,17 @@ serve(async (req) => {
             body: JSON.stringify(emailPayload),
           });
           result = await emailRes.json();
+          emailsSent++;
+
         } else if (etapa.canal === "whatsapp" && lead.telefone) {
-          // Throttle: max 1 WhatsApp per run, and at least 3 min since last send
+          // WHATSAPP: Respect business hours + 3-min throttle
+          if (!isWhatsappWindow) {
+            whatsappThrottled++;
+            continue; // Leave as pending
+          }
+
           const timeSinceLastWA = Date.now() - lastWhatsappTime;
           if (whatsappSentInThisRun || timeSinceLastWA < 3 * 60 * 1000) {
-            // Leave as pending for next run
             whatsappThrottled++;
             continue;
           }
@@ -178,7 +219,6 @@ serve(async (req) => {
         };
         const targetStage = stageForDay[etapa.dia];
         if (targetStage && lead.status_funil !== targetStage) {
-          // Only advance forward, never regress
           const stageOrder = ["lead", "mensagem_enviada", "fup_1", "ia_call", "ultima_mensagem", "reuniao", "no_show", "reuniao_realizada", "proposta", "venda", "perdido"];
           const currentIdx = stageOrder.indexOf(lead.status_funil);
           const targetIdx = stageOrder.indexOf(targetStage);
@@ -216,7 +256,14 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ processed, skipped, whatsappThrottled, total: pendingExecs.length }),
+      JSON.stringify({
+        funil: funilFilter || "all",
+        processed,
+        emailsSent,
+        skipped,
+        whatsappThrottled,
+        total: filteredExecs.length,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
@@ -236,7 +283,6 @@ async function checkCondition(
 ): Promise<boolean> {
   switch (conditionType) {
     case "nao_abriu_email": {
-      // Check if lead opened any email from the reference step
       if (!referenceEtapaId) return true;
       const { data } = await supabase
         .from("email_logs")
@@ -278,7 +324,6 @@ async function replaceVariables(content: string, lead: any, supabase: any): Prom
     .replace(/\{\{email\}\}/g, lead.email || "")
     .replace(/\{\{telefone\}\}/g, lead.telefone || "");
 
-  // Replace {{LINK_AGENDAMENTO}} from config
   if (result.includes("{{LINK_AGENDAMENTO}}")) {
     const { data: config } = await supabase
       .from("configuracoes")
