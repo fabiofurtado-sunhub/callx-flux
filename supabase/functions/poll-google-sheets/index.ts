@@ -30,17 +30,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 5. Get existing phones GLOBALLY to deduplicate (prevent re-imports when leads move between funnels)
+    // 5. Get existing phones PER FUNNEL to deduplicate (same phone CAN exist in different funnels)
     const { data: existingLeads } = await supabase
       .from("leads")
       .select("telefone, funil");
 
-    // Global phone set (across all funnels) to prevent reimporting leads that moved
-    const existingPhonesGlobal = new Set<string>();
     const existingPhonesByFunnel = new Map<string, Set<string>>();
     for (const l of (existingLeads || []) as { telefone: string; funil: string }[]) {
       const phone = normalizePhone(l.telefone);
-      existingPhonesGlobal.add(phone);
       if (!existingPhonesByFunnel.has(l.funil)) {
         existingPhonesByFunnel.set(l.funil, new Set());
       }
@@ -51,17 +48,17 @@ Deno.serve(async (req) => {
 
     // Process CallX sheet
     if (config?.google_sheets_url) {
-      results.callx = await processSheet(config.google_sheets_url, "callx", supabase, existingPhonesGlobal);
+      results.callx = await processSheet(config.google_sheets_url, "callx", supabase, existingPhonesByFunnel);
     }
 
     // Process Core AI sheet
     if (config?.google_sheets_url_core_ai) {
-      results.core_ai = await processSheet(config.google_sheets_url_core_ai, "core_ai", supabase, existingPhonesGlobal);
+      results.core_ai = await processSheet(config.google_sheets_url_core_ai, "core_ai", supabase, existingPhonesByFunnel);
     }
 
     // Process Revenue OS sheet
     if (config?.google_sheets_url_revenue_os) {
-      results.revenue_os = await processSheet(config.google_sheets_url_revenue_os, "revenue_os", supabase, existingPhonesGlobal);
+      results.revenue_os = await processSheet(config.google_sheets_url_revenue_os, "revenue_os", supabase, existingPhonesByFunnel);
     }
 
     if (!config?.google_sheets_url && !config?.google_sheets_url_core_ai && !config?.google_sheets_url_revenue_os) {
@@ -90,7 +87,7 @@ async function processSheet(
   sheetUrl: string,
   funil: string,
   supabase: any,
-  existingPhonesGlobal: Set<string>
+  existingPhonesByFunnel: Map<string, Set<string>>
 ): Promise<Record<string, any>> {
   // Build CSV URL
   let csvUrl: string;
@@ -145,14 +142,15 @@ async function processSheet(
   }
 
   const newLeads: Record<string, unknown>[] = [];
+  const funnelPhones = existingPhonesByFunnel.get(funil) || new Set<string>();
   for (const row of dataRows) {
     const phone = normalizePhone(row[colMap.telefone] || "");
-    if (!phone || existingPhonesGlobal.has(phone)) continue;
+    if (!phone || funnelPhones.has(phone)) continue;
 
     const nome = (row[colMap.nome] || "").trim();
     if (!nome) continue;
 
-    existingPhonesGlobal.add(phone);
+    funnelPhones.add(phone);
 
     const lead: Record<string, unknown> = {
       nome,
