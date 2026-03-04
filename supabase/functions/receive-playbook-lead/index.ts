@@ -88,7 +88,7 @@ serve(async (req) => {
       const { data, error } = await supabase
         .from("leads")
         .insert(batch)
-        .select("id");
+        .select("id, nome, email, telefone");
       if (error) {
         console.error("Insert error batch", i, error);
         continue;
