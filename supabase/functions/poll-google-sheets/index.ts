@@ -87,7 +87,7 @@ async function processSheet(
   sheetUrl: string,
   funil: string,
   supabase: any,
-  existingPhonesGlobal: Set<string>
+  existingPhonesByFunnel: Map<string, Set<string>>
 ): Promise<Record<string, any>> {
   // Build CSV URL
   let csvUrl: string;
