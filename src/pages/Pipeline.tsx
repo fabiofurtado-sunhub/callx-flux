@@ -41,7 +41,8 @@ export default function Pipeline() {
   const [cnpjDialogOpen, setCnpjDialogOpen] = useState(false);
   const [pendingPropostaLeadId, setPendingPropostaLeadId] = useState<string | null>(null);
   const [cnpjValue, setCnpjValue] = useState('');
-
+  const [newLeadDialogOpen, setNewLeadDialogOpen] = useState(false);
+  const [newLead, setNewLead] = useState({ nome: '', telefone: '', email: '', empresa: '', funil: 'callx' });
   const canMovePipeline = can('opportunities', 'move_pipeline');
   const canChangeValue = can('opportunities', 'change_value');
   const canViewAllFields = permissions.pipeline?.view_fields?.includes('all');
