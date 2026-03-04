@@ -630,6 +630,48 @@ export default function Pipeline() {
         </DialogContent>
       </Dialog>
 
+      {/* Dialog Novo Lead */}
+      <Dialog open={newLeadDialogOpen} onOpenChange={setNewLeadDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Lead</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Funil</Label>
+              <Select value={newLead.funil} onValueChange={v => setNewLead(prev => ({ ...prev, funil: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {allFunnels.map(f => (
+                    <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Nome *</Label>
+              <Input value={newLead.nome} onChange={e => setNewLead(prev => ({ ...prev, nome: e.target.value }))} placeholder="Nome do lead" />
+            </div>
+            <div className="space-y-2">
+              <Label>Telefone *</Label>
+              <Input value={newLead.telefone} onChange={e => setNewLead(prev => ({ ...prev, telefone: e.target.value }))} placeholder="5511999999999" />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input value={newLead.email} onChange={e => setNewLead(prev => ({ ...prev, email: e.target.value }))} placeholder="email@exemplo.com" />
+            </div>
+            <div className="space-y-2">
+              <Label>Empresa</Label>
+              <Input value={newLead.empresa} onChange={e => setNewLead(prev => ({ ...prev, empresa: e.target.value }))} placeholder="Nome da empresa" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewLeadDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreateLead}>Criar Lead</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <VoiceAgentButton />
     </div>
   );
