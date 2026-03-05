@@ -518,17 +518,30 @@ function CourseDetail({ course, onBack, onRefresh }: {
                 <div className="px-4 pb-4 space-y-1" style={{ borderTop: '1px solid #222' }}>
                   {/* Add lesson form */}
                   {addingLessonToModule === mod.id && (
-                    <div className="pt-3 pb-2 flex items-center gap-2">
-                      <input autoFocus value={newLessonName} onChange={e => setNewLessonName(e.target.value)}
-                        placeholder="Nome da aula"
-                        className="flex-1 h-8 px-3 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
-                      <input value={newLessonVideoUrl} onChange={e => setNewLessonVideoUrl(e.target.value)}
-                        placeholder="URL do vídeo (opcional)"
-                        className="flex-1 h-8 px-3 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
-                      <button onClick={() => addLesson(mod.id)} className="h-8 px-4 text-xs font-medium" style={{ background: '#FF1657', color: '#fff' }}>Criar</button>
-                      <button onClick={() => { setAddingLessonToModule(null); setNewLessonName(''); setNewLessonVideoUrl(''); }}>
-                        <X className="w-4 h-4" style={{ color: '#666' }} />
-                      </button>
+                    <div className="pt-3 pb-2 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input autoFocus value={newLessonName} onChange={e => setNewLessonName(e.target.value)}
+                          placeholder="Nome da aula"
+                          className="flex-1 h-8 px-3 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                        <input value={newLessonVideoUrl} onChange={e => setNewLessonVideoUrl(e.target.value)}
+                          placeholder="URL do vídeo (opcional)"
+                          className="flex-1 h-8 px-3 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#555' }} />
+                        <input value={newLessonCapaUrl} onChange={e => setNewLessonCapaUrl(e.target.value)}
+                          placeholder="URL da capa da aula (opcional)"
+                          className="flex-1 h-8 px-3 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                        {newLessonCapaUrl && (
+                          <div className="w-10 h-8 border overflow-hidden flex-shrink-0" style={{ borderColor: '#2a2a2a' }}>
+                            <img src={newLessonCapaUrl} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <button onClick={() => addLesson(mod.id)} className="h-8 px-4 text-xs font-medium" style={{ background: '#FF1657', color: '#fff' }}>Criar</button>
+                        <button onClick={() => { setAddingLessonToModule(null); setNewLessonName(''); setNewLessonVideoUrl(''); setNewLessonCapaUrl(''); }}>
+                          <X className="w-4 h-4" style={{ color: '#666' }} />
+                        </button>
+                      </div>
                     </div>
                   )}
 
