@@ -459,6 +459,13 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
           }}
         />
       )}
+      <LossReasonDialog
+        open={lossDialogOpen}
+        onOpenChange={(open) => {
+          setLossDialogOpen(open);
+        }}
+        onConfirm={handleLossConfirm}
+      />
     </Dialog>
   );
 }
