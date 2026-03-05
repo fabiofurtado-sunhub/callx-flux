@@ -29,6 +29,31 @@ const ORIGENS = [
   'Indicação',
 ];
 
+const FATURAMENTO_RANGES = [
+  { label: 'Abaixo de R$ 50.000', value: 25000 },
+  { label: 'De R$ 50.000 a R$ 100.000', value: 75000 },
+  { label: 'De R$ 100.000 a R$ 200.000', value: 150000 },
+  { label: 'De R$ 100.000 a R$ 500.000', value: 300000 },
+  { label: 'De R$ 500.000 a R$ 1.000.000', value: 750000 },
+  { label: 'Acima de R$ 1 milhão', value: 1500000 },
+  { label: 'De R$ 1M a R$ 5M', value: 3000000 },
+  { label: 'Acima de R$ 5 milhões', value: 5000000 },
+];
+
+function getFaturamentoLabel(value: number | null | undefined): string {
+  if (value == null) return '';
+  const match = FATURAMENTO_RANGES.find(r => r.value === value);
+  if (match) return String(match.value);
+  return String(value);
+}
+
+function getFaturamentoDisplayLabel(value: number | null | undefined): string {
+  if (value == null) return 'Sem informação';
+  const match = FATURAMENTO_RANGES.find(r => r.value === value);
+  if (match) return match.label;
+  return `R$ ${value.toLocaleString('pt-BR')}`;
+}
+
 interface LeadEditModalProps {
   lead: Lead | null;
   open: boolean;
