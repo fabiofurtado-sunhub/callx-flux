@@ -460,16 +460,32 @@ function CourseDetail({ course, onBack, onRefresh }: {
                 </button>
 
                 {isEditingMod ? (
-                  <div className="flex-1 flex items-center gap-2">
-                    <input value={editModuleName} onChange={e => setEditModuleName(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && saveModule(mod.id)}
-                      className="flex-1 h-8 px-3 text-sm border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
-                    <button onClick={() => saveModule(mod.id)}>
-                      <Save className="w-4 h-4" style={{ color: '#00FF78' }} />
-                    </button>
-                    <button onClick={() => setEditingModule(null)}>
-                      <X className="w-4 h-4" style={{ color: '#666' }} />
-                    </button>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input value={editModuleName} onChange={e => setEditModuleName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && saveModule(mod.id)}
+                        placeholder="Nome do módulo"
+                        className="flex-1 h-8 px-3 text-sm border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#555' }} />
+                      <input value={editModuleCapaUrl} onChange={e => setEditModuleCapaUrl(e.target.value)}
+                        placeholder="URL da capa do módulo"
+                        className="flex-1 h-8 px-3 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                      {editModuleCapaUrl && (
+                        <div className="w-10 h-8 border overflow-hidden flex-shrink-0" style={{ borderColor: '#2a2a2a' }}>
+                          <img src={editModuleCapaUrl} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => saveModule(mod.id)}>
+                        <Save className="w-4 h-4" style={{ color: '#00FF78' }} />
+                      </button>
+                      <button onClick={() => setEditingModule(null)}>
+                        <X className="w-4 h-4" style={{ color: '#666' }} />
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <>
