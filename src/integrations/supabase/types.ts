@@ -1227,6 +1227,27 @@ export type Database = {
           },
         ]
       }
+      leads_blacklist: {
+        Row: {
+          created_at: string | null
+          funil: string
+          id: string
+          telefone: string
+        }
+        Insert: {
+          created_at?: string | null
+          funil: string
+          id?: string
+          telefone: string
+        }
+        Update: {
+          created_at?: string | null
+          funil?: string
+          id?: string
+          telefone?: string
+        }
+        Relationships: []
+      }
       message_templates: {
         Row: {
           ativo: boolean
