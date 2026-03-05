@@ -69,11 +69,33 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const leadsToInsert = Array.isArray(body) ? body : [body];
+    const rawLeads = Array.isArray(body) ? body : [body];
 
-    const rows = leadsToInsert.map((lead: any) => ({
+    // Deduplicate: skip leads whose phone already exists in the core_ai funnel
+    const { data: existingLeads } = await supabase
+      .from("leads")
+      .select("telefone")
+      .eq("funil", "core_ai");
+
+    const existingPhones = new Set(
+      (existingLeads || []).map((l: any) => (l.telefone || "").replace(/\D/g, ""))
+    );
+
+    const newLeads = rawLeads.filter((lead: any) => {
+      const phone = (lead.telefone || "").replace(/\D/g, "");
+      return phone.length >= 10 && !existingPhones.has(phone);
+    });
+
+    if (newLeads.length === 0) {
+      return new Response(
+        JSON.stringify({ success: true, inserted: 0, skipped_duplicates: rawLeads.length, leads: [] }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const rows = newLeads.map((lead: any) => ({
       nome: lead.nome || "Sem nome",
-      telefone: lead.telefone || "",
+      telefone: (lead.telefone || "").replace(/\D/g, ""),
       email: lead.email || "",
       campanha: lead.campanha || "",
       adset: lead.adset || "",
@@ -104,7 +126,7 @@ serve(async (req) => {
     // Send Meta CAPI Lead event for each lead
     const accessToken = Deno.env.get("META_CAPI_ACCESS_TOKEN");
     if (accessToken) {
-      for (const lead of leadsToInsert) {
+      for (const lead of newLeads) {
         try {
           const metaResult = await sendMetaCapiEvent(lead, accessToken);
           const isSuccess = metaResult?.events_received >= 1;
