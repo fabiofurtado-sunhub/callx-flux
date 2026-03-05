@@ -414,7 +414,7 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
           )}
 
           <div className="flex gap-2">
-            <Button onClick={handleSave} disabled={saving || deleting} className="flex-1 gap-2">
+            <Button onClick={() => handleSave()} disabled={saving || deleting} className="flex-1 gap-2">
               <Save className="w-4 h-4" />
               {saving ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
