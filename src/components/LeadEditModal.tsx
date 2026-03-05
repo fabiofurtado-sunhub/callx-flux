@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import LossReasonDialog from '@/components/LossReasonDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import MetaCapiLogs from '@/components/MetaCapiLogs';
 import GoogleAnalyticsLogs from '@/components/GoogleAnalyticsLogs';
@@ -42,6 +43,7 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
   const [newTag, setNewTag] = useState('');
   const [diagnosticoOpen, setDiagnosticoOpen] = useState(false);
   const [diagnosticoStatus, setDiagnosticoStatus] = useState<string | null>(null);
+  const [lossDialogOpen, setLossDialogOpen] = useState(false);
 
   useEffect(() => {
     if (lead?.funil === 'revenue_os') {
@@ -73,9 +75,18 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
     set('tags', (form.tags || []).filter((t: string) => t !== tag));
   };
 
-  const handleSave = async () => {
+  const handleSave = async (overrideMotivo?: string) => {
+    // Intercept: if moving to 'perdido' and no motivo yet, show dialog
+    if (form.status_funil === 'perdido' && lead.status_funil !== 'perdido' && !overrideMotivo && !form.motivo_perda) {
+      setLossDialogOpen(true);
+      return;
+    }
+
     setSaving(true);
     try {
+      const stageChanged = form.status_funil !== lead.status_funil;
+      const finalMotivo = overrideMotivo || form.motivo_perda;
+
       const { error } = await supabase.from('leads').update({
         nome: form.nome,
         telefone: form.telefone,
@@ -89,7 +100,7 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
         valor_venda: form.valor_venda,
         valor_entrada: form.valor_entrada,
         valor_mrr: form.valor_mrr,
-        motivo_perda: form.motivo_perda,
+        motivo_perda: finalMotivo,
         observacoes: form.observacoes,
         faturamento: form.faturamento,
         empresa: form.empresa,
@@ -103,6 +114,37 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
       } as any).eq('id', lead.id);
 
       if (error) throw error;
+
+      // If stage changed, fire GA4 event and log movement
+      if (stageChanged && form.status_funil) {
+        // Fire GA4 (Meta CAPI is handled by DB trigger)
+        supabase.functions.invoke('google-analytics', {
+          body: {
+            lead_id: lead.id,
+            new_stage: form.status_funil,
+            lead_data: {
+              valor_proposta: form.valor_proposta,
+              valor_venda: form.valor_venda,
+            },
+          },
+        }).then(({ error: gaErr }) => {
+          if (gaErr) console.error('GA4 error:', gaErr);
+          else console.log('GA4 event sent from modal:', form.status_funil);
+        });
+
+        // Log stage change
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user) {
+          await supabase.from('lead_logs').insert({
+            lead_id: lead.id,
+            user_id: userData.user.id,
+            acao: 'Mudança de etapa (modal)',
+            de: lead.status_funil,
+            para: form.status_funil,
+          });
+        }
+      }
+
       toast.success('Lead atualizado com sucesso!');
       onSaved?.();
       onOpenChange(false);
@@ -111,6 +153,12 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleLossConfirm = (motivo: string) => {
+    set('motivo_perda', motivo);
+    setLossDialogOpen(false);
+    handleSave(motivo);
   };
 
   return (
@@ -367,7 +415,7 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
           )}
 
           <div className="flex gap-2">
-            <Button onClick={handleSave} disabled={saving || deleting} className="flex-1 gap-2">
+            <Button onClick={() => handleSave()} disabled={saving || deleting} className="flex-1 gap-2">
               <Save className="w-4 h-4" />
               {saving ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
@@ -411,6 +459,13 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
           }}
         />
       )}
+      <LossReasonDialog
+        open={lossDialogOpen}
+        onOpenChange={(open) => {
+          setLossDialogOpen(open);
+        }}
+        onConfirm={handleLossConfirm}
+      />
     </Dialog>
   );
 }
