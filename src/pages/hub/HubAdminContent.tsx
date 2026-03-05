@@ -11,11 +11,11 @@ interface CourseRow {
   capa_url: string | null; modules: ModuleRow[];
 }
 interface ModuleRow {
-  id: string; nome: string; ordem: number; course_id: string; lessons: LessonRow[];
+  id: string; nome: string; ordem: number; course_id: string; capa_url: string | null; lessons: LessonRow[];
 }
 interface LessonRow {
   id: string; nome: string; ordem: number; video_url: string | null;
-  material_url: string | null; module_id: string;
+  material_url: string | null; module_id: string; capa_url: string | null;
 }
 
 type View = 'grid' | 'course-detail';
@@ -36,14 +36,14 @@ export default function HubAdminContent() {
     const lessonsMap = new Map<string, LessonRow[]>();
     (lessonsRes.data || []).forEach((l: any) => {
       const arr = lessonsMap.get(l.module_id) || [];
-      arr.push({ id: l.id, nome: l.nome, ordem: l.ordem, video_url: l.video_url, material_url: l.material_url, module_id: l.module_id });
+      arr.push({ id: l.id, nome: l.nome, ordem: l.ordem, video_url: l.video_url, material_url: l.material_url, module_id: l.module_id, capa_url: l.capa_url });
       lessonsMap.set(l.module_id, arr);
     });
 
     const modulesMap = new Map<string, ModuleRow[]>();
     (modulesRes.data || []).forEach((m: any) => {
       const arr = modulesMap.get(m.course_id) || [];
-      arr.push({ id: m.id, nome: m.nome, ordem: m.ordem, course_id: m.course_id, lessons: lessonsMap.get(m.id) || [] });
+      arr.push({ id: m.id, nome: m.nome, ordem: m.ordem, course_id: m.course_id, capa_url: m.capa_url, lessons: lessonsMap.get(m.id) || [] });
       modulesMap.set(m.course_id, arr);
     });
 
@@ -198,9 +198,13 @@ function CourseDetail({ course, onBack, onRefresh }: {
   const [newLessonVideoUrl, setNewLessonVideoUrl] = useState('');
   const [editingModule, setEditingModule] = useState<string | null>(null);
   const [editModuleName, setEditModuleName] = useState('');
+  const [editModuleCapaUrl, setEditModuleCapaUrl] = useState('');
   const [editingLesson, setEditingLesson] = useState<string | null>(null);
   const [editLessonName, setEditLessonName] = useState('');
   const [editLessonVideoUrl, setEditLessonVideoUrl] = useState('');
+  const [editLessonCapaUrl, setEditLessonCapaUrl] = useState('');
+  const [newModuleCapaUrl, setNewModuleCapaUrl] = useState('');
+  const [newLessonCapaUrl, setNewLessonCapaUrl] = useState('');
 
   const saveCourseInfo = async () => {
     const { error } = await supabase.from('hub_courses').update({
@@ -235,11 +239,12 @@ function CourseDetail({ course, onBack, onRefresh }: {
     if (!newModuleName.trim()) return;
     const ordem = course.modules.length;
     const { error } = await supabase.from('hub_modules').insert({
-      nome: newModuleName.trim(), course_id: course.id, ordem,
+      nome: newModuleName.trim(), course_id: course.id, ordem, capa_url: newModuleCapaUrl.trim() || null,
     });
     if (error) { toast.error(error.message); return; }
     toast.success('Módulo criado');
     setNewModuleName('');
+    setNewModuleCapaUrl('');
     setAddingModule(false);
     onRefresh();
   };
@@ -253,7 +258,7 @@ function CourseDetail({ course, onBack, onRefresh }: {
   };
 
   const saveModule = async (id: string) => {
-    const { error } = await supabase.from('hub_modules').update({ nome: editModuleName.trim() }).eq('id', id);
+    const { error } = await supabase.from('hub_modules').update({ nome: editModuleName.trim(), capa_url: editModuleCapaUrl.trim() || null }).eq('id', id);
     if (error) { toast.error(error.message); return; }
     toast.success('Módulo atualizado');
     setEditingModule(null);
@@ -267,11 +272,13 @@ function CourseDetail({ course, onBack, onRefresh }: {
     const { error } = await supabase.from('hub_lessons').insert({
       nome: newLessonName.trim(), module_id: moduleId,
       video_url: newLessonVideoUrl.trim() || null, ordem,
+      capa_url: newLessonCapaUrl.trim() || null,
     });
     if (error) { toast.error(error.message); return; }
     toast.success('Aula criada');
     setNewLessonName('');
     setNewLessonVideoUrl('');
+    setNewLessonCapaUrl('');
     setAddingLessonToModule(null);
     onRefresh();
   };
@@ -279,6 +286,7 @@ function CourseDetail({ course, onBack, onRefresh }: {
   const saveLesson = async (id: string) => {
     const { error } = await supabase.from('hub_lessons').update({
       nome: editLessonName.trim(), video_url: editLessonVideoUrl.trim() || null,
+      capa_url: editLessonCapaUrl.trim() || null,
     }).eq('id', id);
     if (error) { toast.error(error.message); return; }
     toast.success('Aula atualizada');
@@ -403,15 +411,30 @@ function CourseDetail({ course, onBack, onRefresh }: {
         </div>
 
         {addingModule && (
-          <div className="border p-4 flex items-center gap-3" style={{ background: '#1a1a1a', borderColor: '#FF165740' }}>
-            <input autoFocus value={newModuleName} onChange={e => setNewModuleName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addModule()}
-              placeholder="Nome do módulo"
-              className="flex-1 h-9 px-3 text-sm border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
-            <button onClick={addModule} className="h-9 px-5 text-xs font-medium" style={{ background: '#FF1657', color: '#fff' }}>Criar</button>
-            <button onClick={() => { setAddingModule(false); setNewModuleName(''); }}>
-              <X className="w-4 h-4" style={{ color: '#666' }} />
-            </button>
+          <div className="border p-4 space-y-3" style={{ background: '#1a1a1a', borderColor: '#FF165740' }}>
+            <div className="flex items-center gap-3">
+              <input autoFocus value={newModuleName} onChange={e => setNewModuleName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addModule()}
+                placeholder="Nome do módulo"
+                className="flex-1 h-9 px-3 text-sm border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+            </div>
+            <div className="flex items-center gap-3">
+              <ImageIcon className="w-4 h-4 flex-shrink-0" style={{ color: '#555' }} />
+              <input value={newModuleCapaUrl} onChange={e => setNewModuleCapaUrl(e.target.value)}
+                placeholder="URL da capa do módulo (opcional)"
+                className="flex-1 h-9 px-3 text-sm border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+              {newModuleCapaUrl && (
+                <div className="w-12 h-9 border overflow-hidden flex-shrink-0" style={{ borderColor: '#2a2a2a' }}>
+                  <img src={newModuleCapaUrl} alt="" className="w-full h-full object-cover" />
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={addModule} className="h-9 px-5 text-xs font-medium" style={{ background: '#FF1657', color: '#fff' }}>Criar</button>
+              <button onClick={() => { setAddingModule(false); setNewModuleName(''); setNewModuleCapaUrl(''); }}>
+                <X className="w-4 h-4" style={{ color: '#666' }} />
+              </button>
+            </div>
           </div>
         )}
 
@@ -437,19 +460,40 @@ function CourseDetail({ course, onBack, onRefresh }: {
                 </button>
 
                 {isEditingMod ? (
-                  <div className="flex-1 flex items-center gap-2">
-                    <input value={editModuleName} onChange={e => setEditModuleName(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && saveModule(mod.id)}
-                      className="flex-1 h-8 px-3 text-sm border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
-                    <button onClick={() => saveModule(mod.id)}>
-                      <Save className="w-4 h-4" style={{ color: '#00FF78' }} />
-                    </button>
-                    <button onClick={() => setEditingModule(null)}>
-                      <X className="w-4 h-4" style={{ color: '#666' }} />
-                    </button>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input value={editModuleName} onChange={e => setEditModuleName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && saveModule(mod.id)}
+                        placeholder="Nome do módulo"
+                        className="flex-1 h-8 px-3 text-sm border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#555' }} />
+                      <input value={editModuleCapaUrl} onChange={e => setEditModuleCapaUrl(e.target.value)}
+                        placeholder="URL da capa do módulo"
+                        className="flex-1 h-8 px-3 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                      {editModuleCapaUrl && (
+                        <div className="w-10 h-8 border overflow-hidden flex-shrink-0" style={{ borderColor: '#2a2a2a' }}>
+                          <img src={editModuleCapaUrl} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => saveModule(mod.id)}>
+                        <Save className="w-4 h-4" style={{ color: '#00FF78' }} />
+                      </button>
+                      <button onClick={() => setEditingModule(null)}>
+                        <X className="w-4 h-4" style={{ color: '#666' }} />
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <>
+                    {mod.capa_url && (
+                      <div className="w-8 h-8 border overflow-hidden flex-shrink-0 rounded" style={{ borderColor: '#2a2a2a' }}>
+                        <img src={mod.capa_url} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    )}
                     <span className="text-sm font-medium flex-1">{mod.nome}</span>
                     <span className="text-[10px] px-2 py-0.5" style={{ background: '#00FF7820', color: '#00FF78' }}>
                       {mod.lessons.length} aula{mod.lessons.length !== 1 ? 's' : ''}
@@ -459,7 +503,7 @@ function CourseDetail({ course, onBack, onRefresh }: {
                       style={{ borderColor: '#333', color: '#888' }}>
                       + Aula
                     </button>
-                    <button onClick={() => { setEditingModule(mod.id); setEditModuleName(mod.nome); }}>
+                    <button onClick={() => { setEditingModule(mod.id); setEditModuleName(mod.nome); setEditModuleCapaUrl(mod.capa_url || ''); }}>
                       <Pencil className="w-3.5 h-3.5" style={{ color: '#555' }} />
                     </button>
                     <button onClick={() => deleteModule(mod.id)}>
@@ -474,17 +518,30 @@ function CourseDetail({ course, onBack, onRefresh }: {
                 <div className="px-4 pb-4 space-y-1" style={{ borderTop: '1px solid #222' }}>
                   {/* Add lesson form */}
                   {addingLessonToModule === mod.id && (
-                    <div className="pt-3 pb-2 flex items-center gap-2">
-                      <input autoFocus value={newLessonName} onChange={e => setNewLessonName(e.target.value)}
-                        placeholder="Nome da aula"
-                        className="flex-1 h-8 px-3 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
-                      <input value={newLessonVideoUrl} onChange={e => setNewLessonVideoUrl(e.target.value)}
-                        placeholder="URL do vídeo (opcional)"
-                        className="flex-1 h-8 px-3 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
-                      <button onClick={() => addLesson(mod.id)} className="h-8 px-4 text-xs font-medium" style={{ background: '#FF1657', color: '#fff' }}>Criar</button>
-                      <button onClick={() => { setAddingLessonToModule(null); setNewLessonName(''); setNewLessonVideoUrl(''); }}>
-                        <X className="w-4 h-4" style={{ color: '#666' }} />
-                      </button>
+                    <div className="pt-3 pb-2 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input autoFocus value={newLessonName} onChange={e => setNewLessonName(e.target.value)}
+                          placeholder="Nome da aula"
+                          className="flex-1 h-8 px-3 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                        <input value={newLessonVideoUrl} onChange={e => setNewLessonVideoUrl(e.target.value)}
+                          placeholder="URL do vídeo (opcional)"
+                          className="flex-1 h-8 px-3 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#555' }} />
+                        <input value={newLessonCapaUrl} onChange={e => setNewLessonCapaUrl(e.target.value)}
+                          placeholder="URL da capa da aula (opcional)"
+                          className="flex-1 h-8 px-3 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                        {newLessonCapaUrl && (
+                          <div className="w-10 h-8 border overflow-hidden flex-shrink-0" style={{ borderColor: '#2a2a2a' }}>
+                            <img src={newLessonCapaUrl} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <button onClick={() => addLesson(mod.id)} className="h-8 px-4 text-xs font-medium" style={{ background: '#FF1657', color: '#fff' }}>Criar</button>
+                        <button onClick={() => { setAddingLessonToModule(null); setNewLessonName(''); setNewLessonVideoUrl(''); setNewLessonCapaUrl(''); }}>
+                          <X className="w-4 h-4" style={{ color: '#666' }} />
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -497,27 +554,46 @@ function CourseDetail({ course, onBack, onRefresh }: {
                     return (
                       <div key={lesson.id} className="ml-6 flex items-center gap-3 py-2.5" style={{ borderBottom: '1px solid #1e1e1e' }}>
                         {isEditingL ? (
-                          <div className="flex-1 flex items-center gap-2">
-                            <input value={editLessonName} onChange={e => setEditLessonName(e.target.value)}
-                              className="flex-1 h-7 px-2 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
-                            <input value={editLessonVideoUrl} onChange={e => setEditLessonVideoUrl(e.target.value)}
-                              placeholder="URL do vídeo"
-                              className="flex-1 h-7 px-2 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
-                            <button onClick={() => saveLesson(lesson.id)}>
-                              <Save className="w-3.5 h-3.5" style={{ color: '#00FF78' }} />
-                            </button>
-                            <button onClick={() => setEditingLesson(null)}>
-                              <X className="w-3.5 h-3.5" style={{ color: '#666' }} />
-                            </button>
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <input value={editLessonName} onChange={e => setEditLessonName(e.target.value)}
+                                className="flex-1 h-7 px-2 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                              <input value={editLessonVideoUrl} onChange={e => setEditLessonVideoUrl(e.target.value)}
+                                placeholder="URL do vídeo"
+                                className="flex-1 h-7 px-2 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <ImageIcon className="w-3 h-3 flex-shrink-0" style={{ color: '#555' }} />
+                              <input value={editLessonCapaUrl} onChange={e => setEditLessonCapaUrl(e.target.value)}
+                                placeholder="URL da capa"
+                                className="flex-1 h-7 px-2 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                              {editLessonCapaUrl && (
+                                <div className="w-8 h-7 border overflow-hidden flex-shrink-0" style={{ borderColor: '#2a2a2a' }}>
+                                  <img src={editLessonCapaUrl} alt="" className="w-full h-full object-cover" />
+                                </div>
+                              )}
+                              <button onClick={() => saveLesson(lesson.id)}>
+                                <Save className="w-3.5 h-3.5" style={{ color: '#00FF78' }} />
+                              </button>
+                              <button onClick={() => setEditingLesson(null)}>
+                                <X className="w-3.5 h-3.5" style={{ color: '#666' }} />
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <>
-                            <Video className="w-3.5 h-3.5 flex-shrink-0" style={{ color: lesson.video_url ? '#FF1657' : '#333' }} />
+                            {lesson.capa_url ? (
+                              <div className="w-6 h-6 border overflow-hidden flex-shrink-0 rounded" style={{ borderColor: '#2a2a2a' }}>
+                                <img src={lesson.capa_url} alt="" className="w-full h-full object-cover" />
+                              </div>
+                            ) : (
+                              <Video className="w-3.5 h-3.5 flex-shrink-0" style={{ color: lesson.video_url ? '#FF1657' : '#333' }} />
+                            )}
                             <span className="text-xs flex-1">{lesson.nome}</span>
                             {lesson.video_url && (
                               <span className="text-[9px] px-1.5 py-0.5" style={{ background: '#FF165715', color: '#FF1657' }}>vídeo</span>
                             )}
-                            <button onClick={() => { setEditingLesson(lesson.id); setEditLessonName(lesson.nome); setEditLessonVideoUrl(lesson.video_url || ''); }}>
+                            <button onClick={() => { setEditingLesson(lesson.id); setEditLessonName(lesson.nome); setEditLessonVideoUrl(lesson.video_url || ''); setEditLessonCapaUrl(lesson.capa_url || ''); }}>
                               <Pencil className="w-3 h-3" style={{ color: '#555' }} />
                             </button>
                             <button onClick={() => deleteLesson(lesson.id)}>
