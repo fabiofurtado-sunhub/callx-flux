@@ -371,8 +371,21 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
               <Input value={(form as any).porte_empresa || ''} onChange={e => set('porte_empresa', e.target.value || null)} className="mt-1 bg-background border-border" />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Faturamento Mensal (R$)</Label>
-              <Input type="number" value={form.faturamento ?? ''} onChange={e => set('faturamento', e.target.value ? Number(e.target.value) : null)} className="mt-1 bg-background border-border" />
+              <Label className="text-xs text-muted-foreground">Faturamento Mensal</Label>
+              <Select value={form.faturamento != null ? String(form.faturamento) : ''} onValueChange={v => set('faturamento', v === '' ? null : Number(v))}>
+                <SelectTrigger className="mt-1 bg-background border-border">
+                  <SelectValue placeholder="Selecione a faixa" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sem informação</SelectItem>
+                  {FATURAMENTO_RANGES.map(r => (
+                    <SelectItem key={r.value} value={String(r.value)}>{r.label}</SelectItem>
+                  ))}
+                  {form.faturamento != null && !FATURAMENTO_RANGES.find(r => r.value === form.faturamento) && (
+                    <SelectItem value={String(form.faturamento)}>R$ {form.faturamento?.toLocaleString('pt-BR')}</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Observações</Label>
