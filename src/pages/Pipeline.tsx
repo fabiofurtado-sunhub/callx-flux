@@ -379,9 +379,13 @@ export default function Pipeline() {
                     draggable={canMovePipeline}
                     onDragStart={() => canMovePipeline && handleDragStart(lead.id)}
                     onDragEnd={handleDragEnd}
-                    className={`rounded-lg border border-border bg-card p-3.5 cursor-pointer hover:border-primary/40 transition-all space-y-2.5 ${
-                      draggedLead === lead.id ? 'opacity-40' : ''
-                    }`}
+                    className={cn(
+                      'rounded-lg border bg-card p-3.5 cursor-pointer hover:border-primary/40 transition-all space-y-2.5',
+                      draggedLead === lead.id ? 'opacity-40' : '',
+                      lead.faturamento != null && lead.faturamento >= 500000
+                        ? 'border-amber-400/70 ring-1 ring-amber-400/30 shadow-[0_0_12px_-2px_rgba(251,191,36,0.25)]'
+                        : 'border-border'
+                    )}
                     onClick={() => setEditingLead(lead)}
                   >
                     {/* Header: Nome + Etapa + Score + Grip */}
