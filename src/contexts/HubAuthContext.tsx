@@ -38,7 +38,7 @@ export function HubAuthProvider({ children }: { children: ReactNode }) {
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .in('role', ['aluno_hub', 'admin_hub', 'suporte_hub']);
+      .in('role', ['aluno_hub', 'admin_hub', 'suporte_hub', 'admin']);
     
     const hasHubRole = (data && data.length > 0) || false;
     const hasAdminRole = (data || []).some((r) => r.role === 'admin_hub' || r.role === 'admin');
