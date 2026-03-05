@@ -536,19 +536,44 @@ export default function Pipeline() {
                               Migrar Pipeline
                             </button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-48 p-1" align="start" onClick={(e) => e.stopPropagation()}>
-                            <p className="text-xs font-medium text-muted-foreground px-2 py-1.5">Mover para:</p>
-                            {allFunnels.filter(f => f.value !== activeFunil).map(f => (
-                              <Button
-                                key={f.value}
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-start text-xs h-8"
-                                onClick={() => handleMigrateFunnel(lead.id, f.value)}
-                              >
-                                {f.label}
-                              </Button>
-                            ))}
+                          <PopoverContent className="w-52 p-1" align="start" onClick={(e) => e.stopPropagation()}>
+                            {!migrationTargetFunil ? (
+                              <>
+                                <p className="text-xs font-medium text-muted-foreground px-2 py-1.5">Mover para:</p>
+                                {allFunnels.filter(f => f.value !== activeFunil).map(f => (
+                                  <Button
+                                    key={f.value}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start text-xs h-8"
+                                    onClick={() => setMigrationTargetFunil(f.value)}
+                                  >
+                                    {f.label}
+                                  </Button>
+                                ))}
+                              </>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border mb-1">
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setMigrationTargetFunil(null)}>
+                                    ←
+                                  </Button>
+                                  <p className="text-xs font-medium text-muted-foreground">{funilLabels[migrationTargetFunil] || migrationTargetFunil}</p>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground px-2 py-1">Etapa de destino:</p>
+                                {getStagesForFunnel(migrationTargetFunil).map(s => (
+                                  <Button
+                                    key={s.key}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start text-xs h-8"
+                                    onClick={() => handleMigrateFunnel(lead.id, migrationTargetFunil, s.key)}
+                                  >
+                                    {s.label}
+                                  </Button>
+                                ))}
+                              </>
+                            )}
                           </PopoverContent>
                         </Popover>
                       </div>
