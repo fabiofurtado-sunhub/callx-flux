@@ -411,15 +411,30 @@ function CourseDetail({ course, onBack, onRefresh }: {
         </div>
 
         {addingModule && (
-          <div className="border p-4 flex items-center gap-3" style={{ background: '#1a1a1a', borderColor: '#FF165740' }}>
-            <input autoFocus value={newModuleName} onChange={e => setNewModuleName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addModule()}
-              placeholder="Nome do módulo"
-              className="flex-1 h-9 px-3 text-sm border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
-            <button onClick={addModule} className="h-9 px-5 text-xs font-medium" style={{ background: '#FF1657', color: '#fff' }}>Criar</button>
-            <button onClick={() => { setAddingModule(false); setNewModuleName(''); }}>
-              <X className="w-4 h-4" style={{ color: '#666' }} />
-            </button>
+          <div className="border p-4 space-y-3" style={{ background: '#1a1a1a', borderColor: '#FF165740' }}>
+            <div className="flex items-center gap-3">
+              <input autoFocus value={newModuleName} onChange={e => setNewModuleName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addModule()}
+                placeholder="Nome do módulo"
+                className="flex-1 h-9 px-3 text-sm border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+            </div>
+            <div className="flex items-center gap-3">
+              <ImageIcon className="w-4 h-4 flex-shrink-0" style={{ color: '#555' }} />
+              <input value={newModuleCapaUrl} onChange={e => setNewModuleCapaUrl(e.target.value)}
+                placeholder="URL da capa do módulo (opcional)"
+                className="flex-1 h-9 px-3 text-sm border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+              {newModuleCapaUrl && (
+                <div className="w-12 h-9 border overflow-hidden flex-shrink-0" style={{ borderColor: '#2a2a2a' }}>
+                  <img src={newModuleCapaUrl} alt="" className="w-full h-full object-cover" />
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={addModule} className="h-9 px-5 text-xs font-medium" style={{ background: '#FF1657', color: '#fff' }}>Criar</button>
+              <button onClick={() => { setAddingModule(false); setNewModuleName(''); setNewModuleCapaUrl(''); }}>
+                <X className="w-4 h-4" style={{ color: '#666' }} />
+              </button>
+            </div>
           </div>
         )}
 
