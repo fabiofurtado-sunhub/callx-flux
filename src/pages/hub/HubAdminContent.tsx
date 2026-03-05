@@ -503,7 +503,7 @@ function CourseDetail({ course, onBack, onRefresh }: {
                       style={{ borderColor: '#333', color: '#888' }}>
                       + Aula
                     </button>
-                    <button onClick={() => { setEditingModule(mod.id); setEditModuleName(mod.nome); }}>
+                    <button onClick={() => { setEditingModule(mod.id); setEditModuleName(mod.nome); setEditModuleCapaUrl(mod.capa_url || ''); }}>
                       <Pencil className="w-3.5 h-3.5" style={{ color: '#555' }} />
                     </button>
                     <button onClick={() => deleteModule(mod.id)}>
