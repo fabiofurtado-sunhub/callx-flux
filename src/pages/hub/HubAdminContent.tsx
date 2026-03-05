@@ -554,18 +554,31 @@ function CourseDetail({ course, onBack, onRefresh }: {
                     return (
                       <div key={lesson.id} className="ml-6 flex items-center gap-3 py-2.5" style={{ borderBottom: '1px solid #1e1e1e' }}>
                         {isEditingL ? (
-                          <div className="flex-1 flex items-center gap-2">
-                            <input value={editLessonName} onChange={e => setEditLessonName(e.target.value)}
-                              className="flex-1 h-7 px-2 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
-                            <input value={editLessonVideoUrl} onChange={e => setEditLessonVideoUrl(e.target.value)}
-                              placeholder="URL do vídeo"
-                              className="flex-1 h-7 px-2 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
-                            <button onClick={() => saveLesson(lesson.id)}>
-                              <Save className="w-3.5 h-3.5" style={{ color: '#00FF78' }} />
-                            </button>
-                            <button onClick={() => setEditingLesson(null)}>
-                              <X className="w-3.5 h-3.5" style={{ color: '#666' }} />
-                            </button>
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <input value={editLessonName} onChange={e => setEditLessonName(e.target.value)}
+                                className="flex-1 h-7 px-2 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                              <input value={editLessonVideoUrl} onChange={e => setEditLessonVideoUrl(e.target.value)}
+                                placeholder="URL do vídeo"
+                                className="flex-1 h-7 px-2 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <ImageIcon className="w-3 h-3 flex-shrink-0" style={{ color: '#555' }} />
+                              <input value={editLessonCapaUrl} onChange={e => setEditLessonCapaUrl(e.target.value)}
+                                placeholder="URL da capa"
+                                className="flex-1 h-7 px-2 text-xs border" style={{ background: '#111', borderColor: '#2a2a2a', color: '#fff' }} />
+                              {editLessonCapaUrl && (
+                                <div className="w-8 h-7 border overflow-hidden flex-shrink-0" style={{ borderColor: '#2a2a2a' }}>
+                                  <img src={editLessonCapaUrl} alt="" className="w-full h-full object-cover" />
+                                </div>
+                              )}
+                              <button onClick={() => saveLesson(lesson.id)}>
+                                <Save className="w-3.5 h-3.5" style={{ color: '#00FF78' }} />
+                              </button>
+                              <button onClick={() => setEditingLesson(null)}>
+                                <X className="w-3.5 h-3.5" style={{ color: '#666' }} />
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <>
