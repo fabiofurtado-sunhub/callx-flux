@@ -11,11 +11,11 @@ interface CourseRow {
   capa_url: string | null; modules: ModuleRow[];
 }
 interface ModuleRow {
-  id: string; nome: string; ordem: number; course_id: string; lessons: LessonRow[];
+  id: string; nome: string; ordem: number; course_id: string; capa_url: string | null; lessons: LessonRow[];
 }
 interface LessonRow {
   id: string; nome: string; ordem: number; video_url: string | null;
-  material_url: string | null; module_id: string;
+  material_url: string | null; module_id: string; capa_url: string | null;
 }
 
 type View = 'grid' | 'course-detail';
