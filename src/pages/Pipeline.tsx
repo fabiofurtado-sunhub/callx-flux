@@ -467,9 +467,15 @@ export default function Pipeline() {
                       <span className="text-xs text-muted-foreground truncate">
                         {lead.vendedor_nome || 'Sem vendedor'}
                       </span>
-                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground flex-shrink-0">
-                        <Calendar className="w-3 h-3" />
-                        {format(new Date(lead.data_entrada), 'dd/MM/yy')}
+                      <div className="flex flex-col items-end text-[10px] text-muted-foreground flex-shrink-0">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {format(new Date(lead.data_entrada), 'dd/MM/yy')}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {format(new Date(lead.data_entrada), 'HH:mm')}
+                        </div>
                       </div>
                     </div>
 
