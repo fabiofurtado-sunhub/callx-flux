@@ -189,18 +189,27 @@ export default function Pipeline() {
     }
   };
 
-  const handleMigrateFunnel = async (leadId: string, targetFunil: string) => {
-    await supabase.from('leads').update({ funil: targetFunil, data_ultimo_movimento: new Date().toISOString() }).eq('id', leadId);
+  const handleMigrateFunnel = async (leadId: string, targetFunil: string, targetStage?: LeadStatus) => {
+    const targetStages = getStagesForFunnel(targetFunil);
     const lead = leads.find(l => l.id === leadId);
+    // Determine the stage: use chosen stage, or keep current if it exists in target, otherwise use first stage
+    const finalStage = targetStage || (lead && targetStages.some(s => s.key === lead.status_funil) ? lead.status_funil : targetStages[0]?.key || 'lead');
+    
+    await supabase.from('leads').update({ 
+      funil: targetFunil, 
+      status_funil: finalStage,
+      data_ultimo_movimento: new Date().toISOString() 
+    }).eq('id', leadId);
     if (lead) {
       await supabase.from('lead_logs').insert({
         lead_id: leadId,
-        acao: `Migração de pipeline: ${funilLabels[lead.funil || 'callx']} → ${funilLabels[targetFunil]}`,
+        acao: `Migração de pipeline: ${funilLabels[lead.funil || 'callx']} → ${funilLabels[targetFunil]} (etapa: ${finalStage})`,
         de: lead.funil || 'callx',
         para: targetFunil,
       });
     }
     setMigratingLeadId(null);
+    setMigrationTargetFunil(null);
     setActiveFunil(targetFunil as typeof activeFunil);
     await refreshLeads();
   };
