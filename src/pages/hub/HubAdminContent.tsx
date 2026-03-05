@@ -198,9 +198,13 @@ function CourseDetail({ course, onBack, onRefresh }: {
   const [newLessonVideoUrl, setNewLessonVideoUrl] = useState('');
   const [editingModule, setEditingModule] = useState<string | null>(null);
   const [editModuleName, setEditModuleName] = useState('');
+  const [editModuleCapaUrl, setEditModuleCapaUrl] = useState('');
   const [editingLesson, setEditingLesson] = useState<string | null>(null);
   const [editLessonName, setEditLessonName] = useState('');
   const [editLessonVideoUrl, setEditLessonVideoUrl] = useState('');
+  const [editLessonCapaUrl, setEditLessonCapaUrl] = useState('');
+  const [newModuleCapaUrl, setNewModuleCapaUrl] = useState('');
+  const [newLessonCapaUrl, setNewLessonCapaUrl] = useState('');
 
   const saveCourseInfo = async () => {
     const { error } = await supabase.from('hub_courses').update({
