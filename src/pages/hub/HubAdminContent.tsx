@@ -489,6 +489,11 @@ function CourseDetail({ course, onBack, onRefresh }: {
                   </div>
                 ) : (
                   <>
+                    {mod.capa_url && (
+                      <div className="w-8 h-8 border overflow-hidden flex-shrink-0 rounded" style={{ borderColor: '#2a2a2a' }}>
+                        <img src={mod.capa_url} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    )}
                     <span className="text-sm font-medium flex-1">{mod.nome}</span>
                     <span className="text-[10px] px-2 py-0.5" style={{ background: '#00FF7820', color: '#00FF78' }}>
                       {mod.lessons.length} aula{mod.lessons.length !== 1 ? 's' : ''}
