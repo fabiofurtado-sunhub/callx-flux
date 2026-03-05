@@ -111,8 +111,16 @@ serve(async (req) => {
       );
     }
 
-    // Update lead: exit cadence, move to reuniao
+    // Update original lead: exit cadence, move to reuniao
     const now = new Date().toISOString();
+
+    // Get original lead data for cloning
+    const { data: originalLead } = await supabase
+      .from("leads")
+      .select("*")
+      .eq("id", lead_id)
+      .single();
+
     await supabase
       .from("leads")
       .update({
@@ -140,7 +148,49 @@ serve(async (req) => {
       para: "reuniao",
     });
 
+    // Create a card in the "diagnostico" funnel (starts at reuniao)
     const meetingLink = graphData.onlineMeeting?.joinUrl || graphData.webLink || null;
+    const diagLeadData = {
+      nome: originalLead?.nome || nome || "Sem nome",
+      telefone: originalLead?.telefone || telefone || "",
+      email: originalLead?.email || email || null,
+      funil: "diagnostico",
+      status_funil: "reuniao",
+      cadencia_status: "concluida",
+      origem: originalLead?.origem || "agenda",
+      empresa: originalLead?.empresa || "",
+      setor_empresa: originalLead?.setor_empresa || null,
+      faturamento: originalLead?.faturamento || null,
+      campanha: originalLead?.campanha || "",
+      vendedor_id: originalLead?.vendedor_id || null,
+      vendedor_nome: originalLead?.vendedor_nome || "",
+      tags: ["Diagnóstico"],
+      observacoes: `Agendado via página /agenda. Link: ${meetingLink || "N/A"}. Lead original: ${lead_id}`,
+      score_lead: 30,
+      probabilidade_fechamento: 30,
+      data_entrada: now,
+      data_ultimo_movimento: now,
+    };
+
+    const { data: diagLead, error: diagError } = await supabase
+      .from("leads")
+      .insert(diagLeadData)
+      .select("id")
+      .single();
+
+    if (diagError) {
+      console.error("Error creating diagnostico lead:", diagError);
+    } else {
+      console.log("Diagnostico lead created:", diagLead?.id);
+      // Log the creation
+      await supabase.from("lead_logs").insert({
+        lead_id: diagLead!.id,
+        acao: "Lead criado no funil Diagnóstico via agendamento",
+        de: null,
+        para: "reuniao",
+      });
+    }
+
 
     return new Response(
       JSON.stringify({
