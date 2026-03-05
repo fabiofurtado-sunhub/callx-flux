@@ -587,7 +587,7 @@ function CourseDetail({ course, onBack, onRefresh }: {
                             {lesson.video_url && (
                               <span className="text-[9px] px-1.5 py-0.5" style={{ background: '#FF165715', color: '#FF1657' }}>vídeo</span>
                             )}
-                            <button onClick={() => { setEditingLesson(lesson.id); setEditLessonName(lesson.nome); setEditLessonVideoUrl(lesson.video_url || ''); }}>
+                            <button onClick={() => { setEditingLesson(lesson.id); setEditLessonName(lesson.nome); setEditLessonVideoUrl(lesson.video_url || ''); setEditLessonCapaUrl(lesson.capa_url || ''); }}>
                               <Pencil className="w-3 h-3" style={{ color: '#555' }} />
                             </button>
                             <button onClick={() => deleteLesson(lesson.id)}>
