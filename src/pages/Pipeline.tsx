@@ -526,7 +526,7 @@ export default function Pipeline() {
                     {/* Botão Migração de Pipeline - only strategic roles */}
                     {isStrategic && (
                       <div className="border-t border-border/50 pt-2">
-                        <Popover open={migratingLeadId === lead.id} onOpenChange={(open) => { if (!open) setMigratingLeadId(null); }}>
+                        <Popover open={migratingLeadId === lead.id} onOpenChange={(open) => { if (!open) { setMigratingLeadId(null); setMigrationTargetFunil(null); } }}>
                           <PopoverTrigger asChild>
                             <button
                               onClick={(e) => { e.stopPropagation(); setMigratingLeadId(lead.id); }}
