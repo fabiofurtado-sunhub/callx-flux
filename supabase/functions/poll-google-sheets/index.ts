@@ -44,6 +44,19 @@ Deno.serve(async (req) => {
       existingPhonesByFunnel.get(l.funil)!.add(phone);
     }
 
+    // 5b. Also load blacklisted phones (deleted leads that should never be re-imported)
+    const { data: blacklistedLeads } = await supabase
+      .from("leads_blacklist")
+      .select("telefone, funil");
+
+    for (const bl of (blacklistedLeads || []) as { telefone: string; funil: string }[]) {
+      const phone = normalizePhone(bl.telefone);
+      if (!existingPhonesByFunnel.has(bl.funil)) {
+        existingPhonesByFunnel.set(bl.funil, new Set());
+      }
+      existingPhonesByFunnel.get(bl.funil)!.add(phone);
+    }
+
     const results: Record<string, any> = {};
 
     // Process CallX sheet
