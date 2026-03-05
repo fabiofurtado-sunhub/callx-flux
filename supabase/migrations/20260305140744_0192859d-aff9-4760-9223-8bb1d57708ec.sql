@@ -1,0 +1,1 @@
+ALTER TABLE public.hub_courses ADD COLUMN capa_url TEXT DEFAULT NULL;
