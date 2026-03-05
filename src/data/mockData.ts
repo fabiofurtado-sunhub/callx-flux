@@ -100,6 +100,20 @@ export const DIAGNOSTICO_STAGES: { key: LeadStatus; label: string; color: string
   { key: 'perdido', label: 'Perdido', color: 'hsl(var(--destructive))' },
 ];
 
+export const FUNNEL_STAGES_MAP: Record<string, { key: LeadStatus; label: string; color: string }[]> = {
+  callx: FUNNEL_STAGES,
+  core_ai: CORE_AI_STAGES,
+  playbook_mx3: PLAYBOOK_STAGES,
+  revenue_os: REVENUE_OS_STAGES,
+  revenue_ia: REVENUE_IA_STAGES,
+  diagnostico: DIAGNOSTICO_STAGES,
+  reaquecimento: REAQUECIMENTO_STAGES,
+};
+
+export function getStagesForFunnel(funil: string) {
+  return FUNNEL_STAGES_MAP[funil] || FUNNEL_STAGES;
+}
+
 export function getScoreLabel(score: number): LeadScore {
   if (score <= 20) return 'frio';
   if (score <= 50) return 'morno';

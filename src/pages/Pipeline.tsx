@@ -1,5 +1,5 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
-import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, REVENUE_IA_STAGES, DIAGNOSTICO_STAGES, REAQUECIMENTO_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
+import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, REVENUE_IA_STAGES, DIAGNOSTICO_STAGES, REAQUECIMENTO_STAGES, getScoreLabel, getScoreColor, getStagesForFunnel } from '@/data/mockData';
 import { useState, useEffect } from 'react';
 import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList, ArrowRightLeft, Download, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
