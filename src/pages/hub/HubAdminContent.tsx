@@ -239,11 +239,12 @@ function CourseDetail({ course, onBack, onRefresh }: {
     if (!newModuleName.trim()) return;
     const ordem = course.modules.length;
     const { error } = await supabase.from('hub_modules').insert({
-      nome: newModuleName.trim(), course_id: course.id, ordem,
+      nome: newModuleName.trim(), course_id: course.id, ordem, capa_url: newModuleCapaUrl.trim() || null,
     });
     if (error) { toast.error(error.message); return; }
     toast.success('Módulo criado');
     setNewModuleName('');
+    setNewModuleCapaUrl('');
     setAddingModule(false);
     onRefresh();
   };
