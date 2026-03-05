@@ -38,6 +38,7 @@ export default function Pipeline() {
   const [diagnosticoLead, setDiagnosticoLead] = useState<Lead | null>(null);
   const [diagnosticoStatuses, setDiagnosticoStatuses] = useState<Record<string, string>>({});
   const [migratingLeadId, setMigratingLeadId] = useState<string | null>(null);
+  const [migrationTargetFunil, setMigrationTargetFunil] = useState<string | null>(null);
   const [cnpjDialogOpen, setCnpjDialogOpen] = useState(false);
   const [pendingPropostaLeadId, setPendingPropostaLeadId] = useState<string | null>(null);
   const [cnpjValue, setCnpjValue] = useState('');
