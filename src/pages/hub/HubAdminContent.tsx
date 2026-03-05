@@ -582,7 +582,13 @@ function CourseDetail({ course, onBack, onRefresh }: {
                           </div>
                         ) : (
                           <>
-                            <Video className="w-3.5 h-3.5 flex-shrink-0" style={{ color: lesson.video_url ? '#FF1657' : '#333' }} />
+                            {lesson.capa_url ? (
+                              <div className="w-6 h-6 border overflow-hidden flex-shrink-0 rounded" style={{ borderColor: '#2a2a2a' }}>
+                                <img src={lesson.capa_url} alt="" className="w-full h-full object-cover" />
+                              </div>
+                            ) : (
+                              <Video className="w-3.5 h-3.5 flex-shrink-0" style={{ color: lesson.video_url ? '#FF1657' : '#333' }} />
+                            )}
                             <span className="text-xs flex-1">{lesson.nome}</span>
                             {lesson.video_url && (
                               <span className="text-[9px] px-1.5 py-0.5" style={{ background: '#FF165715', color: '#FF1657' }}>vídeo</span>
