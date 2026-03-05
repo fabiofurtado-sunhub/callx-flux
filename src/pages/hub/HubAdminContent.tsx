@@ -272,11 +272,13 @@ function CourseDetail({ course, onBack, onRefresh }: {
     const { error } = await supabase.from('hub_lessons').insert({
       nome: newLessonName.trim(), module_id: moduleId,
       video_url: newLessonVideoUrl.trim() || null, ordem,
+      capa_url: newLessonCapaUrl.trim() || null,
     });
     if (error) { toast.error(error.message); return; }
     toast.success('Aula criada');
     setNewLessonName('');
     setNewLessonVideoUrl('');
+    setNewLessonCapaUrl('');
     setAddingLessonToModule(null);
     onRefresh();
   };
