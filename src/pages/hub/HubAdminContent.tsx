@@ -286,6 +286,7 @@ function CourseDetail({ course, onBack, onRefresh }: {
   const saveLesson = async (id: string) => {
     const { error } = await supabase.from('hub_lessons').update({
       nome: editLessonName.trim(), video_url: editLessonVideoUrl.trim() || null,
+      capa_url: editLessonCapaUrl.trim() || null,
     }).eq('id', id);
     if (error) { toast.error(error.message); return; }
     toast.success('Aula atualizada');
