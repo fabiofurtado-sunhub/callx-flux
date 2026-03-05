@@ -763,6 +763,7 @@ export type Database = {
       }
       hub_lessons: {
         Row: {
+          capa_url: string | null
           created_at: string
           duracao_total: number | null
           id: string
@@ -773,6 +774,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          capa_url?: string | null
           created_at?: string
           duracao_total?: number | null
           id?: string
@@ -783,6 +785,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          capa_url?: string | null
           created_at?: string
           duracao_total?: number | null
           id?: string
@@ -828,6 +831,7 @@ export type Database = {
       }
       hub_modules: {
         Row: {
+          capa_url: string | null
           course_id: string
           created_at: string
           id: string
@@ -835,6 +839,7 @@ export type Database = {
           ordem: number
         }
         Insert: {
+          capa_url?: string | null
           course_id: string
           created_at?: string
           id?: string
@@ -842,6 +847,7 @@ export type Database = {
           ordem?: number
         }
         Update: {
+          capa_url?: string | null
           course_id?: string
           created_at?: string
           id?: string
