@@ -29,6 +29,31 @@ const ORIGENS = [
   'Indicação',
 ];
 
+const FATURAMENTO_RANGES = [
+  { label: 'Abaixo de R$ 50.000', value: 25000 },
+  { label: 'De R$ 50.000 a R$ 100.000', value: 75000 },
+  { label: 'De R$ 100.000 a R$ 200.000', value: 150000 },
+  { label: 'De R$ 100.000 a R$ 500.000', value: 300000 },
+  { label: 'De R$ 500.000 a R$ 1.000.000', value: 750000 },
+  { label: 'Acima de R$ 1 milhão', value: 1500000 },
+  { label: 'De R$ 1M a R$ 5M', value: 3000000 },
+  { label: 'Acima de R$ 5 milhões', value: 5000000 },
+];
+
+function getFaturamentoLabel(value: number | null | undefined): string {
+  if (value == null) return '';
+  const match = FATURAMENTO_RANGES.find(r => r.value === value);
+  if (match) return String(match.value);
+  return String(value);
+}
+
+function getFaturamentoDisplayLabel(value: number | null | undefined): string {
+  if (value == null) return 'Sem informação';
+  const match = FATURAMENTO_RANGES.find(r => r.value === value);
+  if (match) return match.label;
+  return `R$ ${value.toLocaleString('pt-BR')}`;
+}
+
 interface LeadEditModalProps {
   lead: Lead | null;
   open: boolean;
@@ -346,8 +371,21 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
               <Input value={(form as any).porte_empresa || ''} onChange={e => set('porte_empresa', e.target.value || null)} className="mt-1 bg-background border-border" />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Faturamento Mensal (R$)</Label>
-              <Input type="number" value={form.faturamento ?? ''} onChange={e => set('faturamento', e.target.value ? Number(e.target.value) : null)} className="mt-1 bg-background border-border" />
+              <Label className="text-xs text-muted-foreground">Faturamento Mensal</Label>
+              <Select value={form.faturamento != null ? String(form.faturamento) : ''} onValueChange={v => set('faturamento', v === '' ? null : Number(v))}>
+                <SelectTrigger className="mt-1 bg-background border-border">
+                  <SelectValue placeholder="Selecione a faixa" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sem informação</SelectItem>
+                  {FATURAMENTO_RANGES.map(r => (
+                    <SelectItem key={r.value} value={String(r.value)}>{r.label}</SelectItem>
+                  ))}
+                  {form.faturamento != null && !FATURAMENTO_RANGES.find(r => r.value === form.faturamento) && (
+                    <SelectItem value={String(form.faturamento)}>R$ {form.faturamento?.toLocaleString('pt-BR')}</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Observações</Label>
