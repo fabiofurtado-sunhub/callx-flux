@@ -258,7 +258,7 @@ function CourseDetail({ course, onBack, onRefresh }: {
   };
 
   const saveModule = async (id: string) => {
-    const { error } = await supabase.from('hub_modules').update({ nome: editModuleName.trim() }).eq('id', id);
+    const { error } = await supabase.from('hub_modules').update({ nome: editModuleName.trim(), capa_url: editModuleCapaUrl.trim() || null }).eq('id', id);
     if (error) { toast.error(error.message); return; }
     toast.success('Módulo atualizado');
     setEditingModule(null);
