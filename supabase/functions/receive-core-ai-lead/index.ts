@@ -126,7 +126,7 @@ serve(async (req) => {
     // Send Meta CAPI Lead event for each lead
     const accessToken = Deno.env.get("META_CAPI_ACCESS_TOKEN");
     if (accessToken) {
-      for (const lead of leadsToInsert) {
+      for (const lead of newLeads) {
         try {
           const metaResult = await sendMetaCapiEvent(lead, accessToken);
           const isSuccess = metaResult?.events_received >= 1;
