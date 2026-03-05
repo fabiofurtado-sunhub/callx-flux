@@ -1,0 +1,1 @@
+UPDATE public.leads SET status_funil = 'reuniao', data_ultimo_movimento = now() WHERE id = 'a1d08eaa-6e61-4b5f-a58a-6ab0a5988eb9' AND funil = 'diagnostico';

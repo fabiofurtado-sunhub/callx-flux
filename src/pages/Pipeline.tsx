@@ -1,5 +1,5 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
-import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, REVENUE_IA_STAGES, DIAGNOSTICO_STAGES, REAQUECIMENTO_STAGES, getScoreLabel, getScoreColor } from '@/data/mockData';
+import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, REVENUE_IA_STAGES, DIAGNOSTICO_STAGES, REAQUECIMENTO_STAGES, getScoreLabel, getScoreColor, getStagesForFunnel } from '@/data/mockData';
 import { useState, useEffect } from 'react';
 import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList, ArrowRightLeft, Download, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,7 @@ export default function Pipeline() {
   const [diagnosticoLead, setDiagnosticoLead] = useState<Lead | null>(null);
   const [diagnosticoStatuses, setDiagnosticoStatuses] = useState<Record<string, string>>({});
   const [migratingLeadId, setMigratingLeadId] = useState<string | null>(null);
+  const [migrationTargetFunil, setMigrationTargetFunil] = useState<string | null>(null);
   const [cnpjDialogOpen, setCnpjDialogOpen] = useState(false);
   const [pendingPropostaLeadId, setPendingPropostaLeadId] = useState<string | null>(null);
   const [cnpjValue, setCnpjValue] = useState('');
@@ -188,18 +189,27 @@ export default function Pipeline() {
     }
   };
 
-  const handleMigrateFunnel = async (leadId: string, targetFunil: string) => {
-    await supabase.from('leads').update({ funil: targetFunil, data_ultimo_movimento: new Date().toISOString() }).eq('id', leadId);
+  const handleMigrateFunnel = async (leadId: string, targetFunil: string, targetStage?: LeadStatus) => {
+    const targetStages = getStagesForFunnel(targetFunil);
     const lead = leads.find(l => l.id === leadId);
+    // Determine the stage: use chosen stage, or keep current if it exists in target, otherwise use first stage
+    const finalStage = targetStage || (lead && targetStages.some(s => s.key === lead.status_funil) ? lead.status_funil : targetStages[0]?.key || 'lead');
+    
+    await supabase.from('leads').update({ 
+      funil: targetFunil, 
+      status_funil: finalStage,
+      data_ultimo_movimento: new Date().toISOString() 
+    }).eq('id', leadId);
     if (lead) {
       await supabase.from('lead_logs').insert({
         lead_id: leadId,
-        acao: `Migração de pipeline: ${funilLabels[lead.funil || 'callx']} → ${funilLabels[targetFunil]}`,
+        acao: `Migração de pipeline: ${funilLabels[lead.funil || 'callx']} → ${funilLabels[targetFunil]} (etapa: ${finalStage})`,
         de: lead.funil || 'callx',
         para: targetFunil,
       });
     }
     setMigratingLeadId(null);
+    setMigrationTargetFunil(null);
     setActiveFunil(targetFunil as typeof activeFunil);
     await refreshLeads();
   };
@@ -516,7 +526,7 @@ export default function Pipeline() {
                     {/* Botão Migração de Pipeline - only strategic roles */}
                     {isStrategic && (
                       <div className="border-t border-border/50 pt-2">
-                        <Popover open={migratingLeadId === lead.id} onOpenChange={(open) => { if (!open) setMigratingLeadId(null); }}>
+                        <Popover open={migratingLeadId === lead.id} onOpenChange={(open) => { if (!open) { setMigratingLeadId(null); setMigrationTargetFunil(null); } }}>
                           <PopoverTrigger asChild>
                             <button
                               onClick={(e) => { e.stopPropagation(); setMigratingLeadId(lead.id); }}
@@ -526,19 +536,44 @@ export default function Pipeline() {
                               Migrar Pipeline
                             </button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-48 p-1" align="start" onClick={(e) => e.stopPropagation()}>
-                            <p className="text-xs font-medium text-muted-foreground px-2 py-1.5">Mover para:</p>
-                            {allFunnels.filter(f => f.value !== activeFunil).map(f => (
-                              <Button
-                                key={f.value}
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-start text-xs h-8"
-                                onClick={() => handleMigrateFunnel(lead.id, f.value)}
-                              >
-                                {f.label}
-                              </Button>
-                            ))}
+                          <PopoverContent className="w-52 p-1" align="start" onClick={(e) => e.stopPropagation()}>
+                            {!migrationTargetFunil ? (
+                              <>
+                                <p className="text-xs font-medium text-muted-foreground px-2 py-1.5">Mover para:</p>
+                                {allFunnels.filter(f => f.value !== activeFunil).map(f => (
+                                  <Button
+                                    key={f.value}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start text-xs h-8"
+                                    onClick={() => setMigrationTargetFunil(f.value)}
+                                  >
+                                    {f.label}
+                                  </Button>
+                                ))}
+                              </>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border mb-1">
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setMigrationTargetFunil(null)}>
+                                    ←
+                                  </Button>
+                                  <p className="text-xs font-medium text-muted-foreground">{funilLabels[migrationTargetFunil] || migrationTargetFunil}</p>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground px-2 py-1">Etapa de destino:</p>
+                                {getStagesForFunnel(migrationTargetFunil).map(s => (
+                                  <Button
+                                    key={s.key}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start text-xs h-8"
+                                    onClick={() => handleMigrateFunnel(lead.id, migrationTargetFunil, s.key)}
+                                  >
+                                    {s.label}
+                                  </Button>
+                                ))}
+                              </>
+                            )}
                           </PopoverContent>
                         </Popover>
                       </div>
