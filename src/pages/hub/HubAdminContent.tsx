@@ -43,7 +43,7 @@ export default function HubAdminContent() {
     const modulesMap = new Map<string, ModuleRow[]>();
     (modulesRes.data || []).forEach((m: any) => {
       const arr = modulesMap.get(m.course_id) || [];
-      arr.push({ id: m.id, nome: m.nome, ordem: m.ordem, course_id: m.course_id, lessons: lessonsMap.get(m.id) || [] });
+      arr.push({ id: m.id, nome: m.nome, ordem: m.ordem, course_id: m.course_id, capa_url: m.capa_url, lessons: lessonsMap.get(m.id) || [] });
       modulesMap.set(m.course_id, arr);
     });
 
