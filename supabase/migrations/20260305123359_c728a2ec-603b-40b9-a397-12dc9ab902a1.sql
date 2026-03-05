@@ -1,0 +1,1 @@
+DELETE FROM public.leads WHERE funil = 'callx' AND status_funil = 'lead';
