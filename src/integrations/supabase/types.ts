@@ -731,6 +731,7 @@ export type Database = {
       hub_courses: {
         Row: {
           ativo: boolean
+          capa_url: string | null
           created_at: string
           descricao: string | null
           drip_enabled: boolean
@@ -740,6 +741,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          capa_url?: string | null
           created_at?: string
           descricao?: string | null
           drip_enabled?: boolean
@@ -749,6 +751,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          capa_url?: string | null
           created_at?: string
           descricao?: string | null
           drip_enabled?: boolean
