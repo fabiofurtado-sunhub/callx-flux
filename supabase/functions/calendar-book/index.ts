@@ -191,7 +191,6 @@ serve(async (req) => {
       });
     }
 
-    const meetingLink = graphData.onlineMeeting?.joinUrl || graphData.webLink || null;
 
     return new Response(
       JSON.stringify({
