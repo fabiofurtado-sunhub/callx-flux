@@ -36,7 +36,7 @@ export default function HubAdminContent() {
     const lessonsMap = new Map<string, LessonRow[]>();
     (lessonsRes.data || []).forEach((l: any) => {
       const arr = lessonsMap.get(l.module_id) || [];
-      arr.push({ id: l.id, nome: l.nome, ordem: l.ordem, video_url: l.video_url, material_url: l.material_url, module_id: l.module_id });
+      arr.push({ id: l.id, nome: l.nome, ordem: l.ordem, video_url: l.video_url, material_url: l.material_url, module_id: l.module_id, capa_url: l.capa_url });
       lessonsMap.set(l.module_id, arr);
     });
 
