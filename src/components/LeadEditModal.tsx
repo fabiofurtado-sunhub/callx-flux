@@ -42,6 +42,7 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
   const [newTag, setNewTag] = useState('');
   const [diagnosticoOpen, setDiagnosticoOpen] = useState(false);
   const [diagnosticoStatus, setDiagnosticoStatus] = useState<string | null>(null);
+  const [lossDialogOpen, setLossDialogOpen] = useState(false);
 
   useEffect(() => {
     if (lead?.funil === 'revenue_os') {
