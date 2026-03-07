@@ -52,6 +52,40 @@ export default function Leads() {
     }
   };
 
+  const handleExportFaturamento50k = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('nome, telefone, email')
+        .not('faturamento', 'is', null)
+        .lte('faturamento', 50000)
+        .order('nome');
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        toast.error('Nenhum lead encontrado com faturamento até R$ 50 mil');
+        return;
+      }
+      const headers = ['Nome', 'Telefone', 'Email'];
+      const escape = (v: any) => {
+        if (v == null) return '';
+        const s = String(v);
+        return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      const rows = data.map(l => [l.nome, l.telefone, l.email || ''].map(escape).join(','));
+      const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `leads_ate_50k_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`${data.length} leads exportados com sucesso!`);
+    } catch {
+      toast.error('Erro ao exportar leads');
+    }
+  };
+
   const handleExportCSV = () => {
     const stageLabels: Record<string, string> = {
       lead: 'Lead', mensagem_enviada: 'Msg Enviada', reuniao: 'Reunião', reuniao_realizada: 'Reunião Realizada',
@@ -186,6 +220,10 @@ export default function Leads() {
             <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
               <Download className="w-4 h-4" />
               Exportar CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportFaturamento50k} className="gap-2 text-warning border-warning/30">
+              <Download className="w-4 h-4" />
+              CSV Até 50k
             </Button>
           </div>
             <Button variant="outline" size="sm" onClick={handleSyncSheets} disabled={syncing} className="gap-2">
