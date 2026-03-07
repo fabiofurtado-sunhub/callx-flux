@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, Building2, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, Building2, ChevronLeft, ChevronRight, RefreshCw, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
