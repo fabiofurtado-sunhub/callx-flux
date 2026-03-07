@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, Building2, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, Building2, ChevronLeft, ChevronRight, RefreshCw, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -145,9 +145,35 @@ export default function Clientes() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Clientes</h1>
-          <p className="text-sm text-muted-foreground mt-1">{sorted.length} empresas</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">Clientes</h1>
+            <p className="text-sm text-muted-foreground mt-1">{sorted.length} empresas</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={async () => {
+            try {
+              const { data, error } = await supabase
+                .from('leads')
+                .select('nome, telefone, email')
+                .not('faturamento', 'is', null)
+                .lte('faturamento', 50000)
+                .order('nome');
+              if (error) throw error;
+              if (!data || data.length === 0) { toast.error('Nenhum lead encontrado'); return; }
+              const esc = (v: any) => { if (v == null) return ''; const s = String(v); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s; };
+              const rows = data.map(l => [l.nome, l.telefone, l.email || ''].map(esc).join(','));
+              const csv = '\uFEFF' + ['Nome,Telefone,Email', ...rows].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a'); a.href = url;
+              a.download = `leads_ate_50k_${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click(); URL.revokeObjectURL(url);
+              toast.success(`${data.length} leads exportados!`);
+            } catch { toast.error('Erro ao exportar'); }
+          }} className="gap-2 text-warning border-warning/30">
+            <Download className="w-4 h-4" />
+            CSV Até 50k
+          </Button>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative w-full sm:w-72">
