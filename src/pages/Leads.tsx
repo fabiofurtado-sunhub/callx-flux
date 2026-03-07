@@ -221,6 +221,10 @@ export default function Leads() {
               <Download className="w-4 h-4" />
               Exportar CSV
             </Button>
+            <Button variant="outline" size="sm" onClick={handleExportFaturamento50k} className="gap-2 text-warning border-warning/30">
+              <Download className="w-4 h-4" />
+              CSV Até 50k
+            </Button>
           </div>
             <Button variant="outline" size="sm" onClick={handleSyncSheets} disabled={syncing} className="gap-2">
               <RotateCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
