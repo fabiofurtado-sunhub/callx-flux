@@ -90,7 +90,7 @@ serve(async (req) => {
           origem: lead.origem || "playbook_agendamento",
           empresa: lead.empresa || "",
           setor_empresa: lead.setor_empresa || null,
-          faturamento: lead.faturamento || null,
+          faturamento: parseFaturamento(lead.faturamento),
           campanha: lead.campanha || "",
           vendedor_nome: lead.vendedor_nome || "",
           tags: ["Diagnóstico", "Playbook"],
