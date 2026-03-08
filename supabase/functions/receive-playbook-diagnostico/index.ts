@@ -11,6 +11,20 @@ function cleanPhone(phone: string): string {
   return phone.replace(/\D/g, "");
 }
 
+function parseFaturamento(val: any): number | null {
+  if (val === null || val === undefined) return null;
+  if (typeof val === "number") return val;
+  const s = String(val);
+  if (s.includes("Acima de R$ 5") || s.includes("5M") || s.includes("5m")) return 5000000;
+  if (s.includes("1 milh") || s.includes("1M-5M") || s.includes("1m")) return 3000000;
+  if (s.includes("500 mil") || s.includes("500k-1") || s.includes("500K")) return 750000;
+  if (s.includes("100 mil") || s.includes("100k-500k") || s.includes("100K") || s.includes("100k")) return 300000;
+  if (s.includes("50 mil") || s.includes("50k-100k") || s.includes("50K") || s.includes("50k")) return 75000;
+  if (s.includes("0 mil") || s.includes("0k") || s.includes("0-")) return 25000;
+  const num = parseFloat(s.replace(/[^\d.]/g, ""));
+  return isNaN(num) ? null : num;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
