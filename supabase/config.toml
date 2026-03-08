@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.import-playbook-leads]
 verify_jwt = false
+
+[functions.receive-playbook-diagnostico]
+verify_jwt = false
