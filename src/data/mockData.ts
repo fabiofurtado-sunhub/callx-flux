@@ -112,6 +112,7 @@ export const FUNNEL_STAGES_MAP: Record<string, { key: LeadStatus; label: string;
   revenue_ia: REVENUE_IA_STAGES,
   diagnostico: DIAGNOSTICO_STAGES,
   reaquecimento: REAQUECIMENTO_STAGES,
+  protocolo_solar: PROTOCOLO_SOLAR_STAGES,
 };
 
 export function getStagesForFunnel(funil: string) {

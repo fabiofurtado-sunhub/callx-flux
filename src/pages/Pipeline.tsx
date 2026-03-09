@@ -230,7 +230,7 @@ export default function Pipeline() {
       ultima_mensagem: 'Última Msg', reuniao: 'Reunião', no_show: 'No-Show', reuniao_realizada: 'Reunião Realizada',
       proposta: 'Proposta', venda: 'Venda', perdido: 'Perdido',
     };
-    const funilMap: Record<string, string> = { callx: 'CallX', core_ai: 'Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Diagnóstico' };
+    const funilMap: Record<string, string> = { callx: 'CallX', core_ai: 'Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Diagnóstico', protocolo_solar: 'Protocolo Solar' };
     const headers = ['Nome', 'Email', 'Telefone', 'Empresa', 'Funil', 'Etapa', 'Vendedor', 'Campanha', 'Score', 'Faturamento', 'Data Entrada'];
     const escape = (v: any) => { if (v == null) return ''; const s = String(v); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s; };
     const rows = exportLeads.map(l => [
