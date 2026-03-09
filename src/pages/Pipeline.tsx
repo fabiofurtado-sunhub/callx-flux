@@ -1,5 +1,5 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
-import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, REVENUE_IA_STAGES, DIAGNOSTICO_STAGES, REAQUECIMENTO_STAGES, getScoreLabel, getScoreColor, getStagesForFunnel } from '@/data/mockData';
+import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, REVENUE_IA_STAGES, DIAGNOSTICO_STAGES, REAQUECIMENTO_STAGES, PROTOCOLO_SOLAR_STAGES, getScoreLabel, getScoreColor, getStagesForFunnel } from '@/data/mockData';
 import { useState, useEffect } from 'react';
 import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList, ArrowRightLeft, Download, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,7 @@ export default function Pipeline() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
-  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os' | 'revenue_ia' | 'diagnostico' | 'reaquecimento'>('callx');
+  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os' | 'revenue_ia' | 'diagnostico' | 'reaquecimento' | 'protocolo_solar'>('callx');
   const [selectedVendedor, setSelectedVendedor] = useState<string>('todos');
   const [selectedFaturamento, setSelectedFaturamento] = useState<string>('todos');
   const [diagnosticoLead, setDiagnosticoLead] = useState<Lead | null>(null);
@@ -58,9 +58,10 @@ export default function Pipeline() {
     { value: 'revenue_ia', label: 'Revenue IA' },
     { value: 'diagnostico', label: 'Funil Diagnóstico' },
     { value: 'reaquecimento', label: 'Reaquecimento' },
+    { value: 'protocolo_solar', label: 'Protocolo Solar' },
   ];
 
-  const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Funil Diagnóstico', reaquecimento: 'Reaquecimento' };
+  const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Funil Diagnóstico', reaquecimento: 'Reaquecimento', protocolo_solar: 'Protocolo Solar' };
   const funilLabel = funilLabels[activeFunil] || activeFunil;
 
   // Load diagnostico statuses for Revenue OS and Core AI leads
@@ -229,7 +230,7 @@ export default function Pipeline() {
       ultima_mensagem: 'Última Msg', reuniao: 'Reunião', no_show: 'No-Show', reuniao_realizada: 'Reunião Realizada',
       proposta: 'Proposta', venda: 'Venda', perdido: 'Perdido',
     };
-    const funilMap: Record<string, string> = { callx: 'CallX', core_ai: 'Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Diagnóstico' };
+    const funilMap: Record<string, string> = { callx: 'CallX', core_ai: 'Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Diagnóstico', protocolo_solar: 'Protocolo Solar' };
     const headers = ['Nome', 'Email', 'Telefone', 'Empresa', 'Funil', 'Etapa', 'Vendedor', 'Campanha', 'Score', 'Faturamento', 'Data Entrada'];
     const escape = (v: any) => { if (v == null) return ''; const s = String(v); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s; };
     const rows = exportLeads.map(l => [

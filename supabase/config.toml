@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.receive-playbook-diagnostico]
 verify_jwt = false
+
+[functions.receive-protocolo-solar]
+verify_jwt = false

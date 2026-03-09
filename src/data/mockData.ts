@@ -91,6 +91,10 @@ export const REVENUE_IA_STAGES: { key: LeadStatus; label: string; color: string 
   { key: 'perdido', label: 'Perdido', color: 'hsl(var(--destructive))' },
 ];
 
+export const PROTOCOLO_SOLAR_STAGES: { key: LeadStatus; label: string; color: string }[] = [
+  { key: 'lead', label: 'Inscrição', color: 'hsl(var(--warning))' },
+];
+
 export const DIAGNOSTICO_STAGES: { key: LeadStatus; label: string; color: string }[] = [
   { key: 'reuniao', label: 'Reunião Agendada', color: 'hsl(var(--warning))' },
   { key: 'no_show', label: 'No-Show', color: 'hsl(var(--destructive))' },
@@ -108,6 +112,7 @@ export const FUNNEL_STAGES_MAP: Record<string, { key: LeadStatus; label: string;
   revenue_ia: REVENUE_IA_STAGES,
   diagnostico: DIAGNOSTICO_STAGES,
   reaquecimento: REAQUECIMENTO_STAGES,
+  protocolo_solar: PROTOCOLO_SOLAR_STAGES,
 };
 
 export function getStagesForFunnel(funil: string) {
