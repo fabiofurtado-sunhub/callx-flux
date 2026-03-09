@@ -58,6 +58,7 @@ export default function Pipeline() {
     { value: 'revenue_ia', label: 'Revenue IA' },
     { value: 'diagnostico', label: 'Funil Diagnóstico' },
     { value: 'reaquecimento', label: 'Reaquecimento' },
+    { value: 'protocolo_solar', label: 'Protocolo Solar' },
   ];
 
   const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Funil Diagnóstico', reaquecimento: 'Reaquecimento' };
