@@ -1,5 +1,5 @@
 import { useAppContext, LeadStatus, Lead } from '@/contexts/AppContext';
-import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, REVENUE_IA_STAGES, DIAGNOSTICO_STAGES, REAQUECIMENTO_STAGES, PROTOCOLO_SOLAR_STAGES, getScoreLabel, getScoreColor, getStagesForFunnel } from '@/data/mockData';
+import { FUNNEL_STAGES, PLAYBOOK_STAGES, REVENUE_OS_STAGES, CORE_AI_STAGES, REVENUE_IA_STAGES, DIAGNOSTICO_STAGES, REAQUECIMENTO_STAGES, PROTOCOLO_SOLAR_STAGES, PROTOCOLO_SOLAR_STAGES, getScoreLabel, getScoreColor, getStagesForFunnel } from '@/data/mockData';
 import { useState, useEffect } from 'react';
 import { GripVertical, Search, Phone, Mail, Megaphone, Layers, Users, Calendar, Clock, MessageSquare, AlertTriangle, Building2, Filter, DollarSign, ClipboardList, ArrowRightLeft, Download, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,7 @@ export default function Pipeline() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [pendingLossLeadId, setPendingLossLeadId] = useState<string | null>(null);
-  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os' | 'revenue_ia' | 'diagnostico' | 'reaquecimento'>('callx');
+  const [activeFunil, setActiveFunil] = useState<'callx' | 'core_ai' | 'playbook_mx3' | 'revenue_os' | 'revenue_ia' | 'diagno | 'protocolo_solar'stico' | 'reaquecimento'>('callx');
   const [selectedVendedor, setSelectedVendedor] = useState<string>('todos');
   const [selectedFaturamento, setSelectedFaturamento] = useState<string>('todos');
   const [diagnosticoLead, setDiagnosticoLead] = useState<Lead | null>(null);
