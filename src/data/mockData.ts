@@ -91,6 +91,10 @@ export const REVENUE_IA_STAGES: { key: LeadStatus; label: string; color: string 
   { key: 'perdido', label: 'Perdido', color: 'hsl(var(--destructive))' },
 ];
 
+export const PROTOCOLO_SOLAR_STAGES: { key: LeadStatus; label: string; color: string }[] = [
+  { key: 'lead', label: 'Inscrição', color: 'hsl(var(--warning))' },
+];
+
 export const DIAGNOSTICO_STAGES: { key: LeadStatus; label: string; color: string }[] = [
   { key: 'reuniao', label: 'Reunião Agendada', color: 'hsl(var(--warning))' },
   { key: 'no_show', label: 'No-Show', color: 'hsl(var(--destructive))' },
