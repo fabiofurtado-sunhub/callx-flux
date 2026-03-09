@@ -61,7 +61,7 @@ export default function Pipeline() {
     { value: 'protocolo_solar', label: 'Protocolo Solar' },
   ];
 
-  const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Funil Diagnóstico', reaquecimento: 'Reaquecimento' };
+  const funilLabels: Record<string, string> = { callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Funil Diagnóstico', reaquecimento: 'Reaquecimento', protocolo_solar: 'Protocolo Solar' };
   const funilLabel = funilLabels[activeFunil] || activeFunil;
 
   // Load diagnostico statuses for Revenue OS and Core AI leads
