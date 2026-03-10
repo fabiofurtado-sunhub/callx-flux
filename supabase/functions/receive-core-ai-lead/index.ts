@@ -81,6 +81,16 @@ serve(async (req) => {
       (existingLeads || []).map((l: any) => (l.telefone || "").replace(/\D/g, ""))
     );
 
+    // Also check blacklist (deleted or migrated leads)
+    const { data: blacklisted } = await supabase
+      .from("leads_blacklist")
+      .select("telefone")
+      .eq("funil", "core_ai");
+
+    for (const bl of (blacklisted || []) as any[]) {
+      existingPhones.add((bl.telefone || "").replace(/\D/g, ""));
+    }
+
     const newLeads = rawLeads.filter((lead: any) => {
       const phone = (lead.telefone || "").replace(/\D/g, "");
       return phone.length >= 10 && !existingPhones.has(phone);
