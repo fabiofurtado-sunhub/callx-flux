@@ -26,6 +26,7 @@ export default function Dashboard() {
   const [activeFunil, setActiveFunil] = useState<string>('todos');
   const [selectedFaixa, setSelectedFaixa] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<string>('todos');
+  const [evolucaoMode, setEvolucaoMode] = useState<'semana' | 'mes'>('semana');
 
   const showFinancials = can('reports', 'view_company') || isStrategic;
   const showTeamMetrics = can('reports', 'view_team') || isStrategic;
