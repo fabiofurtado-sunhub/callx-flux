@@ -2,7 +2,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import KpiCard from '@/components/KpiCard';
 import {
   Users, CalendarCheck, FileText, Trophy, DollarSign, Target,
-  TrendingUp, Clock, ArrowRightLeft, MessageSquare, Flame, Bell, CheckCircle2
+  TrendingUp, Clock, ArrowRightLeft, MessageSquare, Flame, Bell, CheckCircle2, CalendarDays
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -14,7 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format, subDays, subMonths, startOfMonth, endOfMonth, isAfter, isBefore } from 'date-fns';
 import { usePermissions } from '@/hooks/usePermissions';
 
 export default function Dashboard() {
@@ -23,6 +24,7 @@ export default function Dashboard() {
   const [alertas, setAlertas] = useState<any[]>([]);
   const [activeFunil, setActiveFunil] = useState<string>('todos');
   const [selectedFaixa, setSelectedFaixa] = useState<string | null>(null);
+  const [timeRange, setTimeRange] = useState<string>('todos');
 
   const showFinancials = can('reports', 'view_company') || isStrategic;
   const showTeamMetrics = can('reports', 'view_team') || isStrategic;
@@ -51,12 +53,53 @@ export default function Dashboard() {
     setAlertas(prev => prev.filter(a => a.id !== id));
   };
 
-  const funilLabels: Record<string, string> = { todos: 'Acumulado', callx: 'Funil CallX', core_ai: 'Funil Core AI', playbook_mx3: 'Playbook MX3' };
+  const funilLabels: Record<string, string> = {
+    todos: 'Acumulado',
+    callx: 'CallX',
+    core_ai: 'Core AI',
+    playbook_mx3: 'Playbook MX3',
+    revenue_os: 'Revenue OS',
+    revenue_ia: 'Revenue IA',
+    diagnostico: 'Diagnóstico',
+    reaquecimento: 'Reaquecimento',
+    protocolo_solar: 'Protocolo Solar',
+  };
 
-  const filteredByFunil = useMemo(() =>
-    activeFunil === 'todos' ? leads : leads.filter(l => (l.funil || 'callx') === activeFunil),
-    [leads, activeFunil]
-  );
+  const allFunnels = ['todos', 'callx', 'core_ai', 'playbook_mx3', 'revenue_os', 'revenue_ia', 'diagnostico', 'reaquecimento', 'protocolo_solar'];
+
+  // Time range filter
+  const getTimeRangeStart = useCallback((): Date | null => {
+    const now = new Date();
+    switch (timeRange) {
+      case '7d': return subDays(now, 7);
+      case '15d': return subDays(now, 15);
+      case '30d': return subDays(now, 30);
+      case '90d': return subDays(now, 90);
+      case 'mes_atual': return startOfMonth(now);
+      case 'mes_passado': return startOfMonth(subMonths(now, 1));
+      default: return null;
+    }
+  }, [timeRange]);
+
+  const getTimeRangeEnd = useCallback((): Date | null => {
+    if (timeRange === 'mes_passado') return endOfMonth(subMonths(new Date(), 1));
+    return null;
+  }, [timeRange]);
+
+  const filteredByFunil = useMemo(() => {
+    let filtered = activeFunil === 'todos' ? leads : leads.filter(l => (l.funil || 'callx') === activeFunil);
+    const rangeStart = getTimeRangeStart();
+    const rangeEnd = getTimeRangeEnd();
+    if (rangeStart) {
+      filtered = filtered.filter(l => {
+        const d = new Date(l.data_entrada);
+        if (isBefore(d, rangeStart)) return false;
+        if (rangeEnd && isAfter(d, rangeEnd)) return false;
+        return true;
+      });
+    }
+    return filtered;
+  }, [leads, activeFunil, getTimeRangeStart, getTimeRangeEnd]);
 
   const totalLeads = filteredByFunil.length;
   const leadsEtapaLead = filteredByFunil.filter(l => l.status_funil === 'lead').length;
@@ -73,11 +116,6 @@ export default function Dashboard() {
   const taxaLeadReuniao = totalLeads > 0 ? ((reunioes / totalLeads) * 100).toFixed(1) : '0';
   const taxaReuniaoVenda = reunioes > 0 ? ((vendasCount / reunioes) * 100).toFixed(1) : '0';
   const leadTimeMedio = vendas.filter(v => v.lead_time).reduce((sum, v) => sum + (v.lead_time || 0), 0) / (vendas.filter(v => v.lead_time).length || 1);
-
-  // Leads por criativo (adset)
-  const criativoMap = new Map<string, number>();
-  filteredByFunil.forEach(l => { const key = l.adset || 'Sem criativo'; criativoMap.set(key, (criativoMap.get(key) || 0) + 1); });
-  const leadsPorCriativo = Array.from(criativoMap, ([name, value]) => ({ name: name.substring(0, 20), value }));
 
   // Receita por vendedor
   const vendedorReceitaMap = new Map<string, number>();
@@ -123,7 +161,7 @@ export default function Dashboard() {
     venda: 'Venda', perdido: 'Perdido',
   };
 
-  const funilLabelMap: Record<string, string> = { callx: 'CallX', core_ai: 'Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS' };
+  const funilLabelMap: Record<string, string> = { callx: 'CallX', core_ai: 'Core AI', playbook_mx3: 'Playbook MX3', revenue_os: 'Revenue OS', revenue_ia: 'Revenue IA', diagnostico: 'Diagnóstico', reaquecimento: 'Reaquecimento', protocolo_solar: 'Protocolo Solar' };
 
   // Funil data
   const funnelData = [
@@ -137,23 +175,47 @@ export default function Dashboard() {
   ];
 
   const PIE_COLORS = ['hsl(199,89%,48%)', 'hsl(38,92%,50%)', 'hsl(18,100%,60%)', 'hsl(0,72%,51%)', 'hsl(215,20%,55%)'];
-  const CHART_COLORS = ['hsl(18,100%,60%)'];
+
+  const timeRangeLabel: Record<string, string> = {
+    todos: 'Todo período',
+    '7d': 'Últimos 7 dias',
+    '15d': 'Últimos 15 dias',
+    '30d': 'Últimos 30 dias',
+    '90d': 'Últimos 90 dias',
+    mes_atual: 'Mês atual',
+    mes_passado: 'Mês passado',
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Dashboard Executivo</h1>
-          <p className="text-sm text-muted-foreground mt-1">Visão geral da operação comercial</p>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">Dashboard Executivo</h1>
+            <p className="text-sm text-muted-foreground mt-1">Visão geral da operação comercial</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-muted-foreground" />
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-[180px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(timeRangeLabel).map(([value, label]) => (
+                  <SelectItem key={value} value={value} className="text-xs">{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {['todos', 'callx', 'core_ai', 'playbook_mx3'].map(f => (
+        <div className="flex flex-wrap gap-1.5">
+          {allFunnels.map(f => (
             <Button
               key={f}
               size="sm"
               variant={activeFunil === f ? 'default' : 'outline'}
               onClick={() => setActiveFunil(f)}
-              className="text-xs"
+              className="text-xs h-7 px-2.5"
             >
               {funilLabels[f]}
             </Button>
@@ -269,15 +331,15 @@ export default function Dashboard() {
         </div>
 
         <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
-          <h3 className="text-sm font-display font-semibold text-card-foreground mb-4">Leads por Criativo</h3>
+         <h3 className="text-sm font-display font-semibold text-card-foreground mb-4">Leads por Faixa de Faturamento</h3>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={leadsPorCriativo} layout="vertical">
+            <BarChart data={leadsPorFaturamento} onClick={(e) => { if (e?.activeLabel) setSelectedFaixa(e.activeLabel); }} style={{ cursor: 'pointer' }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(216,30%,18%)" />
-              <XAxis type="number" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
-              <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} width={120} />
+              <XAxis dataKey="name" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
+              <YAxis tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
               <Tooltip contentStyle={{ background: 'hsl(216,50%,10%)', border: '1px solid hsl(216,30%,18%)', borderRadius: 8, color: 'hsl(210,40%,95%)' }} />
-              <Bar dataKey="value" fill="hsl(199,89%,48%)" radius={[0, 6, 6, 0]}>
-                <LabelList dataKey="value" position="right" fill="hsl(210,40%,95%)" fontSize={11} fontWeight={600} />
+              <Bar dataKey="value" fill="hsl(38,92%,50%)" radius={[6, 6, 0, 0]} className="cursor-pointer">
+                <LabelList dataKey="value" position="top" fill="hsl(210,40%,95%)" fontSize={11} fontWeight={600} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -315,24 +377,6 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
       </div>}
-
-      {/* Charts Row 3 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
-         <h3 className="text-sm font-display font-semibold text-card-foreground mb-4">Leads por Faixa de Faturamento</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={leadsPorFaturamento} onClick={(e) => { if (e?.activeLabel) setSelectedFaixa(e.activeLabel); }} style={{ cursor: 'pointer' }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(216,30%,18%)" />
-              <XAxis dataKey="name" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
-              <YAxis tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
-              <Tooltip contentStyle={{ background: 'hsl(216,50%,10%)', border: '1px solid hsl(216,30%,18%)', borderRadius: 8, color: 'hsl(210,40%,95%)' }} />
-              <Bar dataKey="value" fill="hsl(38,92%,50%)" radius={[6, 6, 0, 0]} className="cursor-pointer">
-                <LabelList dataKey="value" position="top" fill="hsl(210,40%,95%)" fontSize={11} fontWeight={600} />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
 
       {/* Dialog de leads por faixa de faturamento */}
       <Dialog open={!!selectedFaixa} onOpenChange={(open) => { if (!open) setSelectedFaixa(null); }}>
