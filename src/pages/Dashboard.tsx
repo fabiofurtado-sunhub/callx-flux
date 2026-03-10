@@ -348,6 +348,66 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Evolução Temporal de Leads */}
+      {(() => {
+        const leadsSource = filteredByFunil;
+        const dataMap = new Map<string, { leads: number; vendas: number; reunioes: number }>();
+
+        if (evolucaoMode === 'semana') {
+          leadsSource.forEach(l => {
+            const d = new Date(l.data_entrada);
+            const weekStart = startOfWeek(d, { weekStartsOn: 1 });
+            const key = format(weekStart, 'dd/MM', { locale: ptBR });
+            const entry = dataMap.get(key) || { leads: 0, vendas: 0, reunioes: 0 };
+            entry.leads++;
+            if (l.status_funil === 'venda') entry.vendas++;
+            if (['reuniao', 'reuniao_realizada', 'no_show', 'proposta', 'venda'].includes(l.status_funil)) entry.reunioes++;
+            dataMap.set(key, entry);
+          });
+        } else {
+          leadsSource.forEach(l => {
+            const d = new Date(l.data_entrada);
+            const key = format(d, 'MMM/yy', { locale: ptBR });
+            const entry = dataMap.get(key) || { leads: 0, vendas: 0, reunioes: 0 };
+            entry.leads++;
+            if (l.status_funil === 'venda') entry.vendas++;
+            if (['reuniao', 'reuniao_realizada', 'no_show', 'proposta', 'venda'].includes(l.status_funil)) entry.reunioes++;
+            dataMap.set(key, entry);
+          });
+        }
+
+        // Sort by date
+        const sortedData = Array.from(dataMap, ([name, vals]) => ({ name, ...vals }));
+
+        return (
+          <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-display font-semibold text-card-foreground">Evolução Temporal</h3>
+              <div className="flex gap-1">
+                <Button size="sm" variant={evolucaoMode === 'semana' ? 'default' : 'outline'} onClick={() => setEvolucaoMode('semana')} className="text-[10px] h-6 px-2">Semana</Button>
+                <Button size="sm" variant={evolucaoMode === 'mes' ? 'default' : 'outline'} onClick={() => setEvolucaoMode('mes')} className="text-[10px] h-6 px-2">Mês</Button>
+              </div>
+            </div>
+            {sortedData.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-8">Sem dados no período</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={sortedData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(216,30%,18%)" />
+                  <XAxis dataKey="name" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 10 }} />
+                  <YAxis tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
+                  <Tooltip contentStyle={{ background: 'hsl(216,50%,10%)', border: '1px solid hsl(216,30%,18%)', borderRadius: 8, color: 'hsl(210,40%,95%)' }} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Line type="monotone" dataKey="leads" stroke="hsl(199,89%,48%)" strokeWidth={2} name="Leads" dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="reunioes" stroke="hsl(38,92%,50%)" strokeWidth={2} name="Reuniões" dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="vendas" stroke="hsl(142,71%,45%)" strokeWidth={2} name="Vendas" dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Valor de Entrada por Funil */}
       {showFinancials && (() => {
         const funisComValor = Object.keys(funilLabels).filter(f => f !== 'todos');
