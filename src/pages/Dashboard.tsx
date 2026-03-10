@@ -15,7 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format, subDays, subMonths, startOfMonth, endOfMonth, isAfter, isBefore } from 'date-fns';
+import { format, subDays, subMonths, startOfMonth, endOfMonth, isAfter, isBefore, startOfWeek, addWeeks } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { usePermissions } from '@/hooks/usePermissions';
 
 export default function Dashboard() {
