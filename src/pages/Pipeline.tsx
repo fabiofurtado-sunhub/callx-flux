@@ -379,9 +379,19 @@ export default function Pipeline() {
                     )}
                   </div>
                 </div>
-                <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full flex-shrink-0">
-                  {stageLeads.length}
-                </span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {(() => {
+                    const totalEntrada = stageLeads.reduce((sum, l) => sum + (l.valor_entrada || 0), 0);
+                    return totalEntrada > 0 ? (
+                      <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">
+                        R$ {totalEntrada >= 1000 ? `${(totalEntrada / 1000).toFixed(0)}k` : totalEntrada.toLocaleString('pt-BR')}
+                      </span>
+                    ) : null;
+                  })()}
+                  <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                    {stageLeads.length}
+                  </span>
+                </div>
               </div>
 
               <div className="p-2 space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto">
