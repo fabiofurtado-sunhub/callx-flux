@@ -193,9 +193,18 @@ export default function Pipeline() {
   const handleMigrateFunnel = async (leadId: string, targetFunil: string, targetStage?: LeadStatus) => {
     const targetStages = getStagesForFunnel(targetFunil);
     const lead = leads.find(l => l.id === leadId);
+    const sourceFunil = lead?.funil || 'callx';
     // Determine the stage: use chosen stage, or keep current if it exists in target, otherwise use first stage
     const finalStage = targetStage || (lead && targetStages.some(s => s.key === lead.status_funil) ? lead.status_funil : targetStages[0]?.key || 'lead');
     
+    // Blacklist the phone in the source funnel to prevent re-import by Google Sheets polling
+    if (lead?.telefone && sourceFunil !== targetFunil) {
+      await supabase.from('leads_blacklist').upsert(
+        { telefone: lead.telefone, funil: sourceFunil },
+        { onConflict: 'telefone,funil', ignoreDuplicates: true }
+      );
+    }
+
     await supabase.from('leads').update({ 
       funil: targetFunil, 
       status_funil: finalStage,
@@ -204,8 +213,8 @@ export default function Pipeline() {
     if (lead) {
       await supabase.from('lead_logs').insert({
         lead_id: leadId,
-        acao: `Migração de pipeline: ${funilLabels[lead.funil || 'callx']} → ${funilLabels[targetFunil]} (etapa: ${finalStage})`,
-        de: lead.funil || 'callx',
+        acao: `Migração de pipeline: ${funilLabels[sourceFunil]} → ${funilLabels[targetFunil]} (etapa: ${finalStage})`,
+        de: sourceFunil,
         para: targetFunil,
       });
     }
