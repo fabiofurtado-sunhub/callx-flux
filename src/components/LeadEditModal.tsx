@@ -465,6 +465,13 @@ export default function LeadEditModal({ lead, open, onOpenChange, onSaved }: Lea
                 if (!confirm('Tem certeza que deseja excluir este lead?')) return;
                 setDeleting(true);
                 try {
+                  // Add to blacklist before deleting to prevent re-import
+                  if (lead.telefone) {
+                    await supabase.from('leads_blacklist').upsert(
+                      { telefone: lead.telefone.replace(/\D/g, ''), funil: lead.funil || 'callx' },
+                      { onConflict: 'telefone,funil', ignoreDuplicates: true }
+                    );
+                  }
                   const { error } = await supabase.from('leads').delete().eq('id', lead.id);
                   if (error) throw error;
                   toast.success('Lead excluído com sucesso!');

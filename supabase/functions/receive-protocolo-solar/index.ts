@@ -69,6 +69,19 @@ serve(async (req) => {
         continue;
       }
 
+      // Also check blacklist (deleted or migrated leads)
+      const { data: blacklisted } = await supabase
+        .from("leads_blacklist")
+        .select("id")
+        .eq("funil", "protocolo_solar")
+        .eq("telefone", phone)
+        .limit(1);
+
+      if (blacklisted && blacklisted.length > 0) {
+        skippedCount++;
+        continue;
+      }
+
       const obsItems = [
         lead.observacoes || "",
         lead.empresa ? `Empresa: ${lead.empresa}` : "",

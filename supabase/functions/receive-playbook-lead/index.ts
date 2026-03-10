@@ -63,6 +63,16 @@ serve(async (req) => {
       (existingLeads || []).map((l: any) => cleanPhone(l.telefone || ""))
     );
 
+    // Also check blacklist (deleted or migrated leads)
+    const { data: blacklisted } = await supabase
+      .from("leads_blacklist")
+      .select("telefone")
+      .eq("funil", "playbook_mx3");
+
+    for (const bl of (blacklisted || []) as any[]) {
+      existingPhones.add(cleanPhone(bl.telefone || ""));
+    }
+
     const newLeads = uniqueLeads.filter((l: any) => !existingPhones.has(l.telefone_limpo));
 
     // Insert new leads
