@@ -346,6 +346,36 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Valor de Entrada por Funil */}
+      {showFinancials && (() => {
+        const funisComValor = Object.keys(funilLabels).filter(f => f !== 'todos');
+        const dataEntradaPorFunil = funisComValor.map(f => {
+          const leadsDoFunil = leads.filter(l => (l.funil || 'callx') === f);
+          const total = leadsDoFunil.reduce((sum, l) => sum + (l.valor_entrada || 0), 0);
+          return { name: funilLabels[f], value: total };
+        }).filter(d => d.value > 0);
+        return (
+          <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+            <h3 className="text-sm font-display font-semibold text-card-foreground mb-4">Valor de Entrada por Funil</h3>
+            {dataEntradaPorFunil.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-8">Nenhum valor de entrada registrado</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={dataEntradaPorFunil}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(216,30%,18%)" />
+                  <XAxis dataKey="name" tick={{ fill: 'hsl(215,20%,55%)', fontSize: 10 }} angle={-20} textAnchor="end" height={50} />
+                  <YAxis tick={{ fill: 'hsl(215,20%,55%)', fontSize: 11 }} />
+                  <Tooltip contentStyle={{ background: 'hsl(216,50%,10%)', border: '1px solid hsl(216,30%,18%)', borderRadius: 8, color: 'hsl(210,40%,95%)' }} formatter={(v: number) => [`R$ ${v.toLocaleString('pt-BR')}`, 'Valor Entrada']} />
+                  <Bar dataKey="value" fill="hsl(199,89%,48%)" radius={[6, 6, 0, 0]}>
+                    <LabelList dataKey="value" position="top" fill="hsl(210,40%,95%)" fontSize={10} fontWeight={600} formatter={(v: number) => `R$${(v/1000).toFixed(0)}k`} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Charts Row 2 - Financial (hidden for SDR/Suporte) */}
       {showFinancials && <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
