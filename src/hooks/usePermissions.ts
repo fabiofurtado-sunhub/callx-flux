@@ -122,6 +122,7 @@ export function usePermissions() {
   const isSdr = role === 'sdr';
   const isSuporte = role === 'suporte';
   const isFinanceiro = role === 'financeiro';
+  const isVendedor = role === 'vendedor';
   const isStrategic = isAdmin || isGestor;
 
   return {
@@ -135,6 +136,7 @@ export function usePermissions() {
     isSdr,
     isSuporte,
     isFinanceiro,
+    isVendedor,
     isStrategic,
   };
 }
