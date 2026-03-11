@@ -50,7 +50,7 @@ interface NavItem {
 
 const allNavItems: NavItem[] = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/leads', icon: Users, label: 'Clientes' },
+  { to: '/leads', icon: Users, label: 'Clientes', requiredRoles: ['admin', 'gestor', 'closer', 'sdr', 'suporte', 'financeiro'] },
   { to: '/pipeline', icon: Kanban, label: 'Pipeline' },
   { to: '/forecast', icon: TrendingUp, label: 'Forecast', requiredRoles: ['admin', 'gestor', 'closer'] },
   { to: '/inteligencia', icon: Brain, label: 'Inteligência', requiredRoles: ['admin', 'gestor'] },

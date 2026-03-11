@@ -29,6 +29,7 @@ const ROLE_OPTIONS = [
   { value: 'gestor', label: 'Gestor', color: 'bg-primary text-primary-foreground' },
   { value: 'closer', label: 'Closer', color: 'bg-blue-600 text-white' },
   { value: 'sdr', label: 'SDR', color: 'bg-green-600 text-white' },
+  { value: 'vendedor', label: 'Vendedor', color: 'bg-muted text-muted-foreground' },
   { value: 'suporte', label: 'Suporte', color: 'bg-yellow-600 text-white' },
   { value: 'financeiro', label: 'Financeiro', color: 'bg-orange-600 text-white' },
 ];

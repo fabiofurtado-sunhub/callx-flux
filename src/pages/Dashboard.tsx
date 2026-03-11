@@ -21,15 +21,15 @@ import { usePermissions } from '@/hooks/usePermissions';
 
 export default function Dashboard() {
   const { leads, settings } = useAppContext();
-  const { can, isStrategic, isSdr, isSuporte } = usePermissions();
+  const { can, isStrategic, isSdr, isSuporte, isVendedor } = usePermissions();
   const [alertas, setAlertas] = useState<any[]>([]);
   const [activeFunil, setActiveFunil] = useState<string>('todos');
   const [selectedFaixa, setSelectedFaixa] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<string>('todos');
   const [evolucaoMode, setEvolucaoMode] = useState<'semana' | 'mes'>('semana');
 
-  const showFinancials = can('reports', 'view_company') || isStrategic;
-  const showTeamMetrics = can('reports', 'view_team') || isStrategic;
+  const showFinancials = !isVendedor && (can('reports', 'view_company') || isStrategic);
+  const showTeamMetrics = !isVendedor && (can('reports', 'view_team') || isStrategic);
 
   const fetchAlertas = useCallback(async () => {
     const { data } = await supabase
