@@ -21,7 +21,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 
 export default function Dashboard() {
   const { leads, settings } = useAppContext();
-  const { can, isStrategic, isSdr, isSuporte } = usePermissions();
+  const { can, isStrategic, isSdr, isSuporte, isVendedor } = usePermissions();
   const [alertas, setAlertas] = useState<any[]>([]);
   const [activeFunil, setActiveFunil] = useState<string>('todos');
   const [selectedFaixa, setSelectedFaixa] = useState<string | null>(null);
