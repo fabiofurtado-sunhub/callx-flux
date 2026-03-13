@@ -63,6 +63,7 @@ function ProtectedRoutes() {
           <Route path="/configuracoes" element={<Configuracoes />} />
           <Route path="/chamadas" element={<Chamadas />} />
           <Route path="/setup-mensagens" element={<SetupMensagens />} />
+          <Route path="/export-csv" element={<ExportCsv />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
