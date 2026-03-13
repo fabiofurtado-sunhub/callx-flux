@@ -32,6 +32,7 @@ import HubAdminAlerts from "@/pages/hub/HubAdminAlerts";
 import NotFound from "./pages/NotFound";
 import Agenda from "./pages/Agenda";
 import Forecast from "./pages/Forecast";
+import ExportCsv from "./pages/ExportCsv";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ function ProtectedRoutes() {
           <Route path="/configuracoes" element={<Configuracoes />} />
           <Route path="/chamadas" element={<Chamadas />} />
           <Route path="/setup-mensagens" element={<SetupMensagens />} />
+          <Route path="/export-csv" element={<ExportCsv />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
