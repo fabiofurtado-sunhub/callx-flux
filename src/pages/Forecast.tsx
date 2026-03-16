@@ -38,7 +38,6 @@ const FUNNEL_LABELS: Record<string, string> = {
   revenue_os: 'Revenue OS',
   revenue_ia: 'Revenue IA',
   diagnostico: 'Diagnóstico',
-  reaquecimento: 'Reaquecimento',
 };
 
 const STAGE_WEIGHTS: Record<string, number> = {
