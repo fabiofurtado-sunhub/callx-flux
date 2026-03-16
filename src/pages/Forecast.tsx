@@ -219,6 +219,8 @@ export default function Forecast() {
       taxaConversao: totalLeads > 0 ? ((vendas / totalLeads) * 100).toFixed(1) : '0',
       taxaReuniao: totalLeads > 0 ? ((reunioesCount / totalLeads) * 100).toFixed(1) : '0',
       taxaProposta: reunioesCount > 0 ? ((propostasCount / reunioesCount) * 100).toFixed(1) : '0',
+      taxaReuniaoProposta: reunioesCount > 0 ? ((propostasCount / reunioesCount) * 100).toFixed(1) : '0',
+      taxaPropostaVenda: propostasCount > 0 ? ((vendas / propostasCount) * 100).toFixed(1) : '0',
     };
   }, [allFilteredLeads]);
 
