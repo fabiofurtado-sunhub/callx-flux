@@ -209,6 +209,7 @@ export default function Vendas() {
                 { key: 'mes_atual' as QuickFilter, label: 'Mês atual' },
                 { key: 'mes_passado' as QuickFilter, label: 'Mês anterior' },
                 { key: '90d' as QuickFilter, label: 'Últimos 90 dias' },
+                { key: 'esse_ano' as QuickFilter, label: 'Esse ano' },
               ]).map(f => (
                 <Button
                   key={f.key}
