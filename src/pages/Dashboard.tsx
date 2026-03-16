@@ -179,9 +179,9 @@ export default function Dashboard() {
   const funnelData = [
     { name: 'Lead', value: filteredByFunil.filter(l => l.status_funil === 'lead').length },
     { name: 'Msg Enviada', value: mensagensEnviadas },
-    { name: 'Reunião', value: filteredByFunil.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'reuniao_realizada').length },
-    { name: 'No-Show', value: filteredByFunil.filter(l => l.status_funil === 'no_show').length },
-    { name: 'Proposta', value: filteredByFunil.filter(l => l.status_funil === 'proposta').length },
+    { name: 'Reunião', value: filteredByMovimento.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'reuniao_realizada').length },
+    { name: 'No-Show', value: filteredByMovimento.filter(l => l.status_funil === 'no_show').length },
+    { name: 'Proposta', value: filteredByMovimento.filter(l => l.status_funil === 'proposta').length },
     { name: 'Venda', value: vendasCount },
     { name: 'Perdido', value: perdidos.length },
   ];
