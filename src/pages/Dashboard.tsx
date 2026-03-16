@@ -88,29 +88,39 @@ export default function Dashboard() {
     return null;
   }, [timeRange]);
 
-  const filteredByFunil = useMemo(() => {
-    let filtered = activeFunil === 'todos' ? leads : leads.filter(l => (l.funil || 'callx') === activeFunil);
+  const isInTimeRange = useCallback((dateStr: string) => {
     const rangeStart = getTimeRangeStart();
     const rangeEnd = getTimeRangeEnd();
-    if (rangeStart) {
-      filtered = filtered.filter(l => {
-        const d = new Date(l.data_entrada);
-        if (isBefore(d, rangeStart)) return false;
-        if (rangeEnd && isAfter(d, rangeEnd)) return false;
-        return true;
-      });
-    }
-    return filtered;
-  }, [leads, activeFunil, getTimeRangeStart, getTimeRangeEnd]);
+    if (!rangeStart) return true;
+    const d = new Date(dateStr);
+    if (isBefore(d, rangeStart)) return false;
+    if (rangeEnd && isAfter(d, rangeEnd)) return false;
+    return true;
+  }, [getTimeRangeStart, getTimeRangeEnd]);
+
+  // Leads filtrados por funil apenas
+  const filteredByFunilOnly = useMemo(() => {
+    return activeFunil === 'todos' ? leads : leads.filter(l => (l.funil || 'callx') === activeFunil);
+  }, [leads, activeFunil]);
+
+  // Total leads: filtra por data_entrada (novos leads no período)
+  const filteredByFunil = useMemo(() => {
+    return filteredByFunilOnly.filter(l => isInTimeRange(l.data_entrada));
+  }, [filteredByFunilOnly, isInTimeRange]);
+
+  // Métricas de status (vendas, reuniões, propostas): filtra por data_ultimo_movimento
+  const filteredByMovimento = useMemo(() => {
+    return filteredByFunilOnly.filter(l => isInTimeRange(l.data_ultimo_movimento));
+  }, [filteredByFunilOnly, isInTimeRange]);
 
   const totalLeads = filteredByFunil.length;
   const leadsEtapaLead = filteredByFunil.filter(l => l.status_funil === 'lead').length;
-  const mensagensEnviadas = filteredByFunil.filter(l => l.status_funil === 'mensagem_enviada').length;
-  const reunioes = filteredByFunil.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'no_show' || l.status_funil === 'reuniao_realizada' || l.status_funil === 'proposta' || l.status_funil === 'venda').length;
-  const propostasLeads = filteredByFunil.filter(l => l.status_funil === 'proposta' || l.status_funil === 'venda');
+  const mensagensEnviadas = filteredByMovimento.filter(l => l.status_funil === 'mensagem_enviada').length;
+  const reunioes = filteredByMovimento.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'no_show' || l.status_funil === 'reuniao_realizada' || l.status_funil === 'proposta' || l.status_funil === 'venda').length;
+  const propostasLeads = filteredByMovimento.filter(l => l.status_funil === 'proposta' || l.status_funil === 'venda');
   const propostas = propostasLeads.length;
   const valorPropostas = propostasLeads.reduce((sum, l) => sum + (l.valor_proposta || 0), 0);
-  const vendas = filteredByFunil.filter(l => l.status_funil === 'venda');
+  const vendas = filteredByMovimento.filter(l => l.status_funil === 'venda');
   const vendasCount = vendas.length;
   const receitaTotal = vendas.reduce((sum, l) => sum + (l.valor_venda || 0), 0);
   const ticketMedio = vendasCount > 0 ? receitaTotal / vendasCount : 0;
@@ -125,7 +135,7 @@ export default function Dashboard() {
   const receitaPorVendedor = Array.from(vendedorReceitaMap, ([name, value]) => ({ name: name.split(' ')[0], value }));
 
   // Motivos de perda
-  const perdidos = filteredByFunil.filter(l => l.status_funil === 'perdido');
+  const perdidos = filteredByMovimento.filter(l => l.status_funil === 'perdido');
   const motivoMap = new Map<string, number>();
   perdidos.forEach(l => { if (l.motivo_perda) motivoMap.set(l.motivo_perda, (motivoMap.get(l.motivo_perda) || 0) + 1); });
   const motivosPerda = Array.from(motivoMap, ([name, value]) => ({ name, value }));
@@ -169,9 +179,9 @@ export default function Dashboard() {
   const funnelData = [
     { name: 'Lead', value: filteredByFunil.filter(l => l.status_funil === 'lead').length },
     { name: 'Msg Enviada', value: mensagensEnviadas },
-    { name: 'Reunião', value: filteredByFunil.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'reuniao_realizada').length },
-    { name: 'No-Show', value: filteredByFunil.filter(l => l.status_funil === 'no_show').length },
-    { name: 'Proposta', value: filteredByFunil.filter(l => l.status_funil === 'proposta').length },
+    { name: 'Reunião', value: filteredByMovimento.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'reuniao_realizada').length },
+    { name: 'No-Show', value: filteredByMovimento.filter(l => l.status_funil === 'no_show').length },
+    { name: 'Proposta', value: filteredByMovimento.filter(l => l.status_funil === 'proposta').length },
     { name: 'Venda', value: vendasCount },
     { name: 'Perdido', value: perdidos.length },
   ];
