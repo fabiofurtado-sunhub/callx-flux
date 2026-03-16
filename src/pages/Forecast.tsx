@@ -78,8 +78,11 @@ const BAR_COLORS = [
 ];
 
 export default function Forecast() {
-  const { leads } = useAppContext();
+  const { leads: allLeads } = useAppContext();
   const [selectedFunis, setSelectedFunis] = useState<string[]>([]);
+
+  const ALLOWED_FUNIS = Object.keys(FUNNEL_LABELS);
+  const leads = useMemo(() => allLeads.filter(l => ALLOWED_FUNIS.includes(l.funil)), [allLeads]);
 
   const toggleFunil = (f: string) => {
     setSelectedFunis(prev => {
