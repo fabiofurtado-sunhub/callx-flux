@@ -35,8 +35,10 @@ const STAGE_LABELS: Record<string, string> = {
 const FUNNEL_LABELS: Record<string, string> = {
   callx: 'CallX',
   core_ai: 'Core AI',
-  playbook_mx3: 'Playbook MX3',
   revenue_os: 'Revenue OS',
+  revenue_ia: 'Revenue IA',
+  diagnostico: 'Diagnóstico',
+  reaquecimento: 'Reaquecimento',
 };
 
 const STAGE_WEIGHTS: Record<string, number> = {
