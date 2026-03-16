@@ -6,7 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Legend, PieChart, Pie, Cell, LabelList,
 } from 'recharts';
-import { format, startOfWeek, startOfMonth, endOfWeek, endOfMonth, eachWeekOfInterval, eachMonthOfInterval, isWithinInterval, subMonths } from 'date-fns';
+import { format, startOfWeek, startOfMonth, endOfWeek, endOfMonth, eachWeekOfInterval, eachMonthOfInterval, isWithinInterval, subMonths, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -44,13 +44,30 @@ const TOOLTIP_STYLE = {
   color: 'hsl(210,40%,95%)',
 };
 
+type QuickFilter = 'mes_atual' | 'mes_passado' | '90d' | 'custom';
+
 export default function Vendas() {
   const { leads } = useAppContext();
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: subMonths(new Date(), 3),
-    to: new Date(),
-  });
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('mes_atual');
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
   const [evolucaoMode, setEvolucaoMode] = useState<'semana' | 'mes'>('mes');
+
+  // Compute effective date range from quick filter
+  const dateRange = useMemo((): DateRange | undefined => {
+    const now = new Date();
+    switch (quickFilter) {
+      case 'mes_atual':
+        return { from: startOfMonth(now), to: now };
+      case 'mes_passado':
+        return { from: startOfMonth(subMonths(now, 1)), to: endOfMonth(subMonths(now, 1)) };
+      case '90d':
+        return { from: subDays(now, 90), to: now };
+      case 'custom':
+        return customRange;
+      default:
+        return undefined;
+    }
+  }, [quickFilter, customRange]);
 
   // Only sales leads from allowed funnels
   const allVendas = useMemo(() =>
@@ -184,28 +201,51 @@ export default function Vendas() {
           <h1 className="text-2xl font-display font-bold text-foreground">Análise de Vendas</h1>
           <p className="text-sm text-muted-foreground mt-1">Performance detalhada de vendas e receita</p>
         </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="h-9 text-xs gap-2 min-w-[220px] justify-start">
-              <CalendarIcon className="w-4 h-4" />
-              {dateRange?.from ? (
-                dateRange.to ? (
-                  `${format(dateRange.from, 'dd/MM/yy')} – ${format(dateRange.to, 'dd/MM/yy')}`
-                ) : format(dateRange.from, 'dd/MM/yy')
-              ) : 'Selecionar período'}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <Calendar
-              mode="range"
-              selected={dateRange}
-              onSelect={setDateRange}
-              numberOfMonths={2}
-              locale={ptBR}
-              className={cn("p-3 pointer-events-auto")}
-            />
-          </PopoverContent>
-        </Popover>
+         <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex gap-1">
+              {([
+                { key: 'mes_atual' as QuickFilter, label: 'Mês atual' },
+                { key: 'mes_passado' as QuickFilter, label: 'Mês anterior' },
+                { key: '90d' as QuickFilter, label: 'Últimos 90 dias' },
+              ]).map(f => (
+                <Button
+                  key={f.key}
+                  size="sm"
+                  variant={quickFilter === f.key ? 'default' : 'outline'}
+                  onClick={() => setQuickFilter(f.key)}
+                  className="text-xs h-8 px-3"
+                >
+                  {f.label}
+                </Button>
+              ))}
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={quickFilter === 'custom' ? 'default' : 'outline'}
+                  className="h-8 text-xs gap-2 min-w-[200px] justify-start"
+                  onClick={() => setQuickFilter('custom')}
+                >
+                  <CalendarIcon className="w-3.5 h-3.5" />
+                  {quickFilter === 'custom' && customRange?.from ? (
+                    customRange.to ? (
+                      `${format(customRange.from, 'dd/MM/yy')} – ${format(customRange.to, 'dd/MM/yy')}`
+                    ) : format(customRange.from, 'dd/MM/yy')
+                  ) : 'Selecionar período'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="range"
+                  selected={customRange}
+                  onSelect={(range) => { setCustomRange(range); setQuickFilter('custom'); }}
+                  numberOfMonths={2}
+                  locale={ptBR}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
       </div>
 
       {/* KPIs */}
