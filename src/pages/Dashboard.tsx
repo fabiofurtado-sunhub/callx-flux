@@ -88,29 +88,39 @@ export default function Dashboard() {
     return null;
   }, [timeRange]);
 
-  const filteredByFunil = useMemo(() => {
-    let filtered = activeFunil === 'todos' ? leads : leads.filter(l => (l.funil || 'callx') === activeFunil);
+  const isInTimeRange = useCallback((dateStr: string) => {
     const rangeStart = getTimeRangeStart();
     const rangeEnd = getTimeRangeEnd();
-    if (rangeStart) {
-      filtered = filtered.filter(l => {
-        const d = new Date(l.data_entrada);
-        if (isBefore(d, rangeStart)) return false;
-        if (rangeEnd && isAfter(d, rangeEnd)) return false;
-        return true;
-      });
-    }
-    return filtered;
-  }, [leads, activeFunil, getTimeRangeStart, getTimeRangeEnd]);
+    if (!rangeStart) return true;
+    const d = new Date(dateStr);
+    if (isBefore(d, rangeStart)) return false;
+    if (rangeEnd && isAfter(d, rangeEnd)) return false;
+    return true;
+  }, [getTimeRangeStart, getTimeRangeEnd]);
+
+  // Leads filtrados por funil apenas
+  const filteredByFunilOnly = useMemo(() => {
+    return activeFunil === 'todos' ? leads : leads.filter(l => (l.funil || 'callx') === activeFunil);
+  }, [leads, activeFunil]);
+
+  // Total leads: filtra por data_entrada (novos leads no período)
+  const filteredByFunil = useMemo(() => {
+    return filteredByFunilOnly.filter(l => isInTimeRange(l.data_entrada));
+  }, [filteredByFunilOnly, isInTimeRange]);
+
+  // Métricas de status (vendas, reuniões, propostas): filtra por data_ultimo_movimento
+  const filteredByMovimento = useMemo(() => {
+    return filteredByFunilOnly.filter(l => isInTimeRange(l.data_ultimo_movimento));
+  }, [filteredByFunilOnly, isInTimeRange]);
 
   const totalLeads = filteredByFunil.length;
   const leadsEtapaLead = filteredByFunil.filter(l => l.status_funil === 'lead').length;
-  const mensagensEnviadas = filteredByFunil.filter(l => l.status_funil === 'mensagem_enviada').length;
-  const reunioes = filteredByFunil.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'no_show' || l.status_funil === 'reuniao_realizada' || l.status_funil === 'proposta' || l.status_funil === 'venda').length;
-  const propostasLeads = filteredByFunil.filter(l => l.status_funil === 'proposta' || l.status_funil === 'venda');
+  const mensagensEnviadas = filteredByMovimento.filter(l => l.status_funil === 'mensagem_enviada').length;
+  const reunioes = filteredByMovimento.filter(l => l.status_funil === 'reuniao' || l.status_funil === 'no_show' || l.status_funil === 'reuniao_realizada' || l.status_funil === 'proposta' || l.status_funil === 'venda').length;
+  const propostasLeads = filteredByMovimento.filter(l => l.status_funil === 'proposta' || l.status_funil === 'venda');
   const propostas = propostasLeads.length;
   const valorPropostas = propostasLeads.reduce((sum, l) => sum + (l.valor_proposta || 0), 0);
-  const vendas = filteredByFunil.filter(l => l.status_funil === 'venda');
+  const vendas = filteredByMovimento.filter(l => l.status_funil === 'venda');
   const vendasCount = vendas.length;
   const receitaTotal = vendas.reduce((sum, l) => sum + (l.valor_venda || 0), 0);
   const ticketMedio = vendasCount > 0 ? receitaTotal / vendasCount : 0;
