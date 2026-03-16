@@ -32,6 +32,7 @@ import HubAdminAlerts from "@/pages/hub/HubAdminAlerts";
 import NotFound from "./pages/NotFound";
 import Agenda from "./pages/Agenda";
 import Forecast from "./pages/Forecast";
+import Vendas from "./pages/Vendas";
 import ExportCsv from "./pages/ExportCsv";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,7 @@ function ProtectedRoutes() {
           <Route path="/leads/:accountId" element={<AccountDetail />} />
           <Route path="/pipeline" element={<Pipeline />} />
           <Route path="/forecast" element={<Forecast />} />
+          <Route path="/vendas" element={<Vendas />} />
           <Route path="/inteligencia" element={<Intelligence />} />
           <Route path="/investimentos" element={<Investimentos />} />
           <Route path="/configuracoes" element={<Configuracoes />} />
