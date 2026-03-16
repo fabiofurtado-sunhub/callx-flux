@@ -135,7 +135,7 @@ export default function Dashboard() {
   const receitaPorVendedor = Array.from(vendedorReceitaMap, ([name, value]) => ({ name: name.split(' ')[0], value }));
 
   // Motivos de perda
-  const perdidos = filteredByFunil.filter(l => l.status_funil === 'perdido');
+  const perdidos = filteredByMovimento.filter(l => l.status_funil === 'perdido');
   const motivoMap = new Map<string, number>();
   perdidos.forEach(l => { if (l.motivo_perda) motivoMap.set(l.motivo_perda, (motivoMap.get(l.motivo_perda) || 0) + 1); });
   const motivosPerda = Array.from(motivoMap, ([name, value]) => ({ name, value }));
