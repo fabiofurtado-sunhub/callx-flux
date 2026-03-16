@@ -245,6 +245,7 @@ export default function Vendas() {
                 />
               </PopoverContent>
             </Popover>
+          </div>
       </div>
 
       {/* KPIs */}
