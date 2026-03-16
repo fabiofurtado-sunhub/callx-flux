@@ -32,6 +32,7 @@ import HubAdminAlerts from "@/pages/hub/HubAdminAlerts";
 import NotFound from "./pages/NotFound";
 import Agenda from "./pages/Agenda";
 import Forecast from "./pages/Forecast";
+import Vendas from "./pages/Vendas";
 import ExportCsv from "./pages/ExportCsv";
 
 const queryClient = new QueryClient();

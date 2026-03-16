@@ -53,6 +53,7 @@ const allNavItems: NavItem[] = [
   { to: '/leads', icon: Users, label: 'Clientes', requiredRoles: ['admin', 'gestor', 'closer', 'sdr', 'suporte', 'financeiro'] },
   { to: '/pipeline', icon: Kanban, label: 'Pipeline' },
   { to: '/forecast', icon: TrendingUp, label: 'Forecast', requiredRoles: ['admin', 'gestor', 'closer'] },
+  { to: '/vendas', icon: Trophy, label: 'Vendas', requiredRoles: ['admin', 'gestor', 'closer', 'financeiro'] },
   { to: '/inteligencia', icon: Brain, label: 'Inteligência', requiredRoles: ['admin', 'gestor'] },
   { to: '/investimentos', icon: DollarSign, label: 'Investimentos', requiredRoles: ['admin', 'gestor', 'financeiro'] },
   { to: '/chamadas', icon: Phone, label: 'Chamadas IA', requiredRoles: ['admin', 'gestor', 'closer'] },
