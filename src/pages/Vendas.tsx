@@ -201,34 +201,51 @@ export default function Vendas() {
           <h1 className="text-2xl font-display font-bold text-foreground">Análise de Vendas</h1>
           <p className="text-sm text-muted-foreground mt-1">Performance detalhada de vendas e receita</p>
         </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="h-9 text-xs gap-2 min-w-[220px] justify-start">
-              <CalendarIcon className="w-4 h-4" />
-              {dateRange?.from ? (
-                dateRange.to ? (
-                  `${format(dateRange.from, 'dd/MM/yy')} – ${format(dateRange.to, 'dd/MM/yy')}`
-                ) : format(dateRange.from, 'dd/MM/yy')
-              ) : 'Selecionar período'}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <Calendar
-              mode="range"
-              selected={dateRange}
-              onSelect={setDateRange}
-              numberOfMonths={2}
-              locale={ptBR}
-              className={cn("p-3 pointer-events-auto")}
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <KpiCard title="Vendas" value={totalVendas} icon={Trophy} variant="success" />
-        <KpiCard title="Receita Total" value={formatCurrency(receitaTotal)} icon={DollarSign} variant="primary" />
+         <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex gap-1">
+              {([
+                { key: 'mes_atual' as QuickFilter, label: 'Mês atual' },
+                { key: 'mes_passado' as QuickFilter, label: 'Mês anterior' },
+                { key: '90d' as QuickFilter, label: 'Últimos 90 dias' },
+              ]).map(f => (
+                <Button
+                  key={f.key}
+                  size="sm"
+                  variant={quickFilter === f.key ? 'default' : 'outline'}
+                  onClick={() => setQuickFilter(f.key)}
+                  className="text-xs h-8 px-3"
+                >
+                  {f.label}
+                </Button>
+              ))}
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={quickFilter === 'custom' ? 'default' : 'outline'}
+                  className="h-8 text-xs gap-2 min-w-[200px] justify-start"
+                  onClick={() => setQuickFilter('custom')}
+                >
+                  <CalendarIcon className="w-3.5 h-3.5" />
+                  {quickFilter === 'custom' && customRange?.from ? (
+                    customRange.to ? (
+                      `${format(customRange.from, 'dd/MM/yy')} – ${format(customRange.to, 'dd/MM/yy')}`
+                    ) : format(customRange.from, 'dd/MM/yy')
+                  ) : 'Selecionar período'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="range"
+                  selected={customRange}
+                  onSelect={(range) => { setCustomRange(range); setQuickFilter('custom'); }}
+                  numberOfMonths={2}
+                  locale={ptBR}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         <KpiCard title="Ticket Médio" value={formatCurrency(ticketMedio)} icon={Target} />
         <KpiCard title="Vlr Entrada" value={formatCurrency(valorEntradaTotal)} icon={DollarSign} variant="warning" />
         <KpiCard title="MRR Total" value={formatCurrency(mrrTotal)} icon={TrendingUp} variant="primary" />
