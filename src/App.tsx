@@ -59,6 +59,7 @@ function ProtectedRoutes() {
           <Route path="/leads/:accountId" element={<AccountDetail />} />
           <Route path="/pipeline" element={<Pipeline />} />
           <Route path="/forecast" element={<Forecast />} />
+          <Route path="/vendas" element={<Vendas />} />
           <Route path="/inteligencia" element={<Intelligence />} />
           <Route path="/investimentos" element={<Investimentos />} />
           <Route path="/configuracoes" element={<Configuracoes />} />

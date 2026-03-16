@@ -4,6 +4,7 @@ import {
   Users,
   Kanban,
   TrendingUp,
+  Trophy,
   Brain,
   DollarSign,
   Settings,
