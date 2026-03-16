@@ -245,7 +245,12 @@ export default function Vendas() {
                 />
               </PopoverContent>
             </Popover>
-          </div>
+      </div>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <KpiCard title="Vendas" value={totalVendas} icon={Trophy} variant="success" />
+        <KpiCard title="Receita Total" value={formatCurrency(receitaTotal)} icon={DollarSign} variant="primary" />
         <KpiCard title="Ticket Médio" value={formatCurrency(ticketMedio)} icon={Target} />
         <KpiCard title="Vlr Entrada" value={formatCurrency(valorEntradaTotal)} icon={DollarSign} variant="warning" />
         <KpiCard title="MRR Total" value={formatCurrency(mrrTotal)} icon={TrendingUp} variant="primary" />
