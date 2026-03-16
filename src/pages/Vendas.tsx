@@ -44,7 +44,7 @@ const TOOLTIP_STYLE = {
   color: 'hsl(210,40%,95%)',
 };
 
-type QuickFilter = 'mes_atual' | 'mes_passado' | '90d' | 'custom';
+type QuickFilter = 'mes_atual' | 'mes_passado' | '90d' | 'esse_ano' | 'custom';
 
 export default function Vendas() {
   const { leads } = useAppContext();
