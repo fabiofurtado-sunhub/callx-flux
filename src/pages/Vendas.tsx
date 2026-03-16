@@ -62,6 +62,8 @@ export default function Vendas() {
         return { from: startOfMonth(subMonths(now, 1)), to: endOfMonth(subMonths(now, 1)) };
       case '90d':
         return { from: subDays(now, 90), to: now };
+      case 'esse_ano':
+        return { from: startOfYear(now), to: now };
       case 'custom':
         return customRange;
       default:
