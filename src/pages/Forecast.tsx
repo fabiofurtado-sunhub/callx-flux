@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { Tooltip as ShadTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format, startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuarter, subQuarters, startOfYear, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -394,23 +395,46 @@ export default function Forecast() {
             <p className="text-xs text-muted-foreground">Vendas ({conversionData.taxaConversao}%)</p>
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Conversão geral</span>
-            <Progress value={Number(conversionData.taxaConversao)} className="flex-1 h-2" />
-            <span className="text-xs font-medium text-foreground">{conversionData.taxaConversao}%</span>
+        <TooltipProvider delayDuration={200}>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <ShadTooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 cursor-help">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Conversão geral</span>
+                  <Progress value={Number(conversionData.taxaConversao)} className="flex-1 h-2" />
+                  <span className="text-xs font-medium text-foreground">{conversionData.taxaConversao}%</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                <p className="text-xs">Vendas ÷ Total de Leads<br/>{conversionData.vendas} vendas de {conversionData.totalLeads} leads</p>
+              </TooltipContent>
+            </ShadTooltip>
+            <ShadTooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 cursor-help">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Reunião → Proposta</span>
+                  <Progress value={Number(conversionData.taxaReuniaoProposta)} className="flex-1 h-2" />
+                  <span className="text-xs font-medium text-foreground">{conversionData.taxaReuniaoProposta}%</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                <p className="text-xs">Propostas ÷ Reuniões (inclui reunião, no-show, realizada, proposta e venda)<br/>{conversionData.propostas} propostas de {conversionData.reunioes} reuniões</p>
+              </TooltipContent>
+            </ShadTooltip>
+            <ShadTooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 cursor-help">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Proposta → Venda</span>
+                  <Progress value={Number(conversionData.taxaPropostaVenda)} className="flex-1 h-2" />
+                  <span className="text-xs font-medium text-foreground">{conversionData.taxaPropostaVenda}%</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                <p className="text-xs">Vendas ÷ Propostas (inclui proposta e venda)<br/>{conversionData.vendas} vendas de {conversionData.propostas} propostas</p>
+              </TooltipContent>
+            </ShadTooltip>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Reunião → Proposta</span>
-            <Progress value={Number(conversionData.taxaReuniaoProposta)} className="flex-1 h-2" />
-            <span className="text-xs font-medium text-foreground">{conversionData.taxaReuniaoProposta}%</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Proposta → Venda</span>
-            <Progress value={Number(conversionData.taxaPropostaVenda)} className="flex-1 h-2" />
-            <span className="text-xs font-medium text-foreground">{conversionData.taxaPropostaVenda}%</span>
-          </div>
-        </div>
+        </TooltipProvider>
       </Card>
 
       {/* Charts */}
