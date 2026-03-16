@@ -219,6 +219,8 @@ export default function Forecast() {
       taxaConversao: totalLeads > 0 ? ((vendas / totalLeads) * 100).toFixed(1) : '0',
       taxaReuniao: totalLeads > 0 ? ((reunioesCount / totalLeads) * 100).toFixed(1) : '0',
       taxaProposta: reunioesCount > 0 ? ((propostasCount / reunioesCount) * 100).toFixed(1) : '0',
+      taxaReuniaoProposta: reunioesCount > 0 ? ((propostasCount / reunioesCount) * 100).toFixed(1) : '0',
+      taxaPropostaVenda: propostasCount > 0 ? ((vendas / propostasCount) * 100).toFixed(1) : '0',
     };
   }, [allFilteredLeads]);
 
@@ -392,10 +394,22 @@ export default function Forecast() {
             <p className="text-xs text-muted-foreground">Vendas ({conversionData.taxaConversao}%)</p>
           </div>
         </div>
-        <div className="mt-4 flex items-center gap-2">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Conversão geral</span>
-          <Progress value={Number(conversionData.taxaConversao)} className="flex-1 h-2" />
-          <span className="text-xs font-medium text-foreground">{conversionData.taxaConversao}%</span>
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Conversão geral</span>
+            <Progress value={Number(conversionData.taxaConversao)} className="flex-1 h-2" />
+            <span className="text-xs font-medium text-foreground">{conversionData.taxaConversao}%</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Reunião → Proposta</span>
+            <Progress value={Number(conversionData.taxaReuniaoProposta)} className="flex-1 h-2" />
+            <span className="text-xs font-medium text-foreground">{conversionData.taxaReuniaoProposta}%</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Proposta → Venda</span>
+            <Progress value={Number(conversionData.taxaPropostaVenda)} className="flex-1 h-2" />
+            <span className="text-xs font-medium text-foreground">{conversionData.taxaPropostaVenda}%</span>
+          </div>
         </div>
       </Card>
 
