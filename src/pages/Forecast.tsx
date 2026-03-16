@@ -263,7 +263,7 @@ export default function Forecast() {
           >
             Todos
           </button>
-          {['callx', 'core_ai', 'playbook_mx3', 'revenue_os'].map(f => (
+          {Object.keys(FUNNEL_LABELS).map(f => (
             <button
               key={f}
               onClick={() => toggleFunil(f)}
