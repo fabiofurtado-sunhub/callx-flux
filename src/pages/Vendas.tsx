@@ -6,7 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Legend, PieChart, Pie, Cell, LabelList,
 } from 'recharts';
-import { format, startOfWeek, startOfMonth, endOfWeek, endOfMonth, eachWeekOfInterval, eachMonthOfInterval, isWithinInterval, subMonths, subDays } from 'date-fns';
+import { format, startOfWeek, startOfMonth, startOfYear, endOfWeek, endOfMonth, eachWeekOfInterval, eachMonthOfInterval, isWithinInterval, subMonths, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -44,7 +44,7 @@ const TOOLTIP_STYLE = {
   color: 'hsl(210,40%,95%)',
 };
 
-type QuickFilter = 'mes_atual' | 'mes_passado' | '90d' | 'custom';
+type QuickFilter = 'mes_atual' | 'mes_passado' | '90d' | 'esse_ano' | 'custom';
 
 export default function Vendas() {
   const { leads } = useAppContext();
@@ -62,6 +62,8 @@ export default function Vendas() {
         return { from: startOfMonth(subMonths(now, 1)), to: endOfMonth(subMonths(now, 1)) };
       case '90d':
         return { from: subDays(now, 90), to: now };
+      case 'esse_ano':
+        return { from: startOfYear(now), to: now };
       case 'custom':
         return customRange;
       default:
@@ -207,6 +209,7 @@ export default function Vendas() {
                 { key: 'mes_atual' as QuickFilter, label: 'Mês atual' },
                 { key: 'mes_passado' as QuickFilter, label: 'Mês anterior' },
                 { key: '90d' as QuickFilter, label: 'Últimos 90 dias' },
+                { key: 'esse_ano' as QuickFilter, label: 'Esse ano' },
               ]).map(f => (
                 <Button
                   key={f.key}
