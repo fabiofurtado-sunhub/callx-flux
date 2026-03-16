@@ -44,13 +44,30 @@ const TOOLTIP_STYLE = {
   color: 'hsl(210,40%,95%)',
 };
 
+type QuickFilter = 'mes_atual' | 'mes_passado' | '90d' | 'custom';
+
 export default function Vendas() {
   const { leads } = useAppContext();
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: subMonths(new Date(), 3),
-    to: new Date(),
-  });
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('mes_atual');
+  const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined);
   const [evolucaoMode, setEvolucaoMode] = useState<'semana' | 'mes'>('mes');
+
+  // Compute effective date range from quick filter
+  const dateRange = useMemo((): DateRange | undefined => {
+    const now = new Date();
+    switch (quickFilter) {
+      case 'mes_atual':
+        return { from: startOfMonth(now), to: now };
+      case 'mes_passado':
+        return { from: startOfMonth(subMonths(now, 1)), to: endOfMonth(subMonths(now, 1)) };
+      case '90d':
+        return { from: subDays(now, 90), to: now };
+      case 'custom':
+        return customRange;
+      default:
+        return undefined;
+    }
+  }, [quickFilter, customRange]);
 
   // Only sales leads from allowed funnels
   const allVendas = useMemo(() =>
