@@ -74,13 +74,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
   const fetchLeads = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('leads')
-      .select('*')
-      .order('data_entrada', { ascending: false });
+    // Fetch all leads using pagination to bypass the 1000-row default limit
+    let allData: any[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-    if (!error && data) {
-      setLeads(data.map(d => ({
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .order('data_entrada', { ascending: false })
+        .range(from, from + pageSize - 1);
+
+      if (error || !data) {
+        hasMore = false;
+        break;
+      }
+
+      allData = allData.concat(data);
+      if (data.length < pageSize) {
+        hasMore = false;
+      } else {
+        from += pageSize;
+      }
+    }
+
+    if (allData.length > 0) {
+      setLeads(allData.map(d => ({
         ...d,
         status_funil: d.status_funil as LeadStatus,
         valor_proposta: d.valor_proposta ? Number(d.valor_proposta) : null,
