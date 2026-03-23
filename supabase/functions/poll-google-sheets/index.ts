@@ -200,12 +200,14 @@ async function processSheet(
     newLeads.push(lead);
   }
 
-  // Insert new leads
+  // Insert new leads (upsert to avoid duplicates thanks to unique index on telefone+funil)
   let inserted = 0;
   if (newLeads.length > 0) {
     for (let i = 0; i < newLeads.length; i += 50) {
       const batch = newLeads.slice(i, i + 50);
-      const { error: insertError } = await supabase.from("leads").insert(batch);
+      const { error: insertError } = await supabase
+        .from("leads")
+        .upsert(batch, { onConflict: "telefone,funil", ignoreDuplicates: true });
       if (!insertError) {
         inserted += batch.length;
       } else {

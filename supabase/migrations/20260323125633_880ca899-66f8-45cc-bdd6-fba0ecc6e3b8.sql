@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS leads_telefone_funil_unique ON leads (telefone, funil);
